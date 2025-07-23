@@ -1,5 +1,4 @@
-package spring.beautiq.config;
-
+package spring.beautiq.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,14 +7,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-    @EnableWebSecurity
-    public class SecurityConfig {
+@EnableWebSecurity
+public class SecurityConfig {
 
-        @Bean
-        SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-            http.authorizeHttpRequests(auth -> auth
-                    .requestMatchers(("/**")).permitAll());
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(("/**")).permitAll());
 
-            return http.build();
-        }
+        return http.build();
     }
+}
