@@ -1,4 +1,4 @@
-package config;
+package spring.beautiq.config;
 
 
 import org.springframework.context.annotation.Bean;
