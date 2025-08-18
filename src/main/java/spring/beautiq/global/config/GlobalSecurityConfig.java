@@ -8,9 +8,9 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class GlobalSecurityConfig {
 
-    @Bean
+    @Bean(name = "appFilterChain")
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(("/**")).permitAll());
