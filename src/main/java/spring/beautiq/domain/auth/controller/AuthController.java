@@ -13,7 +13,7 @@ import spring.beautiq.domain.auth.dto.AuthDto;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users")
+@RequestMapping("/auth")
 public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AuthDto> me(@AuthenticationPrincipal OAuth2User principal) {

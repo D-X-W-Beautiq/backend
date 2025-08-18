@@ -3,6 +3,7 @@ package spring.beautiq.domain.auth.oauth2.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -14,19 +15,21 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/beautiq/login", "/oauth2/authorization/**").permitAll()
+                        .requestMatchers(
+                                "/", "/login", "/oauth2/authorization/**",
+                                "/favicon.ico", "/css/**", "/js/**", "/auth/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
-                                .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
-                        //성공 핸들러 없어도 기본 /로 돌아감. 이거 나중에 원하면 핸들러 추가하기
+                        .loginPage("/login")
+                        .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                 )
-                .logout(Customizer.withDefaults());
+                .logout(logout -> {}); // 기본값 사용
         return http.build();
     }
-
 }
