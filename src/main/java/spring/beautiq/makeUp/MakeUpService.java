@@ -51,7 +51,7 @@ public class MakeUpService {
     public ResponseEntity<RecommendResponseDto> getAllRecommend() {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
         makeUpRepository.findAll().forEach(makeUp -> {
-            s3Service.getPreSignedUrl(String.valueOf(makeUp.getId()));
+            recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
         });
         return ResponseEntity.ok(recommendResponseDto);
     }
