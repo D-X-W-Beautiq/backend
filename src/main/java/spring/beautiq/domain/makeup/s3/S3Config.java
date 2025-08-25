@@ -1,4 +1,4 @@
-package spring.beautiq.makeUp.s3;
+package spring.beautiq.domain.makeup.s3;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;

@@ -1,4 +1,4 @@
-package spring.beautiq.makeUp.s3;
+package spring.beautiq.domain.makeup.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;

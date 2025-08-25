@@ -1,4 +1,4 @@
-package spring.beautiq.makeUp.entity;
+package spring.beautiq.domain.makeup.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

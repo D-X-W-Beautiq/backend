@@ -1,10 +1,10 @@
-package spring.beautiq.makeUp;
+package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import spring.beautiq.makeUp.dto.RecommendRequestDto;
-import spring.beautiq.makeUp.dto.RecommendResponseDto;
+import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
+import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 
 import java.io.IOException;
 

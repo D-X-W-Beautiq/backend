@@ -1,15 +1,15 @@
-package spring.beautiq.makeUp;
+package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import spring.beautiq.makeUp.dto.RecommendRequestDto;
-import spring.beautiq.makeUp.dto.RecommendResponseDto;
-import spring.beautiq.makeUp.entity.MakeUp;
-import spring.beautiq.makeUp.repository.MakeUpRepository;
-import spring.beautiq.makeUp.s3.S3Service;
+import spring.beautiq.domain.makeup.entity.MakeUp;
+import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
+import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
+import spring.beautiq.domain.makeup.repository.MakeUpRepository;
+import spring.beautiq.domain.makeup.s3.S3Service;
 
 import java.io.IOException;
 

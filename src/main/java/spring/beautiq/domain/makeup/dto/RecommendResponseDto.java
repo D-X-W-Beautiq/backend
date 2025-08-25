@@ -1,4 +1,4 @@
-package spring.beautiq.makeUp.dto;
+package spring.beautiq.domain.makeup.dto;
 
 import lombok.Data;
 
