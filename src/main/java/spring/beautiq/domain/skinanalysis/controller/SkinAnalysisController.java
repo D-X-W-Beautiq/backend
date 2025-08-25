@@ -50,14 +50,14 @@ public class SkinAnalysisController {
 
     @GetMapping("/{analysisId}")
     public ResponseEntity<SkinAnalysisResponseDto> getAnalysis(
-            @PathVariable UUID id,
+            @PathVariable UUID analysisId,
             @AuthenticationPrincipal OAuth2User principal) {
 
         if (principal == null) return ResponseEntity.status(401).build();
 
         UUID userId = principal.getAttribute("userId");
 
-        return ResponseEntity.ok(skinAnalysisService.getAnalysis(userId, id));
+        return ResponseEntity.ok(skinAnalysisService.getAnalysis(userId, analysisId));
     }
 
     @DeleteMapping("/{analysisId}")
