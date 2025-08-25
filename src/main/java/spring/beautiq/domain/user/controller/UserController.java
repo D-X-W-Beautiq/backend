@@ -12,6 +12,8 @@ import spring.beautiq.domain.user.dto.UserResponse;
 import spring.beautiq.domain.user.entity.User;
 import spring.beautiq.domain.user.repository.UserRepository;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
@@ -25,7 +27,7 @@ public class UserController {
     public ResponseEntity<UserResponse> me (@AuthenticationPrincipal OAuth2User principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
-        Long userId = principal.getAttribute("userId"); // CustomOauth2UserService에서 넣어준 값
+        UUID userId = principal.getAttribute("userId"); // CustomOauth2UserService에서 넣어준 값
         User u = userRepository.findById(userId).orElseThrow();
         return ResponseEntity.ok(
                 UserResponse.builder()
