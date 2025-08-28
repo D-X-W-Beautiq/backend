@@ -2,6 +2,8 @@ package spring.beautiq.domain.auth.controller;
 
 
 import java.security.Principal;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +19,7 @@ import spring.beautiq.domain.auth.dto.AuthDto;
 public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AuthDto> me(@AuthenticationPrincipal OAuth2User principal) {
+
         if (principal== null) {
             return ResponseEntity.ok(
                     AuthDto.builder()
@@ -24,10 +27,11 @@ public class AuthController {
                             .build()
             );
         }
+
         return ResponseEntity.ok(
                 AuthDto.builder()
                         .authenticated(true)
-                        .userId(principal.getAttribute("userId"))
+                        .userId((UUID)principal.getAttribute("userId"))
                         .email(principal.getAttribute("email"))
                         .name(principal.getAttribute("name"))
                         .provider(principal.getAttribute("provider"))
