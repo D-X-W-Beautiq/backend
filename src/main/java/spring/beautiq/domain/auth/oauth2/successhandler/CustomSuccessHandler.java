@@ -1,4 +1,4 @@
-package spring.beautiq.domain.auth.oauth2;
+package spring.beautiq.domain.auth.oauth2.successhandler;
 
 
 import jakarta.servlet.ServletException;
@@ -13,7 +13,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
-import spring.beautiq.domain.auth.oauth2.service.CustomOAuth2UserService;
 import spring.beautiq.global.jwt.JwtUtil;
 
 @Component

@@ -1,16 +1,16 @@
 package spring.beautiq.domain.auth.oauth2.config;
 
-import lombok.RequiredArgsConstructor;
+import io.jsonwebtoken.Jwt;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import spring.beautiq.domain.auth.oauth2.CustomSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import spring.beautiq.domain.auth.oauth2.successhandler.CustomSuccessHandler;
 import spring.beautiq.domain.auth.oauth2.service.CustomOAuth2UserService;
+import spring.beautiq.global.jwt.JwtFilter;
 import spring.beautiq.global.jwt.JwtUtil;
 
 @Configuration
@@ -38,6 +38,8 @@ public class SecurityConfig {
 
                 //http basic 인증방식 disable
                 .httpBasic((auth) -> auth.disable())
+
+                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
 
                 //경로별 인가 작업
                 .authorizeHttpRequests(auth -> auth
