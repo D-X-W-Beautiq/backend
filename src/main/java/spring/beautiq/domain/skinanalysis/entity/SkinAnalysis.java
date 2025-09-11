@@ -4,7 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.*;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
@@ -18,7 +18,7 @@ public class SkinAnalysis extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    User user;
+    UserEntity user;
 
     Long drynessGrade;
 

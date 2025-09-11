@@ -9,7 +9,7 @@ import spring.beautiq.domain.skinanalysis.dto.response.SkinAnalysisResponseDto;
 import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
 import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
 import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.exception.GlobalErrorCode;
 
@@ -32,7 +32,7 @@ public class SkinAnalysisService {
     ) {
 
         // 1. userId로 User 엔티티 조회
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
 
         // 2. MultipartFile을 AI 서버에 전송하여 분석 결과 받기
@@ -45,7 +45,7 @@ public class SkinAnalysisService {
     // todo: 분석 결과 리스트로 조회하기
     public List<SkinAnalysisResponseDto> getAnalysisList(UUID userId) {
 
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
 
         List<SkinAnalysisResponseDto> skinAnalysis = skinAnalysisRepository.findAllByUserId(userId).stream()
@@ -60,7 +60,7 @@ public class SkinAnalysisService {
     public SkinAnalysisResponseDto getAnalysis(UUID userId, UUID analysisId) {
 
         // 1. userId로 User 엔티티 조회
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
         // 2. analysisId로 분석 결과 단건 조회
         SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
@@ -74,7 +74,7 @@ public class SkinAnalysisService {
     // todo : 분석 결과 삭제하기
     public void deleteAnalysis(UUID userId, UUID analysisId) {
 
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
 
         SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)

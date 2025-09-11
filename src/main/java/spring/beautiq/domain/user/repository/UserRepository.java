@@ -6,8 +6,8 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import spring.beautiq.domain.user.AuthProvider.AuthProvider;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByProviderAndProviderId(AuthProvider authProvider, String providerId);
+public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+    UserEntity findByUsername(String username);
 }
