@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.Set;
 
+import java.util.UUID;
 import lombok.*;
 import spring.beautiq.domain.user.AuthProvider.AuthProvider;
 import spring.beautiq.global.base.BaseEntity;
@@ -24,7 +25,7 @@ public class UserEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id;
     private String email;
     private String name;
     private String username;

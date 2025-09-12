@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import spring.beautiq.domain.user.dto.UserResponse;
@@ -21,8 +22,6 @@ public class UserController {
 
     private final UserRepository userRepository;
 
-    @GetMapping("/")
-
 
 
     /* 내 프로필 조회 */
@@ -30,14 +29,12 @@ public class UserController {
     public ResponseEntity<UserResponse> me (@AuthenticationPrincipal OAuth2User principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
-           UUID userId = principal.getAttribute("userId"); // CustomOauth2UserService에서 넣어준 값
+           UUID userId = principal.getAttribute("userId");
         UserEntity u = userRepository.findById(userId).orElseThrow();
         return ResponseEntity.ok(
                 UserResponse.builder()
-                        .id(u.getId())
                         .email(u.getEmail())
                         .name(u.getName())
-                        .provider(u.getProvider().name())
                         .build()
         );
     }
