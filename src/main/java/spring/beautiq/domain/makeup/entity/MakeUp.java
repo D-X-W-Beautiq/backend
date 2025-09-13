@@ -32,7 +32,8 @@ public class MakeUp {
 
     // todo: 유저, 피부분석 매핑
 
-    public void changeWish() {
+    public Boolean changeWish() {
         this.isLiked = !this.isLiked;
+        return this.isLiked;
     }
 }
