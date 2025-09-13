@@ -1,9 +1,11 @@
 package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.makeup.entity.MakeUp;
 import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
@@ -12,6 +14,8 @@ import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,11 +26,15 @@ public class MakeUpService {
     private final S3Service s3Service;
 
     @Transactional
-    public ResponseEntity<RecommendResponseDto> makeRecommend(RecommendRequestDto recommendRequestDto) throws IOException {
+    public RecommendResponseDto makeRecommend(
+            UUID userId,
+            MultipartFile image,
+            RecommendRequestDto recommendRequestDto
+            ) throws IOException {
 
         //todo: MultipartBodyBuilder로 요청 본문을 구성하고 WebClient로 AI 파트로 이미지 생성 요청
         // 이후 response에서 이미지를 꺼내와서 반환해준다.
-        MultipartFile responseImg = recommendRequestDto.getOriginalImg(); // 일단 원본 저장
+        MultipartFile responseImg = image; // 일단 원본 저장
 
 
         // todo: 유저, 피부분석 매핑
@@ -39,32 +47,41 @@ public class MakeUpService {
 
         // 이미지를 받아오고 엔티티 아이디를 파일 이름으로 설정하여 저장한다.
         // 그러면 이미지 url을 따로 저장하지 않고 사용할 수 있지 않을까..합니다
-        s3Service.uploadImage(responseImg, makeUp.getId());
+//        s3Service.uploadImage(responseImg, makeUp.getId());
 
 
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
+//        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
 
-        return ResponseEntity.ok(recommendResponseDto);
+        return recommendResponseDto;
     }
 
-    public ResponseEntity<RecommendResponseDto> getAllRecommend() {
+    public RecommendResponseDto getAllRecommend(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        makeUpRepository.findAll().forEach(makeUp -> {
-            recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
-        });
-        return ResponseEntity.ok(recommendResponseDto);
+        // todo: userId로 다 찾고 dto 만들기
+        makeUpRepository.findAll().forEach(
+                makeUp -> recommendResponseDto.addMakeup(makeUp.getId().toString())
+        );
+        System.out.println("userId = " + userId);
+
+        return recommendResponseDto;
     }
 
     @Transactional
-    public ResponseEntity<Void> changeWish(Long recommendId) {
-        makeUpRepository.findById(recommendId).ifPresent(MakeUp::changeWish);
-        return ResponseEntity.noContent().build();
+    public String changeWish(Long makeupId) {
+        Optional<MakeUp> optionalMakeUp = makeUpRepository.findById(makeupId);
+        if (optionalMakeUp.isPresent()) {
+            MakeUp makeUp = optionalMakeUp.get();
+            return makeUp.changeWish().toString();
+        } else {
+            return null;
+        }
     }
 
-    public ResponseEntity<RecommendResponseDto> getAllWish() {
+    public ResponseEntity<RecommendResponseDto> getAllWish(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        makeUpRepository.findAll().forEach(makeUp -> {
+        // todo: userId로 찾기
+        makeUpRepository.findAll().forEach(makeUp -> { // 지금은 전부 리턴
             if (makeUp.getIsLiked()) {
                 s3Service.getPreSignedUrl(String.valueOf(makeUp.getId()));
             }
