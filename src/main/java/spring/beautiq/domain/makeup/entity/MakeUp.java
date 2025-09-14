@@ -5,30 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.LocalDateTime;
+import spring.beautiq.global.base.BaseEntity;
 
 @Entity
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MakeUp {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class MakeUp extends BaseEntity {
 
     private String keywords;
 
     private Boolean isLiked;
-
-    @CreatedDate
-    private LocalDateTime createTime;
-
-    @LastModifiedDate
-    private LocalDateTime updateTime;
 
     // todo: 유저, 피부분석 매핑
 
