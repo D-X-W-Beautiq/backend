@@ -58,13 +58,13 @@ public class MakeUpController {
     @GetMapping("/wish/{makeupId}")
     public ResponseEntity<String> changeWish(
             @AuthenticationPrincipal OAuth2User principal,
-            @PathVariable Long makeupId
+            @PathVariable UUID makeupId
     ) {
 
         String responseString = makeUpService.changeWish(makeupId);
         if (responseString == null) return ResponseEntity.noContent().build();
 
-        return ResponseEntity.ok("wish changed to" + responseString);
+        return ResponseEntity.ok("wish changed to " + responseString);
     }
 
     /**
