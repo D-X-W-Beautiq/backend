@@ -1,11 +1,9 @@
 package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.makeup.entity.MakeUp;
 import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
@@ -46,21 +44,23 @@ public class MakeUpService {
         makeUpRepository.save(makeUp);
 
         // 이미지를 받아오고 엔티티 아이디를 파일 이름으로 설정하여 저장한다.
-        // 그러면 이미지 url을 따로 저장하지 않고 사용할 수 있지 않을까..합니다
-//        s3Service.uploadImage(responseImg, makeUp.getId());
+        // 그러면 이미지 url을 따로 저장하지 않고 사용할 수 있지 않을까..합니다 -> 가능!
+        s3Service.uploadImage(responseImg, makeUp.getId());
 
 
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-//        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
+        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
 
         return recommendResponseDto;
     }
 
     public RecommendResponseDto getAllRecommend(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        // todo: userId로 다 찾고 dto 만들기
+        // todo: User 매핑 후, userId로 다 찾고 dto 만들기
         makeUpRepository.findAll().forEach(
-                makeUp -> recommendResponseDto.addMakeup(makeUp.getId().toString())
+                makeUp -> { // 지금은 전부 리턴
+                    recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(makeUp.getId().toString()));
+                }
         );
         System.out.println("userId = " + userId);
 
@@ -68,7 +68,7 @@ public class MakeUpService {
     }
 
     @Transactional
-    public String changeWish(Long makeupId) {
+    public String changeWish(UUID makeupId) {
         Optional<MakeUp> optionalMakeUp = makeUpRepository.findById(makeupId);
         if (optionalMakeUp.isPresent()) {
             MakeUp makeUp = optionalMakeUp.get();
@@ -80,10 +80,10 @@ public class MakeUpService {
 
     public ResponseEntity<RecommendResponseDto> getAllWish(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        // todo: userId로 찾기
-        makeUpRepository.findAll().forEach(makeUp -> { // 지금은 전부 리턴
+        // todo: User 매핑 후 userId로 찾기
+        makeUpRepository.findAll().forEach(makeUp -> { // 지금은 찜 되어있는 객체 전부 리턴
             if (makeUp.getIsLiked()) {
-                s3Service.getPreSignedUrl(String.valueOf(makeUp.getId()));
+                recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
             }
         });
         return ResponseEntity.ok(recommendResponseDto);
