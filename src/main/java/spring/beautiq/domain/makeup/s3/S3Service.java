@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Service
 public class S3Service {
@@ -23,7 +24,7 @@ public class S3Service {
     /**
      * S3에 이미지 업로드 하기
      */
-    public String uploadImage(MultipartFile image, Long id) throws IOException {
+    public String uploadImage(MultipartFile image, UUID id) throws IOException {
         String fileName = id.toString(); // 고유한 파일 이름 생성
 
         // 메타데이터 설정
