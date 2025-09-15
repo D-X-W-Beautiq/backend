@@ -1,40 +1,40 @@
 package spring.beautiq.global.jwt;
 
 
-import static spring.beautiq.global.exception.GlobalErrorCode.INVALID_EXPIRED_JWT;
-import static spring.beautiq.global.exception.GlobalErrorCode.INVALID_JWT;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import spring.beautiq.global.exception.BusinessException;
 
 @Slf4j
 @Component
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class JwtUtil {
 
     private Key key;
 
-    public JwtUtil(@Value("${jwt.secret}")String secret) {
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        System.out.println("JwtUtil 생성자 호출됨");
+        if (secret == null) {
+            throw new IllegalArgumentException("jwt.secret 값이 null 입니다!");
+        }
+
         byte[] byteSecret = Base64.getDecoder().decode(secret);
 
         key = Keys.hmacShaKeyFor(byteSecret);
+
     }
+
+
+
+
 
     public String getUsername(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("username", String.class);
