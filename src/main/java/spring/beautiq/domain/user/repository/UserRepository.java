@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import spring.beautiq.domain.user.AuthProvider.AuthProvider;
 import spring.beautiq.domain.user.entity.UserEntity;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {

@@ -14,7 +14,6 @@ import java.util.Set;
 
 import java.util.UUID;
 import lombok.*;
-import spring.beautiq.domain.user.AuthProvider.AuthProvider;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity

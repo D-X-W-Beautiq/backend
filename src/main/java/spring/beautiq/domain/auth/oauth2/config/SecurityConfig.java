@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -33,7 +34,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
 
@@ -48,8 +49,7 @@ public class SecurityConfig {
                 //경로별 인가 작업
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/login", "/oauth2/authorization/**",
-                                "/favicon.ico", "/css/**", "/js/**","/getpostman.com/**", "/auth/**"
+                                "/", "/login", "/oauth2/authorization/**" ,"/success/", "/css/**", "/js/**","/getpostman.com/**", "/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -83,9 +83,6 @@ public class SecurityConfig {
 
                     }
                 }));
-
-
-
 
 
         return http.build();

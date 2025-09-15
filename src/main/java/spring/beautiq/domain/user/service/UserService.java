@@ -7,7 +7,6 @@ import spring.beautiq.domain.user.dto.UserRequest;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 @Service
-
 public class UserService {
 
     private final UserRepository userRepository;

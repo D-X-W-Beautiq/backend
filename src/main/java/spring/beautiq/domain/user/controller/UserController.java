@@ -16,27 +16,10 @@ import spring.beautiq.domain.user.repository.UserRepository;
 import java.util.UUID;
 
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/users")
 public class UserController {
 
-    private final UserRepository userRepository;
-
-
-
-    /* 내 프로필 조회 */
-    @GetMapping("/me")
-    public ResponseEntity<UserResponse> me (@AuthenticationPrincipal OAuth2User principal) {
-        if (principal == null) return ResponseEntity.status(401).build();
-
-           UUID userId = principal.getAttribute("userId");
-        UserEntity u = userRepository.findById(userId).orElseThrow();
-        return ResponseEntity.ok(
-                UserResponse.builder()
-                        .email(u.getEmail())
-                        .name(u.getName())
-                        .build()
-        );
+    @GetMapping("/success")
+    public String success() {
+        return "OAuth2 Login Success! JWT 쿠키가 발급되었습니다 🚀";
     }
-
 }
