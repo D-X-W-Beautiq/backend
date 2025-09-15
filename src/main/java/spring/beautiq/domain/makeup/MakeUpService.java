@@ -45,6 +45,7 @@ public class MakeUpService {
 
         // 이미지를 받아오고 엔티티 아이디를 파일 이름으로 설정하여 저장한다.
         // 그러면 이미지 url을 따로 저장하지 않고 사용할 수 있지 않을까..합니다 -> 가능!
+        // todo: 예외 처리 (업로드 실패 시)
         s3Service.uploadImage(responseImg, makeUp.getId());
 
 
