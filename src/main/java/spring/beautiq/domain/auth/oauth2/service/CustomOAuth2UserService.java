@@ -42,19 +42,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return null;
         }
 
-        //추후 작성
 
         String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
-        UserEntity existData = userRepository.findByUsername(username);
-
-        if (existData == null) {
-            UserEntity userEntity = new UserEntity();
-            userEntity.setUsername(username);
-            userEntity.setName(oAuth2Response.getName());
-            userEntity.setEmail(oAuth2Response.getEmail());
-            userEntity.setRole("ROLE_USER");
-
-            userRepository.save(userEntity);
 
             UserDTO userDTO = new UserDTO();
             userDTO.setUsername(username);
@@ -62,25 +51,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userDTO.setRole("ROLE_USER");
 
             return new CustomOAuth2User(userDTO);
-        }
-
-        else {
-
-            existData.setEmail(oAuth2Response.getEmail());
-            existData.setName(oAuth2Response.getName());
-
-            userRepository.save(existData);
-
-
-
-            UserDTO userDTO = new UserDTO();
-            userDTO.setUsername(existData.getUsername());
-            userDTO.setName(oAuth2Response.getName());
-            userDTO.setRole("ROLE_USER");
-
-            return new CustomOAuth2User(userDTO);
-        }
-
         }
 
 }
