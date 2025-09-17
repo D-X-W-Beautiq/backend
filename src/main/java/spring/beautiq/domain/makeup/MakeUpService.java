@@ -10,6 +10,10 @@ import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
 import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
+import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
+import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -21,6 +25,9 @@ import java.util.UUID;
 public class MakeUpService {
 
     private final MakeUpRepository makeUpRepository;
+    private final UserRepository userRepository;
+    private final SkinAnalysisRepository skinAnalysisRepository;
+
     private final S3Service s3Service;
 
     @Transactional
@@ -35,10 +42,17 @@ public class MakeUpService {
         MultipartFile responseImg = image; // 일단 원본 저장
 
 
-        // todo: 유저, 피부분석 매핑
+        // todo: 예외처리, 피부분석이 저장이 안되어서.. 일단 보류했습니다. 유저는 잘 됩니닷.
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+//        SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("Skin analysis not found"));
+
         MakeUp makeUp = MakeUp.builder()
                 .keywords(recommendRequestDto.getKeywords())
                 .isLiked(false)
+                .user(user)
+//                .skinAnalysis(skinAnalysis)
                 .build();
 
         makeUpRepository.save(makeUp);
@@ -57,9 +71,9 @@ public class MakeUpService {
 
     public RecommendResponseDto getAllRecommend(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        // todo: User 매핑 후, userId로 다 찾고 dto 만들기
-        makeUpRepository.findAll().forEach(
-                makeUp -> { // 지금은 전부 리턴
+
+        makeUpRepository.findAllByUserId(userId).forEach(
+                makeUp -> {
                     recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(makeUp.getId().toString()));
                 }
         );
@@ -75,18 +89,17 @@ public class MakeUpService {
             MakeUp makeUp = optionalMakeUp.get();
             return makeUp.changeWish().toString();
         } else {
-            return null;
+            throw new RuntimeException("Make up not found");
         }
     }
 
     public ResponseEntity<RecommendResponseDto> getAllWish(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        // todo: User 매핑 후 userId로 찾기
-        makeUpRepository.findAll().forEach(makeUp -> { // 지금은 찜 되어있는 객체 전부 리턴
-            if (makeUp.getIsLiked()) {
-                recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
-            }
+
+        makeUpRepository.findAllByUserIdAndIsLiked(userId, true).forEach(makeUp -> {
+            recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
         });
+
         return ResponseEntity.ok(recommendResponseDto);
     }
 }
