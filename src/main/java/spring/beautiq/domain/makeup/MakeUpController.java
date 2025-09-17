@@ -52,6 +52,7 @@ public class MakeUpController {
         return ResponseEntity.ok(makeUpService.getAllRecommend(userId));
     }
 
+    // todo: makeUpId 받는 방식 변경
     /**
      * 찜 전환
      */
