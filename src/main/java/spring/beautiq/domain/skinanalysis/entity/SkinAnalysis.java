@@ -54,6 +54,7 @@ public class SkinAnalysis extends BaseEntity {
 
     Float perocularWrinkleRa;
 
+    @jakarta.persistence.Lob
     String feedback;
 
     Float averageScore;
