@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface SkinAnalysisRepository extends JpaRepository<SkinAnalysis, UUID> {
     List<SkinAnalysis> findAllByUserId(UUID userId);
+    List<SkinAnalysis> findAllByUserIdAndCreatedAtBetween(UUID userId, java.time.LocalDateTime start, java.time.LocalDateTime end);
 }
