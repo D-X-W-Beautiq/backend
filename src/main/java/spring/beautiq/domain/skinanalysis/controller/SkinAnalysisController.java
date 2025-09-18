@@ -29,7 +29,7 @@ public class SkinAnalysisController {
             @RequestPart("image") MultipartFile image
     ) {
 
-        if (principal == null) return ResponseEntity.status(401).build();
+        if (principal == null) return ResponseEntity.status(401).body(null);
 
         UUID userId = principal.getAttribute("userId");
 
@@ -43,7 +43,7 @@ public class SkinAnalysisController {
             @RequestParam("month") int month
     ) {
 
-        if (principal == null) return ResponseEntity.status(401).build();
+        if (principal == null) return ResponseEntity.status(401).body(null);
 
         UUID userId = principal.getAttribute("userId");
 
@@ -54,7 +54,7 @@ public class SkinAnalysisController {
     public ResponseEntity<List<SkinAnalysisResponse>> getDailyHistory(
             @AuthenticationPrincipal OAuth2User principal) {
 
-        if (principal == null) return ResponseEntity.status(401).build();
+        if (principal == null) return ResponseEntity.status(401).body(null);
 
         UUID userId = principal.getAttribute("userId");
 
@@ -89,7 +89,7 @@ public class SkinAnalysisController {
             @PathVariable UUID analysisId,
             @AuthenticationPrincipal OAuth2User principal) {
 
-        if (principal == null) return ResponseEntity.status(401).build();
+        if (principal == null) return ResponseEntity.status(401).body(null);
 
         UUID userId = principal.getAttribute("userId");
 
