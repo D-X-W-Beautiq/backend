@@ -128,7 +128,7 @@ public class SkinAnalysisService {
         LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
-        List<SkinAnalysis> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtBetween(userId, start, end);
+        List<SkinAnalysis> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
 
         List<SkinStatusHistory> monthlyHistory = analyses.stream()
                 .map(a -> SkinStatusHistory.builder()
