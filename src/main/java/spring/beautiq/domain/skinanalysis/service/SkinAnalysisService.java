@@ -111,9 +111,6 @@ public class SkinAnalysisService {
             Integer month
     ) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
-
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59);
@@ -142,13 +139,10 @@ public class SkinAnalysisService {
     @Transactional
     public SkinAnalysisResponse getAnalysis(UUID userId, UUID analysisId) {
 
-        // 1. userId로 User 엔티티 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
-        // 2. analysisId로 분석 결과 단건 조회
+        // 1. analysisId로 분석 결과 단건 조회
         SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
-        // 3. 분석 결과를 반환
+        // 2. 분석 결과를 반환
 
         return SkinAnalysisResponse.from(skinAnalysis);
     }
