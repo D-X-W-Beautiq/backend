@@ -113,7 +113,7 @@ public class SkinAnalysisService {
             // 4. 저장된 엔티티를 응답으로 변환
             return SkinAnalysisResponse.from(skinAnalysis);
         } catch (Exception e) {
-            throw new RuntimeException("AI 서버 분석 요청 실패: " + e.getMessage(), e);
+            throw new RuntimeException("AI 서버 분석 요청 실패", e);
         }
     }
 
