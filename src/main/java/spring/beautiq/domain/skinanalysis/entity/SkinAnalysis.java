@@ -20,39 +20,41 @@ public class SkinAnalysis extends BaseEntity {
     @JoinColumn(name = "user_id")
     User user;
 
-    Long drynessGrade;
+    Float dryness;
 
-    Long foreheadPigmentation;
+    Float foreheadPigmentation;
 
-    Long cheekPigmentation;
+    Float cheekPigmentation;
 
-    Long poreGrade;
+    Float pore;
 
-    Long saggingGrade;
+    Float sagging;
 
-    Long foreheadWrinkle;
+    Float foreheadWrinkle;
 
-    Long glabellusWrinkle;
+    Float glabellusWrinkle;
 
-    Long perocularWrinkle;
+    Float perocularWrinkle;
 
-    Long pigmentationIndex;
+    Float pigmentation;
 
-    Long cheekPoreCount;
+    Float cheekPore;
 
-    Long foreheadMoisture;
+    Float foreheadMoisture;
 
-    Long cheekMoisture;
+    Float cheekMoisture;
 
-    Long chinMoisture;
+    Float chinMoisture;
 
-    Long foreheadElasticity;
+    Float foreheadElasticity;
 
-    Long cheekElasticity;
+    Float cheekElasticity;
 
-    Long chinElasticity;
+    Float chinElasticity;
 
-    Long perocularWrinkleRa;
+    Float perocularWrinkleRa;
 
     String feedback;
+
+    Float averageScore;
 }
