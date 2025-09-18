@@ -57,7 +57,7 @@ public class SkinAnalysisService {
             // 1. 이미지 Base64 인코딩
             String base64 = Base64.getEncoder().encodeToString(image.getBytes());
             SkinAnalysisAIRequest aiRequest = new SkinAnalysisAIRequest();
-            aiRequest.setSource_image_base64(base64);
+            aiRequest.setSourceImageBase64(base64);
 
             // 2. AI 서버에 JSON 요청
             SkinAnalysisAIResponse aiResult = webClient.post()
