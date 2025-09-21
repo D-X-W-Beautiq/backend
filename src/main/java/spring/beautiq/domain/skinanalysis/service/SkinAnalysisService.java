@@ -79,8 +79,12 @@ public class SkinAnalysisService {
                     .retrieve()
                     .bodyToMono(SkinAnalysisAIResponse.class)
                     .block(); // 동기식
+
             if (aiResult == null || aiResult.getPredictions() == null)
                 throw SkinAnalysisExceptions.AI_SERVER_RESPONSE_EMPTY.toException();
+            if (aiResult.getFeedback() == null || aiResult.getFeedback().isBlank()) {
+                throw SkinAnalysisExceptions.AI_SERVER_RESPONSE_EMPTY.toException();
+            }
 
             // 3. DB 저장
             SkinAnalysisAI p = aiResult.getPredictions();
