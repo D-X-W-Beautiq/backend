@@ -1,8 +1,7 @@
 package spring.beautiq.domain.skinanalysis.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import spring.beautiq.domain.user.entity.User;
 import spring.beautiq.global.base.BaseEntity;
@@ -20,39 +19,44 @@ public class SkinAnalysis extends BaseEntity {
     @JoinColumn(name = "user_id")
     User user;
 
-    Long drynessGrade;
+    Float dryness;
 
-    Long foreheadPigmentation;
+    Float foreheadPigmentation;
 
-    Long cheekPigmentation;
+    Float cheekPigmentation;
 
-    Long poreGrade;
+    Float pore;
 
-    Long saggingGrade;
+    Float sagging;
 
-    Long foreheadWrinkle;
+    Float foreheadWrinkle;
 
-    Long glabellusWrinkle;
+    Float glabellusWrinkle;
 
-    Long perocularWrinkle;
+    Float perocularWrinkle;
 
-    Long pigmentationIndex;
+    Float pigmentation;
 
-    Long cheekPoreCount;
+    Float cheekPore;
 
-    Long foreheadMoisture;
+    Float foreheadMoisture;
 
-    Long cheekMoisture;
+    Float cheekMoisture;
 
-    Long chinMoisture;
+    Float chinMoisture;
 
-    Long foreheadElasticity;
+    Float foreheadElasticity;
 
-    Long cheekElasticity;
+    Float cheekElasticity;
 
-    Long chinElasticity;
+    Float chinElasticity;
 
-    Long perocularWrinkleRa;
+    Float perocularWrinkleRa;
 
+    @Lob
+    @NotBlank
+    @Column(nullable = false, columnDefinition = "TEXT")
     String feedback;
+
+    Float averageScore;
 }
