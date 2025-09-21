@@ -1,8 +1,7 @@
 package spring.beautiq.domain.skinanalysis.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import spring.beautiq.domain.user.entity.User;
 import spring.beautiq.global.base.BaseEntity;
@@ -54,7 +53,9 @@ public class SkinAnalysis extends BaseEntity {
 
     Float perocularWrinkleRa;
 
-    @jakarta.persistence.Lob
+    @Lob
+    @NotBlank
+    @Column(nullable = false, columnDefinition = "TEXT")
     String feedback;
 
     Float averageScore;
