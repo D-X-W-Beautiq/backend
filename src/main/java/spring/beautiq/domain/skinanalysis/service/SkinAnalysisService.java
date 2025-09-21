@@ -41,8 +41,7 @@ public class SkinAnalysisService {
         this.webClient = webClientBuilder.build();
     }
 
-    @Value("${app.ai-server.url}")
-    private String aiServerUrl;
+
 
     // 프런트에서 이미지 받기 → AI 서버에 이미지 넘기기 → 분석 결과 받기  → 종합 점수 산출 후 분석 결과 DB에 저장 및 프런트로 응답 반환하기
     public SkinAnalysisResponse createAnalysis(
@@ -74,7 +73,7 @@ public class SkinAnalysisService {
 
             // 2. AI 서버에 JSON 요청
             SkinAnalysisAIResponse aiResult = webClient.post()
-                    .uri(aiServerUrl)
+                    .uri("/analysis")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(aiRequest)
                     .retrieve()
