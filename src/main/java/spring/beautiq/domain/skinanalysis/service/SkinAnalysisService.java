@@ -155,10 +155,12 @@ public class SkinAnalysisService {
     @Transactional
     public SkinAnalysisResponse getAnalysis(UUID userId, UUID analysisId) {
 
-        // 1. analysisId로 분석 결과 단건 조회
         SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
-        // 2. 분석 결과를 반환
+
+        if (!skinAnalysis.getUser().getId().equals(userId)) {
+            throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
+        }
 
         return SkinAnalysisResponse.from(skinAnalysis);
     }
@@ -167,13 +169,10 @@ public class SkinAnalysisService {
     // todo : 분석 결과 삭제하기
     public void deleteAnalysis(UUID userId, UUID analysisId) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
-
         SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
 
-        if (!skinAnalysis.getUser().equals(user)) {
+        if (!skinAnalysis.getUser().getId().equals(userId)) {
             throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
         }
 
