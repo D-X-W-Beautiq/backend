@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/skin-analyses")
+@RequestMapping("/skin-analyses")
 public class SkinAnalysisController {
 
     private final SkinAnalysisService skinAnalysisService;
