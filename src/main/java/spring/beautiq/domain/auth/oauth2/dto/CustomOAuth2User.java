@@ -21,22 +21,16 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-        return null;
+        return Map.of(
+                "username", userDTO.getUsername(),
+                "name", userDTO.getName(),
+                "role", userDTO.getRole()
+        );
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        Collection<GrantedAuthority> collection = new ArrayList<>();
-
-        collection.add(new GrantedAuthority() {
-            @Override
-            public String getAuthority() {
-                return userDTO.getUsername();
-            }
-        });
-
-        return collection;
+        return List.of(new SimpleGrantedAuthority(userDTO.getRole()));
     }
 
 

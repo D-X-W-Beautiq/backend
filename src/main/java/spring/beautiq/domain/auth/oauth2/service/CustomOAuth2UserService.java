@@ -39,7 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else if (registrationId.equals("kakao")) {
             oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
         } else {
-            return null;
+            throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
         }
 
 

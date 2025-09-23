@@ -35,11 +35,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority authority = iterator.next();
         String role = authority.getAuthority();
 
-        String token = jwtUtil.createJwt(username, role, 1000L*60*30);
+        String token = jwtUtil.createJwt(username, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
 
         response.addCookie(createCookie("Authorization", token));
-
-        System.out.println("쿠키 발급됨: " + token);
 
         // 프론트 측 특정 리다이렉트 url
         response.sendRedirect("http://localhost:8080/success");

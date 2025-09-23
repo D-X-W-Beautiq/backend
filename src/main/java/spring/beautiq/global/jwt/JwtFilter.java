@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
@@ -36,6 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 System.out.println(cookie.getName());
                 if ("Authorization".equals(cookie.getName())) {
                     authorization = cookie.getValue();
+                    break;
                 }
             }
         }
@@ -56,28 +58,23 @@ public class JwtFilter extends OncePerRequestFilter {
         //토큰 소멸 시간 검증
         try {
             if (jwtUtil.isExpired(token)) {
-                System.out.println("token expired");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"error\": \"Token expired\"}");
-                return;
+               filterChain.doFilter(request, response);
+               return;
             }
-        } catch (ExpiredJwtException e) {
-            System.out.println("catch ExpiredJwtException");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"error\": \"Token expired\"}");
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            // 잘못,변조된 토큰 -> 인증 미적용 후 다음 필터로 진행
+            filterChain.doFilter(request, response);
             return;
         }
 
 
         //토큰에서 username과 role 획득
-        String usernmae= jwtUtil.getUsername(token);
+        String username= jwtUtil.getUsername(token);
         String role = jwtUtil.getRole(token);
 
         //userDto를 생성하여 값 set
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername(usernmae);
+        userDTO.setUsername(username);
         userDTO.setRole(role);
 
 
@@ -85,7 +82,9 @@ public class JwtFilter extends OncePerRequestFilter {
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
 
         //스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());
+        Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User,
+                null,
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(role)));
 
         //세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
