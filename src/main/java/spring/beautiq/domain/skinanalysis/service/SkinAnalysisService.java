@@ -1,6 +1,7 @@
 package spring.beautiq.domain.skinanalysis.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,19 +29,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class SkinAnalysisService {
 
 
     private final UserRepository userRepository;
     private final SkinAnalysisRepository skinAnalysisRepository;
-    private final WebClient webClient;
-
-    public SkinAnalysisService(UserRepository userRepository, SkinAnalysisRepository skinAnalysisRepository, WebClient.Builder webClientBuilder) {
-        this.userRepository = userRepository;
-        this.skinAnalysisRepository = skinAnalysisRepository;
-        this.webClient = webClientBuilder.build();
-    }
-
+    private final WebClient.Builder webClientBuilder;
 
 
     // 프런트에서 이미지 받기 → AI 서버에 이미지 넘기기 → 분석 결과 받기  → 종합 점수 산출 후 분석 결과 DB에 저장 및 프런트로 응답 반환하기
@@ -72,7 +67,7 @@ public class SkinAnalysisService {
             aiRequest.setSourceImageBase64(base64);
 
             // 2. AI 서버에 JSON 요청
-            SkinAnalysisAIResponse aiResult = webClient.post()
+            SkinAnalysisAIResponse aiResult = webClientBuilder.build().post()
                     .uri("/skin/analysis")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(aiRequest)
