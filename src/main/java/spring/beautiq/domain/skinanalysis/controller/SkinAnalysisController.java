@@ -39,8 +39,8 @@ public class SkinAnalysisController {
     @GetMapping("/monthly")
     public ResponseEntity<MonthlySkinStatusResponse> getMonthlyHistory(
             @AuthenticationPrincipal OAuth2User principal,
-            @RequestParam("year") int year,
-            @RequestParam("month") int month
+            @RequestParam("year") Integer year,
+            @RequestParam("month") Integer month
     ) {
 
         if (principal == null) return ResponseEntity.status(401).body(null);
