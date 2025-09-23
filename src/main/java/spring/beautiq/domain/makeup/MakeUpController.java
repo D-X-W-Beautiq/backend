@@ -13,6 +13,8 @@ import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import java.io.IOException;
 import java.util.UUID;
 
+
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/beautiq/makeup")
