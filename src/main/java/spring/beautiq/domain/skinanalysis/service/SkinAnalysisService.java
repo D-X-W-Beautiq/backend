@@ -56,14 +56,14 @@ public class SkinAnalysisService {
 
             // 1. 이미지 유효성 검증
             if (image == null || image.isEmpty()) {
-                throw new IllegalArgumentException("이미지 파일이 비어 있습니다.");
+                throw SkinAnalysisExceptions.IMAGE_EMPTY.toException();
             }
             if (image.getSize() > 5_000_000) { // 5MB 상한 (필요 시 설정값화)
-                throw new IllegalArgumentException("이미지 파일 크기가 5MB를 초과합니다.");
+                throw SkinAnalysisExceptions.IMAGE_TOO_LARGE.toException();
             }
             String contentType = image.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
-                throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
+                throw SkinAnalysisExceptions.IMAGE_INVALID_TYPE.toException();
             }
 
             // 2. 이미지 Base64 인코딩
