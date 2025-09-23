@@ -3,25 +3,31 @@ spring:
     import: optional:file:.env[.properties]
 
 
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+      region:
+        static: ${AWS_REGION}
+      s3:
+        bucket: ${S3_BUCKET}
 
   datasource:
-    url: jdbc:mysql://localhost:3306/Beautiq?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:jws6382!}
-
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-    jpa:
-      open-in-view: false
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
       hibernate:
-        ddl-auto: update
-      show-sql: true
-      properties:
-        hibernate:
-          format_sql: true
-          dialect: org.hibernate.dialect.MySQL8Dialect
-
-
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
   security:
     oauth2:
@@ -34,30 +40,31 @@ spring:
               - openid
               - email
               - profile
-            redirect-uri: "https://getpostman.com/oauth2/callback"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "https://getpostman.com/oauth2/callback"
-            scope: # 카카오에서 이메일 받으려면 동의항목 활성화 필요
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
               - profile_nickname
+              - profile_image
             client-name: Kakao
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id  # 카카오의 고유 키
+            user-name-attribute: id
+
 jwt:
-  secret: "변경필수_길고_랜덤한_서명키"
-  access-exp-min: 15
-  refresh-exp-days: 14
+  secret: ${JWT_SECRET}
+
 app:
   oauth2:
-    redirect-success: "http://localhost:3000/login/callback" # 로그인 성공시 프론트로 이동
-    cookie-domain: "localhost"
-    use-cookie-secure: false # HTTPS면 true
-
-
+    redirect-success: ${OAUTH_REDIRECT_SUCCESS}
+    cookie-domain: ${COOKIE_DOMAIN}
+    use-cookie-secure: ${COOKIE_SECURE}
+  ai-server:
+    url: ${AI_SERVER_URL}

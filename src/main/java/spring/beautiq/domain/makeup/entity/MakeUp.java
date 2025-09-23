@@ -5,34 +5,31 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.LocalDateTime;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
+import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.global.base.BaseEntity;
 
 @Entity
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MakeUp {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class MakeUp extends BaseEntity {
 
     private String keywords;
 
     private Boolean isLiked;
 
-    @CreatedDate
-    private LocalDateTime createTime;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user")
+    private User user;
 
-    @LastModifiedDate
-    private LocalDateTime updateTime;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "skinAnalysis")
+    private SkinAnalysis skinAnalysis;
 
-    // todo: 유저, 피부분석 매핑
-
-    public void changeWish() {
+    public Boolean changeWish() {
         this.isLiked = !this.isLiked;
+        return this.isLiked;
     }
 }
