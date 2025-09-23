@@ -73,7 +73,7 @@ public class SkinAnalysisService {
 
             // 2. AI 서버에 JSON 요청
             SkinAnalysisAIResponse aiResult = webClient.post()
-                    .uri("/analysis")
+                    .uri("/skin/analysis")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(aiRequest)
                     .retrieve()
