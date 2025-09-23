@@ -18,8 +18,8 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("CodeArena Swagger")
-                .description("CodeArena 유저 및 인증 , ps, 알림에 관한 REST API")
-                .version("1.0.0");
+                .title("Beautiq Swagger")
+                .description("Beautiq REST API")
+                .version("0.1.0");
     }
 }
