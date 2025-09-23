@@ -10,12 +10,14 @@ import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.skinanalysis.dto.response.MonthlySkinStatusResponse;
 import spring.beautiq.domain.skinanalysis.dto.response.SkinAnalysisResponse;
 import spring.beautiq.domain.skinanalysis.service.SkinAnalysisService;
+import spring.beautiq.global.security.guard.MemberGuard;
 
 
 
 import java.util.List;
 import java.util.UUID;
 
+@MemberGuard
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/skin-analyses")
