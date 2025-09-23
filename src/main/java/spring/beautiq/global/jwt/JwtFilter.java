@@ -1,5 +1,6 @@
 package spring.beautiq.global.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -29,12 +30,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authorization = null;
         Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            System.out.println(cookie.getName());
-             if ("Authorization".equals(cookie.getName())) {
+
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                System.out.println(cookie.getName());
+                if ("Authorization".equals(cookie.getName())) {
                     authorization = cookie.getValue();
+                }
             }
         }
+
 
         //Authorization 헤더 검증
         if (authorization == null) {
@@ -49,11 +54,19 @@ public class JwtFilter extends OncePerRequestFilter {
         // 토큰
         String token = authorization;
         //토큰 소멸 시간 검증
-        if (jwtUtil.isExpired(token)) {
-            System.out.println("token expired");
-            filterChain.doFilter(request, response);
-
-            //조건이 해당되면 메소드 종료
+        try {
+            if (jwtUtil.isExpired(token)) {
+                System.out.println("token expired");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\": \"Token expired\"}");
+                return;
+            }
+        } catch (ExpiredJwtException e) {
+            System.out.println("catch ExpiredJwtException");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\": \"Token expired\"}");
             return;
         }
 

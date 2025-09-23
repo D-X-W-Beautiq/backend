@@ -32,10 +32,6 @@ public class JwtUtil {
 
     }
 
-
-
-
-
     public String getUsername(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("username", String.class);
     }
