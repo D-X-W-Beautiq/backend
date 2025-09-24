@@ -22,4 +22,6 @@ public class ProductAIResponse {
     private String status;
     @NotNull
     private List<SkinCategories> needs;
+    @NotNull
+    private List<Product> recommendations;
 }
