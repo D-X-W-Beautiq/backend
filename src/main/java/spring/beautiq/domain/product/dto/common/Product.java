@@ -11,7 +11,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecommendProduct {
+public class Product {
 
     String productName;
     String category;

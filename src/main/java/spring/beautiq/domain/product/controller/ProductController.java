@@ -7,16 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
-import spring.beautiq.domain.product.dto.ai.response.RecommendProductAIResponse;
-import spring.beautiq.domain.product.dto.common.RecommendProduct;
-import spring.beautiq.domain.product.dto.request.ProductRecommendRequest;
-import spring.beautiq.domain.product.dto.common.ProductRecommendReqRes;
+import spring.beautiq.domain.product.dto.ai.response.ProductAIResponse;
+import spring.beautiq.domain.product.dto.common.Product;
+import spring.beautiq.domain.product.dto.request.ProductRequest;
+import spring.beautiq.domain.product.dto.common.ProductReqRes;
 import spring.beautiq.domain.product.service.ProductService;
 import spring.beautiq.global.security.guard.MemberGuard;
 
 import java.util.UUID;
 
-import spring.beautiq.domain.product.dto.common.ProductOrder;
+import spring.beautiq.domain.product.dto.common.OrderOption;
 
 @MemberGuard
 @RestController
@@ -26,10 +26,10 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping("/skin-analyses/{analysisId}/recommend-products")
-    public ResponseEntity<RecommendProductAIResponse> productsRecommend(
+    public ResponseEntity<ProductAIResponse> productsRecommend(
             @PathVariable("analysisId") UUID analysisId,
             @AuthenticationPrincipal OAuth2User principal,
-            @Valid @RequestBody ProductRecommendRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
 
         UUID userId = principal.getAttribute("userId");
@@ -38,33 +38,33 @@ public class ProductController {
     }
 
     @PostMapping("/skin-analyses/{analysisId}/recommend-products/wishlists")
-    public ResponseEntity<ProductRecommendReqRes> addWishlist(
             @AuthenticationPrincipal OAuth2User principal,
             @PathVariable String analysisId,
-            @Valid @RequestBody ProductRecommendReqRes request
+    public ResponseEntity<ProductReqRes> addWishlist(
+            @Valid @RequestBody ProductReqRes request
     ) {
 
         UUID userId = principal.getAttribute("userId");
 
-        ProductRecommendReqRes created = productService.addWishlist(userId, request);
+        ProductReqRes created = productService.addWishlist(userUuid, request);
 
         return ResponseEntity.ok(created);
     }
 
     @GetMapping("/users/me/wishlist/products")
-    public ResponseEntity<Page<RecommendProduct>> getAllWishProduct(
             @AuthenticationPrincipal OAuth2User principal,
+    public ResponseEntity<Page<Product>> getAllWishProduct(
             @RequestParam(name = "order", defaultValue = "newest") String order,
             @RequestParam(name = "page", defaultValue = "1") Integer page
     ) {
 
         UUID userId = principal.getAttribute("userId");
 
-        ProductOrder productOrder = ProductOrder.fromParam(order);
+        OrderOption orderOption = OrderOption.fromParam(order);
 
         int pageIndex = (page == null || page < 1) ? 0 : page - 1; // 1페이지부터 입력, 0-based로 변환
 
-        return ResponseEntity.ok(productService.getAllWishProduct(userId, productOrder, pageIndex, 10));
+        return ResponseEntity.ok(productService.getAllWishProduct(userId, orderOption, pageIndex, 10));
     }
 
     @GetMapping("/users/me/wishlist/products/{productId}")

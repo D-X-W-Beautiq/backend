@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import spring.beautiq.domain.product.dto.common.RecommendProduct;
+import spring.beautiq.domain.product.dto.common.Product;
 import spring.beautiq.domain.product.dto.common.SkinCategories;
 
 @Getter
@@ -14,10 +14,8 @@ import spring.beautiq.domain.product.dto.common.SkinCategories;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecommendProductAIResponse {
+public class ProductAIResponse {
 
     private String status;
     private List<SkinCategories> needs;
-    private List<RecommendProduct> recommendations;
 }
-

@@ -13,16 +13,16 @@ import spring.beautiq.domain.product.entity.ProductEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductRecommendReqRes {
+public class ProductReqRes {
 
     List<SkinCategories> needs;
-    RecommendProduct recommendations;
+    Product recommendations;
 
-    public static ProductRecommendReqRes from(ProductEntity product) {
-        return ProductRecommendReqRes.builder()
+    public static ProductReqRes from(ProductEntity product) {
+        return ProductReqRes.builder()
                 .needs(product.getNeeds())
                 .recommendations(
-                        RecommendProduct.builder()
+                        Product.builder()
                                 .productName(product.getProductName())
                                 .category(product.getCategory())
                                 .price(product.getPrice())

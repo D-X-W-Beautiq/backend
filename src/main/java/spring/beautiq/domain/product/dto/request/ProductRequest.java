@@ -5,17 +5,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import spring.beautiq.domain.product.dto.common.RecommendProductFilter;
+import spring.beautiq.domain.product.dto.common.ProductFilter;
 
 @Getter
 @Setter
 @AllArgsConstructor
-public class ProductRecommendRequest {
+public class ProductRequest {
 
     @NotNull
     @Min(1)
     private Integer topN;
     private String locale;
-    private RecommendProductFilter filters;
+    private ProductFilter filters;
 }
 

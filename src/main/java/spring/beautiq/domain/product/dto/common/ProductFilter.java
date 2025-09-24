@@ -12,7 +12,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecommendProductFilter {
+public class ProductFilter {
 
     private Integer budgetMin;
     private Integer budgetMax;

@@ -5,10 +5,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import spring.beautiq.domain.product.dto.ai.request.RecommendProductAIRequest;
-import spring.beautiq.domain.product.dto.common.ProductRecommendReqRes;
-import spring.beautiq.domain.product.dto.request.ProductRecommendRequest;
-import spring.beautiq.domain.product.dto.ai.response.RecommendProductAIResponse;
+import spring.beautiq.domain.product.dto.ai.request.ProductAIRequest;
+import spring.beautiq.domain.product.dto.common.ProductReqRes;
+import spring.beautiq.domain.product.dto.request.ProductRequest;
+import spring.beautiq.domain.product.dto.ai.response.ProductAIResponse;
 import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
 import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
 import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
@@ -20,13 +20,13 @@ import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.util.UUID;
 
-import spring.beautiq.domain.product.dto.common.RecommendProduct;
+import spring.beautiq.domain.product.dto.common.Product;
 import spring.beautiq.global.exception.GlobalErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import spring.beautiq.domain.product.dto.common.ProductOrder;
+import spring.beautiq.domain.product.dto.common.OrderOption;
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +39,10 @@ public class ProductService {
 
     // AI를 활용한 제품 추천
     @Transactional(readOnly = true)
-    public RecommendProductAIResponse productsRecommend(
+    public ProductAIResponse productsRecommend(
             UUID userId,
             UUID analysisId,
-            ProductRecommendRequest clientRequest
+            ProductRequest clientRequest
     ) {
         // 1. analysisId로 SkinAnalysis 조회
         SkinAnalysis analysis = skinAnalysisRepository.findById(analysisId)
@@ -54,20 +54,20 @@ public class ProductService {
         }
 
         // 3. AI 서버에 요청 보내기
-        RecommendProductAIRequest request = RecommendProductAIRequest.builder()
                 .analysis(analysis)
+        ProductAIRequest request = ProductAIRequest.builder()
                 .topN(clientRequest.getTopN())
                 .locale(clientRequest.getLocale())
                 .filters(clientRequest.getFilters())
                 .build();
 
         // 4. AI 서버 응답 받기
-        RecommendProductAIResponse aiResponse = webClientBuilder.build().post()
+        ProductAIResponse aiResponse = webClientBuilder.build().post()
                 .uri("/skin/products/recommend")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .bodyToMono(RecommendProductAIResponse.class)
+                .bodyToMono(ProductAIResponse.class)
                 .block();
 
         // 5. 응답이 null이면 예외 처리
@@ -80,26 +80,26 @@ public class ProductService {
 
     // Wishlist 제품 추가
     @Transactional
-    public ProductRecommendReqRes addWishlist(UUID userId, ProductRecommendReqRes request) {
+    public ProductReqRes addWishlist(UUID userId, ProductReqRes request) {
         // userId로 User 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
 
         // request에서 제품 정보 추출
-        RecommendProduct recommendProduct = request.getRecommendations();
-        if (recommendProduct == null) {
+        Product product = request.getRecommendations();
+        if (product == null) {
             throw ProductExceptions.RECOMMENDATION_REQUIRED.toException();
         }
 
-        return ProductRecommendReqRes.from(
+        return ProductReqRes.from(
                 productRepository.save(ProductEntity.builder()
                 .user(user)
                 .needs(request.getNeeds())
-                .productName(recommendProduct.getProductName())
-                .category(recommendProduct.getCategory())
-                .price(recommendProduct.getPrice())
-                .reviewCount(recommendProduct.getReviewCount())
-                .reason(recommendProduct.getReason())
+                .productName(product.getProductName())
+                .category(product.getCategory())
+                .price(product.getPrice())
+                .reviewCount(product.getReviewCount())
+                .reason(product.getReason())
                 .build()
             )
         );
@@ -107,7 +107,7 @@ public class ProductService {
 
     // 전체 Wishlist 제품 조회 (페이징, 정렬)
     @Transactional(readOnly = true)
-    public Page<RecommendProduct> getAllWishProduct(UUID userId, ProductOrder order, int page, int size) {
+    public Page<Product> getAllWishProduct(UUID userId, OrderOption order, int page, int size) {
 
         Sort sort = switch (order) {
             case POPULAR -> Sort.by(Sort.Order.desc("reviewCount"));
@@ -117,7 +117,7 @@ public class ProductService {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<ProductEntity> result = productRepository.findAllByUser_Id(userId, pageable);
 
-        return result.map(entity -> RecommendProduct.builder()
+        return result.map(entity -> Product.builder()
                 .productName(entity.getProductName())
                 .category(entity.getCategory())
                 .price(entity.getPrice())
@@ -129,13 +129,13 @@ public class ProductService {
 
     // 특정 Wishlist 제품 상세 조회
     @Transactional(readOnly = true)
-    public ProductRecommendReqRes getWishProduct(UUID userId, UUID productId) {
+    public ProductReqRes getWishProduct(UUID userId, UUID productId) {
         ProductEntity entity = productRepository.findByIdAndUser_Id(productId, userId)
                 .orElseThrow(ProductExceptions.WISHLIST_NOT_FOUND::toException);
 
-        return ProductRecommendReqRes.builder()
+        return ProductReqRes.builder()
                 .needs(entity.getNeeds())
-                .recommendations(RecommendProduct.builder()
+                .recommendations(Product.builder()
                         .productName(entity.getProductName())
                         .category(entity.getCategory())
                         .price(entity.getPrice())

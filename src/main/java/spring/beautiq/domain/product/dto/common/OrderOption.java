@@ -5,16 +5,16 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ProductOrder {
+public enum OrderOption {
     POPULAR("popular"),
     NEWEST("newest");
 
     private final String order;
 
-    public static ProductOrder fromParam(String value) {
+    public static OrderOption fromParam(String value) {
         if (value == null) return NEWEST;
         String v = value.trim().toLowerCase();
-        for (ProductOrder o : values()) {
+        for (OrderOption o : values()) {
             if (o.order.equals(v)) return o;
         }
         return NEWEST;
