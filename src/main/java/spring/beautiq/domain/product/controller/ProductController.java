@@ -37,9 +37,8 @@ public class ProductController {
         return ResponseEntity.ok(productService.productsRecommend(userId, analysisId, request));
     }
 
-    @PostMapping("/skin-analyses/{analysisId}/recommend-products/wishlists")
             @AuthenticationPrincipal OAuth2User principal,
-            @PathVariable String analysisId,
+    @PostMapping("/users/me/wishlist/products")
     public ResponseEntity<ProductReqRes> addWishlist(
             @Valid @RequestBody ProductReqRes request
     ) {
