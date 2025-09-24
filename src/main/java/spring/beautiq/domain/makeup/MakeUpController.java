@@ -3,12 +3,12 @@ package spring.beautiq.domain.makeup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
 import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
+import spring.beautiq.global.security.annotation.CurrentUserId;
+import spring.beautiq.global.security.guard.MemberGuard;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -18,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/beautiq/makeup")
+@MemberGuard
 public class MakeUpController {
 
     private final MakeUpService makeUpService;
@@ -28,13 +29,10 @@ public class MakeUpController {
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RecommendResponseDto> makeRecommend(
-            @AuthenticationPrincipal OAuth2User principal,
+            @CurrentUserId UUID userId,
             @RequestPart("sourceImage") MultipartFile image,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
     ) throws IOException {
-
-        if (principal == null) return ResponseEntity.status(401).build();
-        UUID userId = principal.getAttribute("userId");
 
         return ResponseEntity.ok(makeUpService.makeRecommend(userId, image,recommendRequestDto));
     }
@@ -45,11 +43,8 @@ public class MakeUpController {
      */
     @GetMapping()
     public ResponseEntity<RecommendResponseDto> getAllRecommend(
-            @AuthenticationPrincipal OAuth2User principal
+            @CurrentUserId UUID userId
     ) {
-
-        if (principal == null) return ResponseEntity.status(401).build();
-        UUID userId = principal.getAttribute("userId");
 
         return ResponseEntity.ok(makeUpService.getAllRecommend(userId));
     }
@@ -60,7 +55,6 @@ public class MakeUpController {
      */
     @GetMapping("/wish/{makeupId}")
     public ResponseEntity<String> changeWish(
-            @AuthenticationPrincipal OAuth2User principal,
             @PathVariable UUID makeupId
     ) {
 
@@ -76,11 +70,8 @@ public class MakeUpController {
      */
     @GetMapping("/wish")
     public ResponseEntity<RecommendResponseDto> getAllWish(
-            @AuthenticationPrincipal OAuth2User principal
+            @CurrentUserId UUID userId
     ) {
-
-        if (principal == null) return ResponseEntity.status(401).build();
-        UUID userId = principal.getAttribute("userId");
 
         return makeUpService.getAllWish(userId);
     }

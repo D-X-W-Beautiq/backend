@@ -62,6 +62,10 @@ jwt:
   secret: ${JWT_SECRET}
 
 app:
+  openapi:
+    title: Beautiq Swagger
+    description: Beautiq REST API
+    version: ${spring.application.version:0.0.1-SNAPSHOT}
   oauth2:
     redirect-success: ${OAUTH_REDIRECT_SUCCESS}
     cookie-domain: ${COOKIE_DOMAIN}

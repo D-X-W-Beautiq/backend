@@ -3,11 +3,21 @@ package spring.beautiq.global.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration    // 스프링 실행시 설정파일 읽어드리기 위한 어노테이션
+@Configuration
 public class SwaggerConfig {
+
+    @Value("${app.openapi.title:Beautiq Swagger}")
+    private String swaggerTitle;
+
+    @Value("${app.openapi.description}")
+    private String swaggerDescription;
+
+    @Value("${app.openapi.version:${spring.application.version:0.0.1-SNAPSHOT}}")
+    private String swaggerVersion;
 
     @Bean
     public OpenAPI openAPI() {
@@ -18,8 +28,8 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("CodeArena Swagger")
-                .description("CodeArena 유저 및 인증 , ps, 알림에 관한 REST API")
-                .version("1.0.0");
+                .title(swaggerTitle)
+                .description(swaggerDescription)
+                .version(swaggerVersion);
     }
 }

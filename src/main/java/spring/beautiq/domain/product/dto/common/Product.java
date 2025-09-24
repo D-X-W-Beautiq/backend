@@ -1,4 +1,4 @@
-package spring.beautiq.domain.user.dto;
+package spring.beautiq.domain.product.dto.common;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -7,20 +7,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class UserResponse {
+public class Product {
+
     @NotNull
-    private UUID id;
+    String productName;
     @NotNull
-    private String email;
+    String category;
     @NotNull
-    private String name;
+    Integer price;
     @NotNull
-    private String provider;
+    Integer reviewCount;
+    @NotNull
+    String reason;
 }
