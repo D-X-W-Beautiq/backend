@@ -73,7 +73,7 @@ public class SkinAnalysisController {
         return ResponseEntity.ok(skinAnalysisService.getDailyDates(userId, date));
     }
 
-    @GetMapping("/lastest")
+    @GetMapping("/latest")
     public ResponseEntity<SkinAnalysisResponse> getLatestAnalysis(
             @AuthenticationPrincipal OAuth2User principal) {
 
