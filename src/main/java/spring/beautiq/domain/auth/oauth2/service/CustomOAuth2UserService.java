@@ -3,22 +3,18 @@ package spring.beautiq.domain.auth.oauth2.service;
 
 import jakarta.transaction.Transactional;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import spring.beautiq.domain.auth.oauth2.userinfo.OAuth2UserInfo;
-import spring.beautiq.domain.auth.oauth2.userinfo.OAuth2UserInfoFactory;
-import spring.beautiq.domain.user.AuthProvider.AuthProvider;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
+import spring.beautiq.domain.auth.oauth2.dto.GoogleResponse;
+import spring.beautiq.domain.auth.oauth2.dto.KakaoResponse;
+import spring.beautiq.domain.auth.oauth2.dto.OAuth2Response;
+import spring.beautiq.domain.user.dto.UserDTO;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 @Service
@@ -28,45 +24,33 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
 
+
     @Override
-    public OAuth2User loadUser(OAuth2UserRequest req) {
-        OAuth2User delegate = super.loadUser(req);
-        String registrationId = req.getClientRegistration().getRegistrationId();
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+
+        OAuth2Response oAuth2Response = null;
+        if (registrationId.equals("google")) {
+            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+
+        } else if (registrationId.equals("kakao")) {
+            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
+        } else {
+            throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
+        }
 
 
-        // 1. 표준화
-        OAuth2UserInfo info = OAuth2UserInfoFactory.from(registrationId, delegate.getAttributes());
-        AuthProvider provider = switch (registrationId.toLowerCase(Locale.ROOT)) {
-            case "google" -> AuthProvider.GOOGLE;
-            case "kakao"  -> AuthProvider.KAKAO;
-            default -> throw new IllegalArgumentException("지원되지 않는 사용자입니다.: " + registrationId);
-        };
+        String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
 
-        // 2. 가입,수정
-        User user = userRepository.findByProviderAndProviderId(provider, info.getProviderId())
-                .orElseGet(() -> userRepository.save(
-                        User.builder()
-                                .provider(provider)
-                                .providerId(info.getProviderId())
-                                .email(info.getEmail())
-                                .name(info.getName())
-                                .roles(Set.of("ROLE_USER"))
-                                .build()
-                ));
+            UserDTO userDTO = new UserDTO();
+            userDTO.setUsername(username);
+            userDTO.setName(oAuth2Response.getName());
+            userDTO.setRole("ROLE_USER");
 
-        boolean changed = false;
-        if (!Objects.equals(user.getEmail(), info.getEmail())) { user.setEmail(info.getEmail()); changed = true; }
-        if (!Objects.equals(user.getName(),  info.getName()))  { user.setName(info.getName());  changed = true; }
-        if (changed) userRepository.save(user);
+            return new CustomOAuth2User(userDTO);
+        }
 
-
-        Map<String, Object> attrs = new HashMap<>();
-        attrs.put("provider", provider.name());
-        attrs.put("providerId", info.getProviderId());
-        attrs.put("userId", user.getId());
-        attrs.put("email", user.getEmail());
-        attrs.put("name", user.getName());
-
-        return new DefaultOAuth2User(Collections.emptyList(), attrs, "providerId");
-    }
 }

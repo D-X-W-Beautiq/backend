@@ -3,7 +3,7 @@ package spring.beautiq.domain.skinanalysis.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
@@ -17,7 +17,7 @@ public class SkinAnalysis extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    User user;
+    UserEntity user;
 
     Float dryness;
 

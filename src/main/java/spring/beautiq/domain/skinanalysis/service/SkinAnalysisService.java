@@ -48,7 +48,7 @@ public class SkinAnalysisService {
     ) {
 
         // 1. userId로 User 엔티티 조회
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
         try {
 
@@ -131,6 +131,7 @@ public class SkinAnalysisService {
         LocalDateTime end = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
         List<SkinAnalysis> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
+
 
         List<SkinStatusHistory> monthlyHistory = analyses.stream()
                 .map(a -> SkinStatusHistory.builder()
@@ -270,6 +271,7 @@ public class SkinAnalysisService {
     @Transactional(readOnly = true)
     public SkinAnalysisResponse getAnalysis(UUID userId, UUID analysisId) {
 
+        // 2. analysisId로 분석 결과 단건 조회
         SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
 

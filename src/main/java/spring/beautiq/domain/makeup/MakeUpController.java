@@ -13,6 +13,8 @@ import spring.beautiq.global.security.guard.MemberGuard;
 import java.io.IOException;
 import java.util.UUID;
 
+
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/beautiq/makeup")
