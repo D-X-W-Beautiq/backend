@@ -10,12 +10,14 @@ import spring.beautiq.domain.user.dto.UserResponse;
 import spring.beautiq.domain.user.entity.User;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.security.annotation.CurrentUserId;
+import spring.beautiq.global.security.guard.MemberGuard;
 
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
+@MemberGuard
 public class UserController {
 
     private final UserRepository userRepository;

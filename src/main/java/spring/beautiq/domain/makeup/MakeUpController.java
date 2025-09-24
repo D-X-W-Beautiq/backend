@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
 import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import spring.beautiq.global.security.annotation.CurrentUserId;
+import spring.beautiq.global.security.guard.MemberGuard;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/beautiq/makeup")
+@MemberGuard
 public class MakeUpController {
 
     private final MakeUpService makeUpService;
