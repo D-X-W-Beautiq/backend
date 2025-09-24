@@ -54,8 +54,8 @@ public class ProductService {
         }
 
         // 3. AI 서버에 요청 보내기
-                .analysis(analysis)
         ProductAIRequest request = ProductAIRequest.builder()
+                .analysis(ProductAIRequest.toAnalysis(analysis))
                 .topN(clientRequest.getTopN())
                 .locale(clientRequest.getLocale())
                 .filters(clientRequest.getFilters())
