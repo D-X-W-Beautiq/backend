@@ -21,7 +21,10 @@ public class ProductEntity extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @ElementCollection
+    @CollectionTable(name = "product_needs", joinColumns = @JoinColumn(name = "product_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "need", nullable = false)
     List<SkinCategories> needs;
 
     @Column(nullable = false)
