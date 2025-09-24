@@ -85,7 +85,7 @@ public class SkinAnalysisController {
     @GetMapping("/trends/60days")
     public ResponseEntity<SixtyDaySkinPointsResponse> getSixtyDayTrends(
             @AuthenticationPrincipal OAuth2User principal,
-            @RequestParam("data") LocalDateTime date
+            @RequestParam("date") LocalDateTime date
     ) {
 
         UUID userId = principal.getAttribute("userId");
