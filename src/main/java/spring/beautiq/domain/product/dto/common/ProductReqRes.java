@@ -1,6 +1,7 @@
 package spring.beautiq.domain.product.dto.common;
 
 import java.util.List;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +16,9 @@ import spring.beautiq.domain.product.entity.ProductEntity;
 @AllArgsConstructor
 public class ProductReqRes {
 
+    @NotNull
     List<SkinCategories> needs;
+    @NotNull
     Product recommendations;
 
     public static ProductReqRes from(ProductEntity product) {

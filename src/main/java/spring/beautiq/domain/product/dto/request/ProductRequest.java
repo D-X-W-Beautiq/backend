@@ -15,7 +15,9 @@ public class ProductRequest {
     @NotNull
     @Min(1)
     private Integer topN;
+    @NotNull
     private String locale;
+    @NotNull
     private ProductFilter filters;
 }
 

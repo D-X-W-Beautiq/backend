@@ -1,5 +1,6 @@
 package spring.beautiq.domain.user.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,8 +15,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class UserResponse {
+    @NotNull
     private UUID id;
+    @NotNull
     private String email;
+    @NotNull
     private String name;
-    private String provider; //구글인지 카카오인지 이거 받아야하나..?
+    @NotNull
+    private String provider;
 }

@@ -1,6 +1,8 @@
 package spring.beautiq.domain.product.dto.ai.response;
 
 import java.util.List;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,6 +18,8 @@ import spring.beautiq.domain.product.dto.common.SkinCategories;
 @AllArgsConstructor
 public class ProductAIResponse {
 
+    @NotNull
     private String status;
+    @NotNull
     private List<SkinCategories> needs;
 }
