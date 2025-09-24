@@ -24,6 +24,6 @@ public class ProductAIRequest {
     private Integer topN;
     @NotNull
     private String locale;
-    private RecommendProductFilter filters;
     @NotNull
+    private ProductFilter filters;
 }
