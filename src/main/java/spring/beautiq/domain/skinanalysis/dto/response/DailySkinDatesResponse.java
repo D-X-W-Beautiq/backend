@@ -22,7 +22,7 @@ public class DailySkinDatesResponse {
 
     public static DailySkinDatesResponse from(List<SkinAnalysis> skinAnalyses) {
         return DailySkinDatesResponse.builder()
-                .skinAnalysisDates(skinAnalyses.stream()
+                .skinAnalysisDates((skinAnalyses == null ? List.<SkinAnalysis>of() : skinAnalyses).stream()
                         .sorted(Comparator.comparing(SkinAnalysis::getCreatedAt))
                         .map(sa -> sa.getCreatedAt().format(FMT))
                         .toList())
