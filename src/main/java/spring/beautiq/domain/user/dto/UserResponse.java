@@ -20,7 +20,5 @@ public class UserResponse {
     @NotNull
     private String email;
     @NotNull
-    private String name;
-    @NotNull
-    private String provider;
+    private String username;
 }
