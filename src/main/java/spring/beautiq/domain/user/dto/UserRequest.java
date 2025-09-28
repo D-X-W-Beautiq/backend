@@ -10,7 +10,8 @@ import lombok.Setter;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class UserRequest {
-    @NotNull
-    @NotBlank(message = "이름은 필수입니다.")
-    private String name;
+
+    private String username;
+    private String password;
+    private String profileImage;
 }
