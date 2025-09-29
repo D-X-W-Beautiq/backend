@@ -29,6 +29,7 @@ public class UserEntity extends BaseEntity {
     private String username;
     private String role;
     private String password;
+    private String profileImage;
 
 }
 
