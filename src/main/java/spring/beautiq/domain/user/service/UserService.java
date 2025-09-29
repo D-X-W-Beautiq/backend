@@ -76,8 +76,19 @@ public class UserService implements UserDetailsService {
         if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
             userEntity.setUsername(dto.getUsername());
         }
+
         userRepository.save(userEntity);
         }
+
+
+    @Transactional
+    public void updateProfileImage(String username, String imageurl) {
+        UserEntity userEntity = userRepository.findByUsername(username).orElseThrow();
+        userEntity.setProfileImage(imageurl);
+        userRepository.save(userEntity);
+    }
+
+
 
     @Transactional
     public void deleteOneUser(String username) {

@@ -70,4 +70,5 @@ public class S3Service {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, amazonS3.getRegionName(), fileName);
     }
 
+
 }
