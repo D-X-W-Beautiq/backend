@@ -2,15 +2,15 @@ package spring.beautiq.domain.makeup.dto;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class RecommendResponseDto {
 
-    private List<String> recommendations = new ArrayList<>(); // s3 임시 접근 url 리스트 전송
+    private Map<String, String> recommendations = new HashMap<>(); // 이미지 이름:s3 임시 접근 url로 전송
 
-    public void addImageUrl(String string) {
-        this.recommendations.add(string);
+    public void addRecommendation(String imageName, String url) {
+        this.recommendations.put(imageName, url);
     }
 }
