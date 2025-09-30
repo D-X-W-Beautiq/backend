@@ -8,5 +8,4 @@ import java.util.UUID;
 
 public interface MakeUpRepository extends JpaRepository<MakeUp, UUID> {
     List<MakeUp> findAllByUserId(UUID userId);
-    List<MakeUp> findAllByUserIdAndIsLiked(UUID userId, boolean isLiked);
 }
