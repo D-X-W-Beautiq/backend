@@ -29,7 +29,7 @@ public class S3Service {
      * S3에 이미지 임시 업로드 하기
      */
     public String uploadImage(MultipartFile image) throws IOException {
-        String fileName = "temp/" + UUID.randomUUID().toString(); // 고유한 파일 이름 생성
+        String fileName = "temp/" + UUID.randomUUID(); // 고유한 파일 이름 생성
 
         // 메타데이터 설정
         ObjectMetadata metadata = new ObjectMetadata();
