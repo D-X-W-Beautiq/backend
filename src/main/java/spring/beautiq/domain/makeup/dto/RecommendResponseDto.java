@@ -10,7 +10,7 @@ public class RecommendResponseDto {
 
     private List<String> recommendations = new ArrayList<>(); // s3 임시 접근 url 리스트 전송
 
-    public void addMakeup(String string) {
+    public void addImageUrl(String string) {
         this.recommendations.add(string);
     }
 }
