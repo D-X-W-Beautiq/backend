@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class RecommendRequestDto {
 
-    private String keywords;
-    private Long analysisId;
+    private String[] keywords;
 
 }
