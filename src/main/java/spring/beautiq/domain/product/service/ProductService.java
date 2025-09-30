@@ -15,7 +15,7 @@ import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.product.entity.ProductEntity;
 import spring.beautiq.domain.product.exception.ProductExceptions;
 import spring.beautiq.domain.product.repository.ProductRepository;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.util.UUID;
@@ -82,7 +82,7 @@ public class ProductService {
     @Transactional
     public ProductReqRes addWishlist(UUID userId, ProductReqRes request) {
         // userId로 User 조회
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
 
         // request에서 제품 정보 추출
