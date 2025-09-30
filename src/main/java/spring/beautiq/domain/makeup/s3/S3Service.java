@@ -48,13 +48,16 @@ public class S3Service {
     /**
      * S3에 이미지 영구 저장하기
      */
-    public String saveImage() {
+    public String saveImage(String imageName) {
 
         // image 폴더로 복사
+        String newFileName = "images/" + UUID.randomUUID(); // 고유한 파일 이름 생성
+        amazonS3.copyObject(bucket, imageName, bucket, newFileName);
 
         // temp 폴더의 이미지 삭제
+        amazonS3.deleteObject(bucket, imageName);
 
-        return null;
+        return newFileName; // 영구 저장된 파일 이름 반환
     }
 
     /**
