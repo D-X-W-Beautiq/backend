@@ -1,7 +1,7 @@
 package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
-`import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +22,19 @@ import java.util.UUID;
 public class MakeUpController {
 
     private final MakeUpService makeUpService;
+
+    /**
+     * 메이크업 저장
+     * todo: makeupsavereRequestDto에 이미지 정보를 어떻게 담아올지(url? imageName?)
+     */
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> saveMakeUp(
+            @CurrentUserId UUID userId,
+            @RequestPart("data") MakeUpSaveRequestDto makeUpSaveRequestDto
+    ) throws IOException {
+        makeUpService.saveMakeUp(userId, makeUpSaveRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 
     /**
      * 저장한 메이크업 목록 조회
@@ -60,6 +73,7 @@ public class MakeUpController {
 
     /**
      * 메이크업 스타일 추천
+     * todo: 이미지와 키워드 양자택일일지 둘 다 받을지 논의 필요
      */
     @PostMapping(value = "/recommendation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendResponseDto styleRecommend(
@@ -67,7 +81,7 @@ public class MakeUpController {
             @RequestPart("sourceImage") MultipartFile sourceImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
     ) throws IOException {
-        return makeUpService.styleRecommend(userId, sourceImage, recommendRequestDto);
+        return makeUpService.styleRecommend(sourceImage, recommendRequestDto);
     }
 
     /**
@@ -80,27 +94,17 @@ public class MakeUpController {
             @RequestPart("styleImage") MultipartFile styleImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
     ) throws IOException {
-        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage, recommendRequestDto);
-    }
-
-    /**
-     * 메이크업 저장
-     */
-    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> saveMakeUp(
-            @CurrentUserId UUID userId,
-            @RequestPart("data") MakeUpSaveRequestDto makeUpSaveRequestDto
-    ) throws IOException {
-        makeUpService.saveMakeUp(userId, makeUpSaveRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return makeUpService.simulateMakeUp(sourceImage, styleImage, recommendRequestDto);
     }
 
     /**
      * 메이크업 커스터마이즈
      */
     @PostMapping("/customize")
-    public RecommendResponseDto customize() {
-        return null;
+    public RecommendResponseDto customize(
+
+    ) throws IOException {
+        return makeUpService.customize();
     }
 
 }
