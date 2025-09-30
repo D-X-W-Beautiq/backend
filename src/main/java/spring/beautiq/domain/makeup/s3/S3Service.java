@@ -26,10 +26,10 @@ public class S3Service {
     }
 
     /**
-     * S3에 이미지 업로드 하기
+     * S3에 이미지 임시 업로드 하기
      */
-    public void uploadImage(MultipartFile image, UUID id) throws IOException {
-        String fileName = id.toString(); // 고유한 파일 이름 생성
+    public String uploadImage(MultipartFile image) throws IOException {
+        String fileName = "temp/" + UUID.randomUUID().toString(); // 고유한 파일 이름 생성
 
         // 메타데이터 설정
         ObjectMetadata metadata = new ObjectMetadata();
@@ -42,6 +42,19 @@ public class S3Service {
         // S3에 파일 업로드
         amazonS3.putObject(putObjectRequest);
 
+        return fileName; // 업로드된 파일 이름 반환
+    }
+
+    /**
+     * S3에 이미지 영구 저장하기
+     */
+    public String saveImage() {
+
+        // image 폴더로 복사
+
+        // temp 폴더의 이미지 삭제
+
+        return null;
     }
 
     /**
@@ -69,5 +82,4 @@ public class S3Service {
     private String getPublicUrl(String fileName) {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, amazonS3.getRegionName(), fileName);
     }
-
 }
