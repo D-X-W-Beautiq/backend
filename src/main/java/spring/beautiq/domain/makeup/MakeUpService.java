@@ -1,22 +1,18 @@
 package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import spring.beautiq.domain.makeup.dto.MakeUpSaveRequestDto;
 import spring.beautiq.domain.makeup.entity.MakeUp;
 import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
 import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
-import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
-import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
-import spring.beautiq.domain.user.entity.User;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,80 +22,112 @@ public class MakeUpService {
 
     private final MakeUpRepository makeUpRepository;
     private final UserRepository userRepository;
-    private final SkinAnalysisRepository skinAnalysisRepository;
 
     private final S3Service s3Service;
 
+    /**
+     * 메이크업 저장
+     */
     @Transactional
-    public RecommendResponseDto makeRecommend(
-            UUID userId,
-            MultipartFile image,
+    public void saveMakeUp(UUID userId, MakeUpSaveRequestDto saveRequestDto) {
+        MakeUp makeUp = MakeUp.builder()
+                .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                .imageName(saveRequestDto.getImageName()) // todo: 받아온 이미지 정보 유형에 따라 수정
+                .build();
+        makeUpRepository.save(makeUp);
+    }
+
+    /**
+     * 저장한 메이크업 목록 조회
+     */
+    public RecommendResponseDto getMakeUpList(UUID userId) {
+        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
+        for (MakeUp makeUp : makeUpRepository.findAllByUserId(userId)) {
+            String imageName = makeUp.getImageName();
+            recommendResponseDto.addRecommendation(imageName, s3Service.getPreSignedUrl(imageName));
+        }
+        return recommendResponseDto;
+    }
+
+    /**
+     * 메이크업 상세 조회
+     */
+    public RecommendResponseDto getMakeUp(UUID makeupId) {
+        MakeUp makeUp = makeUpRepository.findById(makeupId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
+        String imageName = makeUp.getImageName();
+        recommendResponseDto.addRecommendation(imageName, s3Service.getPreSignedUrl(imageName));
+        return recommendResponseDto;
+    }
+
+    /**
+     * 메이크업 삭제
+     */
+    @Transactional
+    public void deleteMakeUp(UUID makeupId) {
+        MakeUp makeUp = makeUpRepository.findById(makeupId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        makeUpRepository.delete(makeUp);
+    }
+
+    /**
+     * 스타일 추천
+     */
+    public RecommendResponseDto styleRecommend(
+            MultipartFile sourceImage,
+            RecommendRequestDto recommendRequestDto
+    ) throws IOException {
+
+        // todo: ai에서 스타일 추천 이미지 3장 받아오기
+        String[] styleImageBase64s = new String[3];
+
+        // Base64 -> MultipartFile 변환
+        MultipartFile[] styleImages = new MultipartFile[3];
+
+        // S3에 임시 업로드 후 URL dto에 담기
+        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
+        for (MultipartFile styleImage : styleImages) {
+            String styleImageName = s3Service.uploadImage(styleImage);
+            recommendResponseDto.addRecommendation(styleImageName, s3Service.getPreSignedUrl(styleImageName));
+        }
+
+        return recommendResponseDto;
+    }
+
+    /**
+     * 메이크업 시뮬레이션
+     */
+    public RecommendResponseDto simulateMakeUp(
+            MultipartFile sourceImage,
+            MultipartFile styleImage,
             RecommendRequestDto recommendRequestDto
             ) throws IOException {
 
         //todo: MultipartBodyBuilder로 요청 본문을 구성하고 WebClient로 AI 파트로 이미지 생성 요청
         // 이후 response에서 이미지를 꺼내와서 반환해준다.
-        MultipartFile responseImg = image; // 일단 원본 저장
+        MultipartFile responseImg = sourceImage; // 일단 원본 저장
 
 
-        // todo: 예외처리, 피부분석이 저장이 안되어서.. 일단 보류했습니다. 유저는 잘 됩니닷.
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-//        SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(userId)
-//                .orElseThrow(() -> new RuntimeException("Skin analysis not found"));
-
-        MakeUp makeUp = MakeUp.builder()
-                .keywords(recommendRequestDto.getKeywords())
-                .isLiked(false)
-                .user(user)
-//                .skinAnalysis(skinAnalysis)
-                .build();
-
-        makeUpRepository.save(makeUp);
-
-        // 이미지를 받아오고 엔티티 아이디를 파일 이름으로 설정하여 저장한다.
-        // 그러면 이미지 url을 따로 저장하지 않고 사용할 수 있지 않을까..합니다 -> 가능!
+        // 시뮬레이션 이미지 임시 업로드
         // todo: 예외 처리 (업로드 실패 시)
-        s3Service.uploadImage(responseImg, makeUp.getId());
+        String simulatedImageName = s3Service.uploadImage(responseImg);
 
 
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
+        recommendResponseDto.addRecommendation(simulatedImageName, s3Service.getPreSignedUrl(simulatedImageName));
 
         return recommendResponseDto;
     }
 
-    public RecommendResponseDto getAllRecommend(UUID userId) {
-        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
+    /**
+     * 메이크업 커스터마이즈
+     */
+    public RecommendResponseDto customize(
 
-        makeUpRepository.findAllByUserId(userId).forEach(
-                makeUp -> {
-                    recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(makeUp.getId().toString()));
-                }
-        );
-        System.out.println("userId = " + userId);
-
-        return recommendResponseDto;
+    ) throws IOException {
+        return null;
     }
 
-    @Transactional
-    public String changeWish(UUID makeupId) {
-        Optional<MakeUp> optionalMakeUp = makeUpRepository.findById(makeupId);
-        if (optionalMakeUp.isPresent()) {
-            MakeUp makeUp = optionalMakeUp.get();
-            return makeUp.changeWish().toString();
-        } else {
-            throw new RuntimeException("Make up not found");
-        }
-    }
-
-    public ResponseEntity<RecommendResponseDto> getAllWish(UUID userId) {
-        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-
-        makeUpRepository.findAllByUserIdAndIsLiked(userId, true).forEach(makeUp -> {
-            recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
-        });
-
-        return ResponseEntity.ok(recommendResponseDto);
+    static MultipartFile base64ToMultipart(String base64) {
+        return null;
     }
 }
