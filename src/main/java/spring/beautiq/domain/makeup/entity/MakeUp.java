@@ -17,7 +17,7 @@ public class MakeUp extends BaseEntity {
 
     private String keywords;
 
-    private String imageUrl;
+    private String imageName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user")
