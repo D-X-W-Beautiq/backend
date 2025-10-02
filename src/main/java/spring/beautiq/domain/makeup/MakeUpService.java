@@ -254,6 +254,7 @@ public class MakeUpService {
                 .bodyValue(customizeAiRequestDto)
                 .retrieve()
                 .bodyToMono(CustomizeAiResponseDto.class)
+                .timeout(Duration.ofSeconds(30)) // 타임아웃 설정
                 .block();
 
         // Base64 -> MultipartFile 변환
