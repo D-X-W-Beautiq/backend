@@ -1,10 +1,7 @@
 package spring.beautiq.domain.skinanalysis.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
@@ -81,6 +78,7 @@ public class SkinAnalysisEntity extends BaseEntity {
 
     @Column(name = "average_score", nullable = false)
     @NotNull
-    @Min(0) @Max(100)
+    @DecimalMin(value = "0.0", inclusive = true)
+    @DecimalMax(value = "100.0", inclusive = true)
     Float averageScore;
 }
