@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface MakeUpRepository extends JpaRepository<MakeUp, UUID> {
     List<MakeUp> findAllByUserId(UUID userId);
-    Optional<MakeUp> findByImageName(String imageName);
+    Optional<MakeUp> findByUserIdAndImageName(UUID user_id, String imageName);
 }

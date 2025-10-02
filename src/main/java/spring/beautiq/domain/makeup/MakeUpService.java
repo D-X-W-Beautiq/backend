@@ -62,8 +62,8 @@ public class MakeUpService {
     /**
      * 메이크업 상세 조회
      */
-    public RecommendDetailResponseDto getMakeUp(String imageName) {
-        MakeUp makeUp = makeUpRepository.findByImageName(imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public RecommendDetailResponseDto getMakeUp(UUID userId, String imageName) {
+        MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
         RecommendDetailResponseDto recommendDetailResponseDto = new RecommendDetailResponseDto();
         recommendDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
@@ -78,8 +78,8 @@ public class MakeUpService {
      * 메이크업 삭제
      */
     @Transactional
-    public void deleteMakeUp(String imageName) {
-        MakeUp makeUp = makeUpRepository.findByImageName(imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public void deleteMakeUp(UUID userId, String imageName) {
+        MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
         makeUpRepository.delete(makeUp);
     }
 

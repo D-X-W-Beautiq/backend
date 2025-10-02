@@ -51,9 +51,10 @@ public class MakeUpController {
      */
     @GetMapping("/detail")
     public RecommendDetailResponseDto getMakeUp(
+            @CurrentUserId UUID userId,
             @RequestParam("imageName") String imageName
     ) {
-        return makeUpService.getMakeUp(imageName);
+        return makeUpService.getMakeUp(userId, imageName);
     }
 
     /**
@@ -61,9 +62,10 @@ public class MakeUpController {
      */
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteMakeUp(
+            @CurrentUserId UUID userId,
             @RequestParam("imageName") String imageName
     ) {
-        makeUpService.deleteMakeUp(imageName);
+        makeUpService.deleteMakeUp(userId, imageName);
         return ResponseEntity.noContent().build();
     }
 
