@@ -201,6 +201,7 @@ public class MakeUpService {
                 .bodyValue(simulationAiRequestDto)
                 .retrieve()
                 .bodyToMono(SimulationAiResponseDto.class)
+                .timeout(Duration.ofSeconds(30)) // 타임아웃 설정
                 .block();
 
         // todo: 예외 처리, 공통 부분 메서드화 & customize와 response dto 통합 고려
