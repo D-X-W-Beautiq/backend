@@ -6,6 +6,8 @@ import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,7 @@ import java.util.UUID;
 
 @Service
 public class S3Service {
+    private static final Logger log = LoggerFactory.getLogger(S3Service.class);
     private final AmazonS3 amazonS3;
 
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -32,20 +35,26 @@ public class S3Service {
      * S3에 이미지 임시 업로드 하기
      */
     public String uploadImage(MultipartFile image) throws IOException {
-        String fileName = "temp/" + UUID.randomUUID(); // 고유한 파일 이름 생성
+        // 이미지 확장자 보존하며 고유한 이름 생성
+        String originalImageName = image.getOriginalFilename();
+        String extension = (originalImageName != null && originalImageName.contains("."))
+                ? originalImageName.substring(originalImageName.lastIndexOf("."))
+                : "";
+
+        String imageName = "temp/" + UUID.randomUUID() + extension;
 
         // 메타데이터 설정
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(image.getContentType());
         metadata.setContentLength(image.getSize());
 
-        // S3에 파일 업로드 요청 생성
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, fileName, image.getInputStream(), metadata);
+        // S3에 이미지 업로드 요청 생성
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, imageName, image.getInputStream(), metadata);
 
-        // S3에 파일 업로드
+        // S3에 이미지 업로드
         amazonS3.putObject(putObjectRequest);
 
-        return fileName; // 업로드된 파일 이름 반환
+        return imageName; // 업로드된 이미지 이름 반환
     }
 
     /**
@@ -59,13 +68,14 @@ public class S3Service {
         }
 
         // image 폴더로 복사
-        String newFileName = "images/" + UUID.randomUUID(); // 고유한 파일 이름 생성
-        amazonS3.copyObject(bucket, imageName, bucket, newFileName);
+        String extension = imageName.contains(".") ? imageName.substring(imageName.lastIndexOf(".")) : "";
+        String newImageName = "images/" + UUID.randomUUID() + extension; // 고유한 이미지 이름 생성 + 확장자 보존
+        amazonS3.copyObject(bucket, imageName, bucket, newImageName);
 
         // temp 폴더의 이미지 삭제
         deleteImage(imageName);
 
-        return newFileName; // 영구 저장된 파일 이름 반환
+        return newImageName; // 영구 저장된 이미지 이름 반환
     }
 
     /**
@@ -88,7 +98,7 @@ public class S3Service {
     }
 
     /**
-     * S3 파일에 대한 임시 접근 URL 생성하기 (Pre-signed URL)
+     * S3 이미지에 대한 임시 접근 URL 생성하기 (Pre-signed URL)
      */
     public String getPreSignedUrl(String fileName) {
         // 1. URL이 만료될 시간 설정
@@ -114,6 +124,9 @@ public class S3Service {
     }
 
     public void deleteImage(String imageName) {
+        if(!amazonS3.doesObjectExist(bucket, imageName)) {
+            log.warn("Attempted to delete non-existent image: {}", imageName);
+        }
         amazonS3.deleteObject(bucket, imageName);
     }
 }
