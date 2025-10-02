@@ -117,6 +117,14 @@ public class S3Service {
         }
     }
 
+    public String downloadImage(String fileName) throws IOException {
+        try (S3Object s3Object = amazonS3.getObject(bucket, fileName);
+             InputStream inputStream = s3Object.getObjectContent()) {
+            byte[] imageBytes = inputStream.readAllBytes();
+            return Base64.getEncoder().encodeToString(imageBytes);
+        }
+    }
+
     /**
      * Pre-signed URL 생성 (GET)
      */
