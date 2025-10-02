@@ -8,6 +8,7 @@ import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 @Getter
 @Setter
@@ -93,16 +94,23 @@ public class SkinAnalysisResponse {
 
     @NotNull
     @Schema(
-        description = "피부 분석이 수행된 일시 (ISO 8601 형식)",
+        description = "피부 분석이 수행된 일시 (ISO 8601 형식; Z 또는 UTC 오프셋 허용)",
         example = "2025-01-15T10:30:00Z",
         type = "string",
         format = "date-time",
-        pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+        // Z (UTC) 또는 +09:00 같은 오프셋을 허용
+        pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:Z|[+-]\\d{2}:?\\d{2})$",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
     private String createdAt;
 
     public static SkinAnalysisResponse from(SkinAnalysisEntity e) {
+
+        String createdAtIso = e.getCreatedAt()
+                .truncatedTo(ChronoUnit.SECONDS) // 소수점 이하 제거하여 패턴과 일치
+                .atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
         return SkinAnalysisResponse.builder()
                 .id(e.getId().toString())
                 .userId(e.getUser().getId().toString())
@@ -120,9 +128,7 @@ public class SkinAnalysisResponse {
                         .build())
                 .feedback(e.getFeedback())
                 .averageScore(e.getAverageScore())
-                .createdAt(e.getCreatedAt()
-                        .atOffset(ZoneOffset.UTC)
-                        .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                .createdAt(createdAtIso)
                 .build();
     }
 }
