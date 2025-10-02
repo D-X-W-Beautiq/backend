@@ -63,7 +63,7 @@ public class S3Service {
         amazonS3.copyObject(bucket, imageName, bucket, newFileName);
 
         // temp 폴더의 이미지 삭제
-        amazonS3.deleteObject(bucket, imageName);
+        deleteImage(imageName);
 
         return newFileName; // 영구 저장된 파일 이름 반환
     }
@@ -100,5 +100,9 @@ public class S3Service {
 
     private String getPublicUrl(String fileName) {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, amazonS3.getRegionName(), fileName);
+    }
+
+    public void deleteImage(String imageName) {
+        amazonS3.deleteObject(bucket, imageName);
     }
 }

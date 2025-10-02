@@ -1,6 +1,8 @@
 package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MakeUpService {
 
+    private static final Logger log = LoggerFactory.getLogger(MakeUpService.class);
     private final MakeUpRepository makeUpRepository;
     private final UserRepository userRepository;
 
@@ -83,6 +86,13 @@ public class MakeUpService {
     @Transactional
     public void deleteMakeUp(UUID userId, String imageName) {
         MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        // s3에서 이미지 삭제
+        try {
+            s3Service.deleteImage(makeUp.getImageName());
+        } catch (Exception e) {
+            log.warn("Failed to delete S3 image: {}", makeUp.getImageName(), e);
+        }
+        // db에서 메이크업 기록 삭제
         makeUpRepository.delete(makeUp);
     }
 
