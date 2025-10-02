@@ -134,7 +134,7 @@ public class S3Service {
 
     public void deleteImage(String imageName) {
         if(!amazonS3.doesObjectExist(bucket, imageName)) {
-            log.warn("Attempted to delete non-existent image: {}", imageName);
+            log.warn("Image does not exist, but proceeding with delete operation: {}", imageName);
         }
         amazonS3.deleteObject(bucket, imageName);
     }
