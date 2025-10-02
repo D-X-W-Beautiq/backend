@@ -2,18 +2,9 @@ package spring.beautiq.domain.user.entity;
 
 
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import java.util.Set;
-
-import java.util.UUID;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
@@ -21,14 +12,10 @@ import spring.beautiq.global.base.BaseEntity;
 @Setter
 public class UserEntity extends BaseEntity {
 
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Column(name = "auth_key", unique = true, nullable = false)
+    private String authKey; // 기존 username -> authKey (provider_providerId)
+    private String username;
     private String email;
     private String name;
-    private String username;
     private String role;
-
 }
-

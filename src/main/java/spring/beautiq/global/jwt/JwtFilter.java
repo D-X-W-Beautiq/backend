@@ -1,94 +1,111 @@
 package spring.beautiq.global.jwt;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
+import lombok.RequiredArgsConstructor; // Lombok
+import org.springframework.stereotype.Component;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
 import spring.beautiq.domain.user.dto.UserDTO;
+import spring.beautiq.domain.user.entity.UserEntity;
+import spring.beautiq.domain.user.repository.UserRepository;
+import spring.beautiq.global.exception.GlobalErrorCode;
 
+@Component
+@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
+    private static final String AUTH_COOKIE = "Authorization";
+    private static final Set<String> PUBLIC_EXACT = Set.of("/", "/login", "/error");
+    private static final String[] PUBLIC_PREFIXES = {
+            "/oauth2/authorization", "/success", "/css", "/js", "/getpostman.com", "/auth", "/login/oauth2"
+    };
 
-    public JwtFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        //cookie들을 불러온 뒤 Authorization key에 담긴 쿠키 찾기
+        String uri = request.getRequestURI();
+        String token = resolveToken(request);
+        boolean publicPath = isPublic(uri) || isPreflight(request);
 
-        String authorization = null;
+        if (token == null) {
+            if (publicPath) { chain.doFilter(request, response); return; }
+            writeError(response, GlobalErrorCode.INVALID_ACCESS_TOKEN); return;
+        }
+
+        GlobalErrorCode validation = validate(token);
+        if (validation != null) { // 실패
+            if (publicPath) { chain.doFilter(request, response); return; }
+            writeError(response, validation); return;
+        }
+
+        buildAuthentication(token).ifPresent(auth -> SecurityContextHolder.getContext().setAuthentication(auth));
+        chain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+        return Arrays.stream(cookies)
+                .filter(c -> AUTH_COOKIE.equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst().orElse(null);
+    }
 
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                System.out.println(cookie.getName());
-                if ("Authorization".equals(cookie.getName())) {
-                    authorization = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-
-        //Authorization 헤더 검증
-        if (authorization == null) {
-
-            System.out.println("token null");
-            filterChain.doFilter(request, response);
-
-            //조건이 해당되면 메소드 종료
-            return;
-        }
-
-        // 토큰
-        String token = authorization;
-        //토큰 소멸 시간 검증
+    private GlobalErrorCode validate(String token) {
         try {
-            if (jwtUtil.isExpired(token)) {
-               filterChain.doFilter(request, response);
-               return;
-            }
-        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
-            // 잘못,변조된 토큰 -> 인증 미적용 후 다음 필터로 진행
-            filterChain.doFilter(request, response);
-            return;
+            if (jwtUtil.isExpired(token)) return GlobalErrorCode.INVALID_EXPIRED_JWT;
+            return null; // OK
+        } catch (Exception e) {
+            return GlobalErrorCode.INVALID_JWT; // 파싱/서명 실패
         }
+    }
 
+    private boolean isPreflight(HttpServletRequest req) { return "OPTIONS".equalsIgnoreCase(req.getMethod()); }
 
-        //토큰에서 username과 role 획득
-        String username= jwtUtil.getUsername(token);
-        String role = jwtUtil.getRole(token);
+    private boolean isPublic(String uri) {
+        if (uri == null) return false;
+        if (PUBLIC_EXACT.contains(uri)) return true;
+        for (String prefix : PUBLIC_PREFIXES) if (uri.startsWith(prefix)) return true;
+        return false;
+    }
 
-        //userDto를 생성하여 값 set
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUsername(username);
-        userDTO.setRole(role);
+    private Optional<UsernamePasswordAuthenticationToken> buildAuthentication(String token) {
+        try {
+            String authKey = jwtUtil.getUsername(token);
+            String role = jwtUtil.getRole(token);
+            UserEntity user = userRepository.findByAuthKey(authKey);
+            UserDTO dto = UserDTO.from(user);
+            if (dto == null) { dto = new UserDTO(); dto.setAuthKey(authKey); dto.setRole(role); }
+            CustomOAuth2User principal = new CustomOAuth2User(dto);
+            return Optional.of(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
 
-
-        //UserDetails에 회원 정보 객체 담기
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
-
-        //스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User,
-                null,
-                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(role)));
-
-        //세션에 사용자 등록
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        filterChain.doFilter(request, response);
+    private void writeError(HttpServletResponse response, GlobalErrorCode code) throws IOException {
+        response.setStatus(code.getHttpStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+        Instant now = Instant.now();
+        String body = '{' + "\"code\":\"" + code.name() + "\"," +
+                "\"message\":\"" + code.getMessage().replace("\"", "'") + "\"," +
+                "\"status\":" + code.getHttpStatus().value() + ',' +
+                "\"timestamp\":\"" + now + "\"}";
+        response.getWriter().write(body);
     }
 }

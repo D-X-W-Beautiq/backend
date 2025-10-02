@@ -15,42 +15,43 @@ import spring.beautiq.domain.auth.oauth2.dto.KakaoResponse;
 import spring.beautiq.domain.auth.oauth2.dto.OAuth2Response;
 import spring.beautiq.domain.user.dto.UserDTO;
 import spring.beautiq.domain.user.entity.UserEntity;
-import spring.beautiq.domain.user.repository.UserRepository;
+import spring.beautiq.domain.user.service.UserAuthService;
+import spring.beautiq.global.exception.ApiException;
+import spring.beautiq.global.exception.GlobalErrorCode;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final UserRepository userRepository;
-
+    private final UserAuthService userAuthService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        try {
+            OAuth2User rawUser = super.loadUser(userRequest);
 
-        OAuth2Response oAuth2Response = null;
-        if (registrationId.equals("google")) {
-            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+            OAuth2Response oAuth2Response = switch (registrationId) {
+                case "google" -> new GoogleResponse(rawUser.getAttributes());
+                case "kakao" -> new KakaoResponse(rawUser.getAttributes());
+                default -> throw GlobalErrorCode.OAUTH_UNSUPPORTED_PROVIDER.toException();
+            };
 
-        } else if (registrationId.equals("kakao")) {
-            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
-        } else {
-            throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
+            UserEntity user = userAuthService.upsert(
+                    oAuth2Response.getProvider(),
+                    oAuth2Response.getProviderId(),
+                    oAuth2Response.getName(),
+                    oAuth2Response.getEmail(),
+                    "ROLE_USER"
+            );
+
+            return new CustomOAuth2User(UserDTO.from(user));
+        } catch (ApiException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ApiException(GlobalErrorCode.OAUTH_USER_INFO_LOAD_FAILED, e);
         }
-
-
-        String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
-
-            UserDTO userDTO = new UserDTO();
-            userDTO.setUsername(username);
-            userDTO.setName(oAuth2Response.getName());
-            userDTO.setRole("ROLE_USER");
-
-            return new CustomOAuth2User(userDTO);
-        }
+    }
 
 }
