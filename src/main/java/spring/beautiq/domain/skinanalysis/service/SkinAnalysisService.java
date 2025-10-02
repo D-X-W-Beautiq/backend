@@ -13,7 +13,7 @@ import spring.beautiq.domain.skinanalysis.dto.common.DayPoint;
 import spring.beautiq.domain.skinanalysis.dto.common.MonthPoint;
 import spring.beautiq.domain.skinanalysis.dto.common.SkinYearFeedbackType;
 import spring.beautiq.domain.skinanalysis.dto.response.*;
-import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
 import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.skinanalysis.util.SkinAnalysisCalculator;
@@ -87,7 +87,7 @@ public class SkinAnalysisService {
             // 3. DB 저장
             SkinAnalysisAI p = aiResult.getPredictions();
             Float averageScore = SkinAnalysisCalculator.calcAverageScore(p);
-            SkinAnalysis skinAnalysis = SkinAnalysis.builder()
+            SkinAnalysisEntity skinAnalysisEntity = SkinAnalysisEntity.builder()
                     .user(user)
                     .dryness(p.getDryness())
                     .foreheadPigmentation(p.getForeheadPigmentation())
@@ -109,10 +109,10 @@ public class SkinAnalysisService {
                     .feedback(aiResult.getFeedback())
                     .averageScore(averageScore)
                     .build();
-            skinAnalysis = skinAnalysisRepository.save(skinAnalysis);
+            skinAnalysisEntity = skinAnalysisRepository.save(skinAnalysisEntity);
 
             // 4. 저장된 엔티티를 응답으로 변환
-            return SkinAnalysisResponse.from(skinAnalysis);
+            return SkinAnalysisResponse.from(skinAnalysisEntity);
         } catch (Exception e) {
             throw new RuntimeException("AI 서버 분석 요청 실패", e);
         }
@@ -130,7 +130,7 @@ public class SkinAnalysisService {
         LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime end = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
-        List<SkinAnalysis> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
+        List<SkinAnalysisEntity> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
 
 
         List<SkinStatusHistory> monthlyHistory = analyses.stream()
@@ -149,7 +149,7 @@ public class SkinAnalysisService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 
-        List<SkinAnalysis> analyses = skinAnalysisRepository
+        List<SkinAnalysisEntity> analyses = skinAnalysisRepository
                 .findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
 
         return DailySkinDatesResponse.from(analyses);
@@ -159,10 +159,10 @@ public class SkinAnalysisService {
     @Transactional(readOnly = true)
     public SkinAnalysisResponse getLatestAnalysis(UUID userId) {
 
-        SkinAnalysis skinAnalysis = skinAnalysisRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+        SkinAnalysisEntity skinAnalysisEntity = skinAnalysisRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
 
-        return SkinAnalysisResponse.from(skinAnalysis);
+        return SkinAnalysisResponse.from(skinAnalysisEntity);
     }
 
     // 최근 60일 이내 일별 점수 리스트 + 이번 달 평균 점수
@@ -174,7 +174,7 @@ public class SkinAnalysisService {
         LocalDateTime start = end.minusDays(60); // 60일 전 0시
 
         // 60일 이내 분석 결과 조회
-        List<SkinAnalysis> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        List<SkinAnalysisEntity> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                 userId, start, end);
 
         // 일별 점수 리스트 생성
@@ -189,7 +189,7 @@ public class SkinAnalysisService {
         int year = date.getYear();
         int month = date.getMonthValue();
         String thisMonth = year + "-" + String.format("%02d", month);
-        List<SkinAnalysis> thisMonthAnalyses = analyses.stream()
+        List<SkinAnalysisEntity> thisMonthAnalyses = analyses.stream()
                 .filter(a -> {
                     LocalDateTime created = a.getCreatedAt();
                     return created.getYear() == year && created.getMonthValue() == month;
@@ -200,7 +200,7 @@ public class SkinAnalysisService {
         int monthAvg = thisMonthAnalyses.isEmpty() ? 0 :
                 Math.round((float) thisMonthAnalyses.stream()
                         .filter(a -> a.getAverageScore() != null)
-                        .mapToDouble(SkinAnalysis::getAverageScore)
+                        .mapToDouble(SkinAnalysisEntity::getAverageScore)
                         .average().orElse(0));
 
         MonthPoint monthPoint =
@@ -223,7 +223,7 @@ public class SkinAnalysisService {
         LocalDateTime start = LocalDateTime.of(year, 1, 1, 0, 0);
         LocalDateTime end = LocalDateTime.of(year + 1, 1, 1, 0, 0);
 
-        List<SkinAnalysis> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        List<SkinAnalysisEntity> analyses = skinAnalysisRepository.findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                 userId, start, end);
 
         // 월별로 그룹핑 및 평균 계산
@@ -231,7 +231,7 @@ public class SkinAnalysisService {
                 .filter(a -> a.getAverageScore() != null)
                 .collect(Collectors.groupingBy(
                         a -> a.getCreatedAt().getYear() + "-" + String.format("%02d", a.getCreatedAt().getMonthValue()),
-                        Collectors.averagingDouble(SkinAnalysis::getAverageScore)
+                        Collectors.averagingDouble(SkinAnalysisEntity::getAverageScore)
                 ));
 
         // 월별 정렬
@@ -272,27 +272,27 @@ public class SkinAnalysisService {
     public SkinAnalysisResponse getAnalysis(UUID userId, UUID analysisId) {
 
         // 2. analysisId로 분석 결과 단건 조회
-        SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
+        SkinAnalysisEntity skinAnalysisEntity = skinAnalysisRepository.findById(analysisId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
 
-        if (!skinAnalysis.getUser().getId().equals(userId)) {
+        if (!skinAnalysisEntity.getUser().getId().equals(userId)) {
             throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
         }
 
-        return SkinAnalysisResponse.from(skinAnalysis);
+        return SkinAnalysisResponse.from(skinAnalysisEntity);
     }
 
     // 분석 결과 삭제
     @Transactional
     public void deleteAnalysis(UUID userId, UUID analysisId) {
 
-        SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(analysisId)
+        SkinAnalysisEntity skinAnalysisEntity = skinAnalysisRepository.findById(analysisId)
                 .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
 
-        if (!skinAnalysis.getUser().getId().equals(userId)) {
+        if (!skinAnalysisEntity.getUser().getId().equals(userId)) {
             throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
         }
 
-        skinAnalysisRepository.delete(skinAnalysis);
+        skinAnalysisRepository.delete(skinAnalysisEntity);
     }
 }

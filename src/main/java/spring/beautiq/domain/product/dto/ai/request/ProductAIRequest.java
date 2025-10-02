@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import spring.beautiq.domain.product.dto.common.ProductFilter;
 import spring.beautiq.domain.skinanalysis.dto.ai.common.SkinAnalysisAI;
-import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 
 @Getter
 @Setter
@@ -28,7 +28,7 @@ public class ProductAIRequest {
     @NotNull
     private ProductFilter filters;
 
-    public static SkinAnalysisAI toAnalysis(SkinAnalysis a) {
+    public static SkinAnalysisAI toAnalysis(SkinAnalysisEntity a) {
         return SkinAnalysisAI.builder()
                 .dryness(a.getDryness())
                 .foreheadPigmentation(a.getForeheadPigmentation())
