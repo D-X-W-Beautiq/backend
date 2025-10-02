@@ -274,9 +274,19 @@ public class MakeUpService {
     }
 
     static MultipartFile base64ToMultipart(String base64) {
+        if (base64 == null || base64.isBlank()) {
+                throw new IllegalArgumentException("Base64 string cannot be null or empty");
+            }
+
         String[] parts = base64.split(",");
         String imageString = parts.length > 1 ? parts[1] : parts[0];
-        byte[] imageBytes = Base64.getDecoder().decode(imageString);
+        byte[] imageBytes;
+        try {
+            imageBytes = Base64.getDecoder().decode(imageString);
+        } catch (IllegalArgumentException e) { // todo: 예외 처리
+            throw new IllegalArgumentException("Invalid Base64 string", e);
+        }
+
         return new Base64DecodedMultipartFile(imageBytes, "image.png", "image/png");
     }
 
