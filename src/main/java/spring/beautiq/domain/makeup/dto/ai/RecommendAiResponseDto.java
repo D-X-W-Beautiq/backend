@@ -11,6 +11,6 @@ public class RecommendAiResponseDto {
     private List<RecommendAiItem> recommendations = new ArrayList<>();
 
     public String get(int index) {
-        return recommendations.get(index).getStyleImageBase64();
+        return this.recommendations.get(index).getStyleImageBase64();
     }
 }

@@ -138,9 +138,12 @@ public class MakeUpService {
         if(recommendAiResponseDto == null) {
             throw new RuntimeException("AI service error");
         }
+        if (recommendAiResponseDto.getRecommendations() == null || recommendAiResponseDto.getRecommendations().size() < 3) {
+            throw new IllegalStateException("AI service returned insufficient recommendations");
+        }
 
         // Base64 -> MultipartFile 변환
-        MultipartFile[] styleImages = new MultipartFile[3];
+        MultipartFile[] styleImages = new MultipartFile[recommendAiResponseDto.getRecommendations().size()];
         for (int i = 0; i < 3; i++) {
             styleImages[i] = base64ToMultipart(recommendAiResponseDto.get(i));
         }
