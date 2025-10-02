@@ -2,6 +2,7 @@ package spring.beautiq.domain.makeup.dto.web;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import spring.beautiq.domain.makeup.dto.common.Color;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public class CustomizeRequestDto {
     private List<EditForWeb> edits;
 
     @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class EditForWeb {
         private boolean isEdited;
