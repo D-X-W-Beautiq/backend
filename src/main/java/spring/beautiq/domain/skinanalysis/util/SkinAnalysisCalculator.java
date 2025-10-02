@@ -2,7 +2,7 @@ package spring.beautiq.domain.skinanalysis.util;
 
 import spring.beautiq.domain.skinanalysis.dto.ai.common.SkinAnalysisAI;
 import spring.beautiq.domain.skinanalysis.dto.common.SkinStatusType;
-import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 
 public final class SkinAnalysisCalculator {
     private SkinAnalysisCalculator() {}
@@ -33,7 +33,7 @@ public final class SkinAnalysisCalculator {
     }
 
     // averageScore(종합 점수) 기준으로 상태 분류
-    public static SkinStatusType calcSkinStatus(SkinAnalysis analysis) {
+    public static SkinStatusType calcSkinStatus(SkinAnalysisEntity analysis) {
         if (analysis.getAverageScore() == null) return SkinStatusType.CAUTION;
         if (analysis.getAverageScore() < 30) return SkinStatusType.DANGER;
         if (analysis.getAverageScore() < 60) return SkinStatusType.CAUTION;
