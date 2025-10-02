@@ -35,6 +35,15 @@ public class S3Service {
      * S3에 이미지 임시 업로드 하기
      */
     public String uploadImage(MultipartFile image) throws IOException {
+        // 이미지 입력 유효 검증
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("Image cannot be null or empty");
+        }
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid image file type");
+        }
+        
         // 이미지 확장자 보존하며 고유한 이름 생성
         String originalImageName = image.getOriginalFilename();
         String extension = (originalImageName != null && originalImageName.contains("."))
