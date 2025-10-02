@@ -28,6 +28,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Comparator;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -164,7 +167,7 @@ public class SkinAnalysisService {
         return SkinAnalysisResponse.from(skinAnalysisEntity);
     }
 
-    // 최근 60일 이내 일별 점수 리스트 + 이번 달 평균 점수
+    // 최근 60일 이내 일별 점수 리스트 + 이번 달 평균 점수 (날짜별 집계 적용)
     @Transactional(readOnly = true)
     public SixtyDaySkinPointsResponse getSixtyDayTrends(UUID userId, LocalDateTime date) {
 
@@ -176,12 +179,27 @@ public class SkinAnalysisService {
         List<SkinAnalysisEntity> analyses = skinAnalysisRepository
                 .findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
 
-        // 일별 점수 리스트 생성
-        List<DayPoint> dayPoints = analyses.stream()
-                .map(a -> DayPoint.builder()
-                        .dayDate(a.getCreatedAt().toLocalDate().toString())
-                        .point(a.getAverageScore() != null ? Math.round(a.getAverageScore()) : 0)
-                        .build())
+        // 날짜별 그룹핑 (yyyy-MM-dd)
+        Map<String, List<SkinAnalysisEntity>> byDate = analyses.stream()
+                .collect(Collectors.groupingBy(a -> a.getCreatedAt().toLocalDate().toString()));
+
+        // 날짜별 평균 점수(averageScore null 은 0으로 처리) -> DayPoint 생성, 날짜 오름차순 정렬, 최대 60개 제한
+        List<DayPoint> dayPoints = byDate.entrySet().stream()
+                .map(entry -> {
+                    double avg = entry.getValue().stream()
+                            .map(SkinAnalysisEntity::getAverageScore)
+                            .filter(Objects::nonNull)
+                            .mapToDouble(Float::doubleValue) // Float 스트림 처리 수정
+                            .average()
+                            .orElse(0);
+                    int rounded = (int) Math.round(avg);
+                    return DayPoint.builder()
+                            .dayDate(entry.getKey())
+                            .point(rounded)
+                            .build();
+                })
+                .sorted(Comparator.comparing(DayPoint::getDayDate))
+                .limit(60) // 안전하게 최대 60개 보장
                 .toList();
 
         // 기준 날짜의 연/월로 이번 달 분석 결과만 필터링
@@ -192,7 +210,7 @@ public class SkinAnalysisService {
                 .filter(a -> a.getCreatedAt().getYear() == year && a.getCreatedAt().getMonthValue() == month)
                 .toList();
 
-        // 이번 달 평균 점수 계산
+        // 이번 달 평균 점수 계산 (null 은 제외하고 평균, 없으면 0)
         int monthAvg = thisMonthAnalyses.isEmpty() ? 0 : Math.round((float) thisMonthAnalyses.stream()
                 .filter(a -> a.getAverageScore() != null)
                 .mapToDouble(SkinAnalysisEntity::getAverageScore)
