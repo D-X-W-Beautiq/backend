@@ -6,9 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import spring.beautiq.domain.makeup.dto.MakeUpSaveRequestDto;
-import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
-import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
+import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.global.security.annotation.CurrentUserId;
 import spring.beautiq.global.security.guard.MemberGuard;
 
@@ -25,13 +23,12 @@ public class MakeUpController {
 
     /**
      * 메이크업 저장
-     * todo: makeupsavereRequestDto에 이미지 정보를 어떻게 담아올지(url? imageName?)
      */
     @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> saveMakeUp(
             @CurrentUserId UUID userId,
             @RequestPart("data") MakeUpSaveRequestDto makeUpSaveRequestDto
-    ) throws IOException {
+    ) {
         makeUpService.saveMakeUp(userId, makeUpSaveRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -49,25 +46,23 @@ public class MakeUpController {
 
     /**
      * 메이크업 상세 조회
-     * @return recommendResponseDto
+     * @return recommendDetailResponseDto
      */
-    @GetMapping("/{makeupId}")
-    public RecommendResponseDto getMakeUp(
-            @CurrentUserId UUID userId,
-            @PathVariable UUID makeupId
+    @GetMapping("/detail")
+    public RecommendDetailResponseDto getMakeUp(
+            @RequestBody MakeUpSaveRequestDto makeUpSaveRequestDto
     ) {
-        return makeUpService.getMakeUp(makeupId);
+        return makeUpService.getMakeUp(makeUpSaveRequestDto);
     }
 
     /**
      * 메이크업 삭제
      */
-    @DeleteMapping("/{makeupId}")
+    @DeleteMapping()
     public ResponseEntity<Void> deleteMakeUp(
-            @CurrentUserId UUID userId,
-            @PathVariable UUID makeupId
+            @RequestBody MakeUpSaveRequestDto makeUpSaveRequestDto
     ) {
-        makeUpService.deleteMakeUp(makeupId);
+        makeUpService.deleteMakeUp(makeUpSaveRequestDto);
         return ResponseEntity.noContent().build();
     }
 
@@ -77,7 +72,6 @@ public class MakeUpController {
      */
     @PostMapping(value = "/recommendation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendResponseDto styleRecommend(
-            @CurrentUserId UUID userId,
             @RequestPart("sourceImage") MultipartFile sourceImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
     ) throws IOException {
@@ -88,8 +82,7 @@ public class MakeUpController {
      * 메이크업 시뮬레이션
      */
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public RecommendResponseDto simulateMakeUp(
-            @CurrentUserId UUID userId,
+    public RecommendationItem simulateMakeUp(
             @RequestPart("sourceImage") MultipartFile sourceImage,
             @RequestPart("styleImage") MultipartFile styleImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
@@ -101,11 +94,12 @@ public class MakeUpController {
      * 메이크업 커스터마이즈
      */
     @PostMapping("/customize")
-    public RecommendResponseDto customize(
+    public RecommendationItem customize(
 
     ) throws IOException {
         return makeUpService.customize();
     }
 
 }
+
 
