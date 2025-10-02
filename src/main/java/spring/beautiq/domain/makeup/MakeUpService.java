@@ -6,10 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
-import spring.beautiq.domain.makeup.dto.ai.RecommendAiRequestDto;
-import spring.beautiq.domain.makeup.dto.ai.RecommendAiResponseDto;
-import spring.beautiq.domain.makeup.dto.ai.SimulationAiRequestDto;
-import spring.beautiq.domain.makeup.dto.ai.SimulationAiResponseDto;
+import spring.beautiq.domain.makeup.dto.ai.*;
+import spring.beautiq.domain.makeup.dto.common.Color;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUp;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
@@ -64,8 +62,8 @@ public class MakeUpService {
     /**
      * 메이크업 상세 조회
      */
-    public RecommendDetailResponseDto getMakeUp(MakeUpSaveRequestDto makeUpSaveRequestDto) {
-        MakeUp makeUp = makeUpRepository.findByImageName(makeUpSaveRequestDto.getImageName()).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public RecommendDetailResponseDto getMakeUp(String imageName) {
+        MakeUp makeUp = makeUpRepository.findByImageName(imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
         RecommendDetailResponseDto recommendDetailResponseDto = new RecommendDetailResponseDto();
         recommendDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
@@ -80,8 +78,8 @@ public class MakeUpService {
      * 메이크업 삭제
      */
     @Transactional
-    public void deleteMakeUp(MakeUpSaveRequestDto makeUpSaveRequestDto) {
-        MakeUp makeUp = makeUpRepository.findByImageName(makeUpSaveRequestDto.getImageName()).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public void deleteMakeUp(String imageName) {
+        MakeUp makeUp = makeUpRepository.findByImageName(imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
         makeUpRepository.delete(makeUp);
     }
 
@@ -187,6 +185,7 @@ public class MakeUpService {
                 .bodyToMono(SimulationAiResponseDto.class)
                 .block();
 
+        // todo: 예외 처리, 공통 부분 메서드화 & customize와 response dto 통합 고려
         if(simulationAiResponseDto == null || simulationAiResponseDto.getResultImageBase64() == null) {
             throw new RuntimeException("AI service error");
         }
@@ -204,9 +203,49 @@ public class MakeUpService {
      * 메이크업 커스터마이즈
      */
     public RecommendationItem customize(
-
+            CustomizeRequestDto customizeRequestDto
     ) throws IOException {
-        return null;
+        String currentImageBase64 = s3Service.downloadImage(customizeRequestDto.getImageName());
+        if(currentImageBase64 == null) {
+            throw new RuntimeException("Image not found in S3");
+        }
+
+        // 요청 DTO에 이미지, 편집 정보 담기
+        CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
+        customizeAiRequestDto.setBaseImageBase64(currentImageBase64); // 현재 이미지
+        for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
+            if(editForWeb.isEdited()) {
+                customizeAiRequestDto.addEdit(
+                        editForWeb.getRegion(),
+                        editForWeb.getIntensity(),
+                        new Color(
+                                editForWeb.getColor().getR(),
+                                editForWeb.getColor().getG(),
+                                editForWeb.getColor().getB()
+                        )
+                );
+            }
+        }
+
+        // AI 서버에 JSON 요청
+        CustomizeAiResponseDto customizeAiResponseDto = webClientBuilder.build().post()
+                .uri("/styles/customize")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(customizeAiRequestDto)
+                .retrieve()
+                .bodyToMono(CustomizeAiResponseDto.class)
+                .block();
+
+        // Base64 -> MultipartFile 변환
+        // todo: 예외 처리
+        if(customizeAiResponseDto == null || customizeAiResponseDto.getResultImageBase64() == null) {
+            throw new RuntimeException("AI service error");
+        }
+        MultipartFile customizedImage = base64ToMultipart(customizeAiResponseDto.getResultImageBase64());
+
+        // S3에 임시 업로드 후 URL dto에 담기
+        String customizedImageName = s3Service.uploadImage(customizedImage);
+        return new RecommendationItem(customizedImageName, s3Service.getPreSignedUrl(customizedImageName));
     }
 
     static String multipartToBase64(MultipartFile file) throws IOException {
