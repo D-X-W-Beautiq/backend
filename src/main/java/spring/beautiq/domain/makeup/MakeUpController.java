@@ -33,6 +33,7 @@ public class MakeUpController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    // todo: 조회, 삭제 api url을 어떻게 할까요
     /**
      * 저장한 메이크업 목록 조회
      * @return recommendResponseDto
@@ -50,19 +51,19 @@ public class MakeUpController {
      */
     @GetMapping("/detail")
     public RecommendDetailResponseDto getMakeUp(
-            @RequestBody MakeUpSaveRequestDto makeUpSaveRequestDto
+            @RequestParam("imageName") String imageName
     ) {
-        return makeUpService.getMakeUp(makeUpSaveRequestDto);
+        return makeUpService.getMakeUp(imageName);
     }
 
     /**
      * 메이크업 삭제
      */
-    @DeleteMapping()
+    @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteMakeUp(
-            @RequestBody MakeUpSaveRequestDto makeUpSaveRequestDto
+            @RequestParam("imageName") String imageName
     ) {
-        makeUpService.deleteMakeUp(makeUpSaveRequestDto);
+        makeUpService.deleteMakeUp(imageName);
         return ResponseEntity.noContent().build();
     }
 
@@ -93,11 +94,11 @@ public class MakeUpController {
     /**
      * 메이크업 커스터마이즈
      */
-    @PostMapping("/customize")
+    @PostMapping(value = "/customize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendationItem customize(
-
+            @RequestPart("data") CustomizeRequestDto customizeRequestDto
     ) throws IOException {
-        return makeUpService.customize();
+        return makeUpService.customize(customizeRequestDto);
     }
 
 }
