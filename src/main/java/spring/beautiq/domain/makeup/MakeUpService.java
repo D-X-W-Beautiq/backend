@@ -10,7 +10,6 @@ import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
 import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
-import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
 import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
