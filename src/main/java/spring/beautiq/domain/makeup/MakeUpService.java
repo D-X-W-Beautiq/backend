@@ -206,6 +206,7 @@ public class MakeUpService {
      * 메이크업 커스터마이즈
      */
     public RecommendationItem customize(
+            UUID userId,
             CustomizeRequestDto customizeRequestDto
     ) throws IOException {
         String currentImageBase64 = s3Service.downloadImage(customizeRequestDto.getImageName());

@@ -98,9 +98,10 @@ public class MakeUpController {
      */
     @PostMapping(value = "/customize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendationItem customize(
+            @CurrentUserId UUID userId,
             @RequestPart("data") CustomizeRequestDto customizeRequestDto
     ) throws IOException {
-        return makeUpService.customize(customizeRequestDto);
+        return makeUpService.customize(userId, customizeRequestDto);
     }
 
 }
