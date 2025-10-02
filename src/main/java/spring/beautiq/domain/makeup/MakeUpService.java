@@ -225,7 +225,7 @@ public class MakeUpService {
             UUID userId,
             CustomizeRequestDto customizeRequestDto
     ) throws IOException {
-        String currentImageBase64 = s3Service.downloadImage(customizeRequestDto.getImageName());
+        String currentImageBase64 = s3Service.imageNameToBase64(customizeRequestDto.getImageName());
         if(currentImageBase64 == null) {
             throw new RuntimeException("Image not found in S3");
         }

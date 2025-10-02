@@ -68,8 +68,19 @@ public class S3Service {
         return newFileName; // 영구 저장된 파일 이름 반환
     }
 
-    public String downloadImage(String fileName) throws IOException {
-        try (S3Object s3Object = amazonS3.getObject(bucket, fileName);
+    /**
+     * S3에서 이미지 다운로드 및 Base64 인코딩
+     */
+    public String imageNameToBase64(String imageName) throws IOException {
+        // todo: 예외 처리
+        if(imageName == null || imageName.isBlank()) {
+            throw new IllegalArgumentException("Image name cannot be null or blank");
+        }
+        if(!amazonS3.doesObjectExist(bucket, imageName)) {
+            throw new IllegalArgumentException("Image does not exist in S3: " + imageName);
+        }
+
+        try (S3Object s3Object = amazonS3.getObject(bucket, imageName);
              InputStream inputStream = s3Object.getObjectContent()) {
             byte[] imageBytes = inputStream.readAllBytes();
             return Base64.getEncoder().encodeToString(imageBytes);
