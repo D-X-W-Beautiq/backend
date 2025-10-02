@@ -68,7 +68,10 @@ public class MakeUpService {
         RecommendDetailResponseDto recommendDetailResponseDto = new RecommendDetailResponseDto();
         recommendDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
 
-        String[] keywords = makeUp.getKeywords().split(","); // todo: 키워드 구분자 맞춰서 변경
+        String keywordsValue = makeUp.getKeywords();
+        String[] keywords = (keywordsValue == null || keywordsValue.isBlank())
+                        ? new String[0]
+                        : keywordsValue.split(","); // todo: 키워드 구분자 맞춰서 변경
         recommendDetailResponseDto.setKeywords(keywords);
 
         return recommendDetailResponseDto;
