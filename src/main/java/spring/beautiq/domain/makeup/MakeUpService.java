@@ -1,18 +1,23 @@
 package spring.beautiq.domain.makeup;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import spring.beautiq.domain.makeup.dto.MakeUpSaveRequestDto;
+import org.springframework.web.reactive.function.client.WebClient;
+import spring.beautiq.domain.makeup.dto.ai.RecommendAiRequestDto;
+import spring.beautiq.domain.makeup.dto.ai.RecommendAiResponseDto;
+import spring.beautiq.domain.makeup.dto.ai.SimulationAiRequestDto;
+import spring.beautiq.domain.makeup.dto.ai.SimulationAiResponseDto;
+import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUp;
-import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
-import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.UUID;
 
 @Service
@@ -23,6 +28,8 @@ public class MakeUpService {
     private final MakeUpRepository makeUpRepository;
     private final UserRepository userRepository;
 
+    private final WebClient.Builder webClientBuilder;
+
     private final S3Service s3Service;
 
     /**
@@ -30,10 +37,15 @@ public class MakeUpService {
      */
     @Transactional
     public void saveMakeUp(UUID userId, MakeUpSaveRequestDto saveRequestDto) {
+
+        // s3에서 이미지 영구 저장
+        String newImageName = s3Service.saveImage(saveRequestDto.getImageName());
+
         MakeUp makeUp = MakeUp.builder()
                 .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
-                .imageName(saveRequestDto.getImageName()) // todo: 받아온 이미지 정보 유형에 따라 수정
+                .imageName(newImageName)
                 .build();
+
         makeUpRepository.save(makeUp);
     }
 
@@ -52,20 +64,24 @@ public class MakeUpService {
     /**
      * 메이크업 상세 조회
      */
-    public RecommendResponseDto getMakeUp(UUID makeupId) {
-        MakeUp makeUp = makeUpRepository.findById(makeupId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
-        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        String imageName = makeUp.getImageName();
-        recommendResponseDto.addRecommendation(imageName, s3Service.getPreSignedUrl(imageName));
-        return recommendResponseDto;
+    public RecommendDetailResponseDto getMakeUp(MakeUpSaveRequestDto makeUpSaveRequestDto) {
+        MakeUp makeUp = makeUpRepository.findByImageName(makeUpSaveRequestDto.getImageName()).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+
+        RecommendDetailResponseDto recommendDetailResponseDto = new RecommendDetailResponseDto();
+        recommendDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
+
+        String[] keywords = makeUp.getKeywords().split(","); // todo: 키워드 구분자 맞춰서 변경
+        recommendDetailResponseDto.setKeywords(keywords);
+
+        return recommendDetailResponseDto;
     }
 
     /**
      * 메이크업 삭제
      */
     @Transactional
-    public void deleteMakeUp(UUID makeupId) {
-        MakeUp makeUp = makeUpRepository.findById(makeupId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public void deleteMakeUp(MakeUpSaveRequestDto makeUpSaveRequestDto) {
+        MakeUp makeUp = makeUpRepository.findByImageName(makeUpSaveRequestDto.getImageName()).orElseThrow(() -> new RuntimeException("MakeUp not found"));
         makeUpRepository.delete(makeUp);
     }
 
@@ -74,14 +90,47 @@ public class MakeUpService {
      */
     public RecommendResponseDto styleRecommend(
             MultipartFile sourceImage,
-            RecommendRequestDto recommendRequestDto
+            RecommendRequestDto recommendRequestDto // todo: 사진과 키워드 둘 중 하나만 받을지 미정
     ) throws IOException {
 
-        // todo: ai에서 스타일 추천 이미지 3장 받아오기
-        String[] styleImageBase64s = new String[3];
+        // sourceImage 유효설 검증
+        // todo: 예외 처리
+        if (sourceImage == null || sourceImage.isEmpty()) {
+            throw new IllegalArgumentException("Source image is required");
+        }
+        String contentType = sourceImage.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid image file");
+        }
+
+        // sourceImage Base64 인코딩
+        String sourceImageBase64 = multipartToBase64(sourceImage);
+
+        // 요청 DTO에 이미지, 키워드 담기
+        RecommendAiRequestDto recommendAiRequestDto = RecommendAiRequestDto.builder()
+                .sourceImageBase64(sourceImageBase64)
+                .keywords(recommendRequestDto.getKeywords())
+                .build();
+
+        // AI 서버에 JSON 요청
+        RecommendAiResponseDto recommendAiResponseDto = webClientBuilder.build().post()
+                .uri("/styles/recommend")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(recommendAiRequestDto)
+                .retrieve()
+                .bodyToMono(RecommendAiResponseDto.class)
+                .block();
+
+        // todo: 예외 처리
+        if(recommendAiResponseDto == null) {
+            throw new RuntimeException("AI service error");
+        }
 
         // Base64 -> MultipartFile 변환
         MultipartFile[] styleImages = new MultipartFile[3];
+        for (int i = 0; i < 3; i++) {
+            styleImages[i] = base64ToMultipart(recommendAiResponseDto.get(i));
+        }
 
         // S3에 임시 업로드 후 URL dto에 담기
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
@@ -96,38 +145,133 @@ public class MakeUpService {
     /**
      * 메이크업 시뮬레이션
      */
-    public RecommendResponseDto simulateMakeUp(
+    public RecommendationItem simulateMakeUp(
             MultipartFile sourceImage,
             MultipartFile styleImage,
             RecommendRequestDto recommendRequestDto
             ) throws IOException {
 
-        //todo: MultipartBodyBuilder로 요청 본문을 구성하고 WebClient로 AI 파트로 이미지 생성 요청
-        // 이후 response에서 이미지를 꺼내와서 반환해준다.
-        MultipartFile responseImg = sourceImage; // 일단 원본 저장
+        // sourceImage, styleImage 유효설 검증
+        if(sourceImage == null || sourceImage.isEmpty()) {
+            throw new IllegalArgumentException("Source image is required");
+        }
+        if(styleImage == null || styleImage.isEmpty()) {
+            throw new IllegalArgumentException("Style image is required");
+        }
+        String sourceContentType = sourceImage.getContentType();
+        if(sourceContentType == null || !sourceContentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid source image file");
+        }
+        String styleContentType = styleImage.getContentType();
+        if(styleContentType == null || !styleContentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid style image file");
+        }
 
+        // sourceImage, styleImage Base64 인코딩
+        String sourceImageBase64 = multipartToBase64(sourceImage);
+        String styleImageBase64 = multipartToBase64(styleImage);
 
-        // 시뮬레이션 이미지 임시 업로드
-        // todo: 예외 처리 (업로드 실패 시)
-        String simulatedImageName = s3Service.uploadImage(responseImg);
+        // 요청 DTO에 이미지, 키워드 담기
+        SimulationAiRequestDto simulationAiRequestDto = SimulationAiRequestDto.builder()
+                .sourceImageBase64(sourceImageBase64)
+                .styleImageBase64(styleImageBase64)
+                .keywords(recommendRequestDto.getKeywords())
+                .build();
 
+        // AI 서버에 JSON 요청
+        SimulationAiResponseDto simulationAiResponseDto = webClientBuilder.build().post()
+                .uri("/styles/simulation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(simulationAiRequestDto)
+                .retrieve()
+                .bodyToMono(SimulationAiResponseDto.class)
+                .block();
 
-        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        recommendResponseDto.addRecommendation(simulatedImageName, s3Service.getPreSignedUrl(simulatedImageName));
+        if(simulationAiResponseDto == null || simulationAiResponseDto.getResultImageBase64() == null) {
+            throw new RuntimeException("AI service error");
+        }
 
-        return recommendResponseDto;
+        // Base64 -> MultipartFile 변환
+        MultipartFile simulatedImage = base64ToMultipart(simulationAiResponseDto.getResultImageBase64());
+
+        // S3에 임시 업로드 후 URL dto에 담기
+        String simulatedImageName = s3Service.uploadImage(simulatedImage);
+
+        return new RecommendationItem(simulatedImageName, s3Service.getPreSignedUrl(simulatedImageName));
     }
 
     /**
      * 메이크업 커스터마이즈
      */
-    public RecommendResponseDto customize(
+    public RecommendationItem customize(
 
     ) throws IOException {
         return null;
     }
 
-    static MultipartFile base64ToMultipart(String base64) {
-        return null;
+    static String multipartToBase64(MultipartFile file) throws IOException {
+        return Base64.getEncoder().encodeToString(file.getBytes());
     }
+
+    static MultipartFile base64ToMultipart(String base64) {
+        String[] parts = base64.split(",");
+        String imageString = parts.length > 1 ? parts[1] : parts[0];
+        byte[] imageBytes = Base64.getDecoder().decode(imageString);
+        return new Base64DecodedMultipartFile(imageBytes, "image.png", "image/png");
+    }
+
+    static class Base64DecodedMultipartFile implements MultipartFile {
+        private final byte[] imgContent;
+        private final String fileName;
+        private final String contentType;
+
+        public Base64DecodedMultipartFile(byte[] imgContent, String fileName, String contentType) {
+            this.imgContent = imgContent;
+            this.fileName = fileName;
+            this.contentType = contentType;
+        }
+
+        @Override
+        public String getName() {
+            return "file";
+        }
+
+        @Override
+        public String getOriginalFilename() {
+            return fileName;
+        }
+
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return imgContent == null || imgContent.length == 0;
+        }
+
+        @Override
+        public long getSize() {
+            return imgContent.length;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return imgContent;
+        }
+
+        @Override
+        public java.io.InputStream getInputStream() {
+            return new java.io.ByteArrayInputStream(imgContent);
+        }
+
+        @Override
+        public void transferTo(java.io.File dest) throws java.io.IOException, IllegalStateException {
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(dest)) {
+                out.write(imgContent);
+            }
+        }
+    }
+
 }
