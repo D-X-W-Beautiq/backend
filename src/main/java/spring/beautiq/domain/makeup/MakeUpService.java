@@ -17,6 +17,7 @@ import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -130,6 +131,7 @@ public class MakeUpService {
                 .bodyValue(recommendAiRequestDto)
                 .retrieve()
                 .bodyToMono(RecommendAiResponseDto.class)
+                .timeout(Duration.ofSeconds(30)) // 타임아웃 설정
                 .block();
 
         // todo: 예외 처리
