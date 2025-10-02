@@ -15,7 +15,7 @@ import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.product.entity.ProductEntity;
 import spring.beautiq.domain.product.exception.ProductExceptions;
 import spring.beautiq.domain.product.repository.ProductRepository;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.util.UUID;

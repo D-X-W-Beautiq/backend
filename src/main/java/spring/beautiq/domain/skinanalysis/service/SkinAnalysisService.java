@@ -17,7 +17,7 @@ import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
 import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
 import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.skinanalysis.util.SkinAnalysisCalculator;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.exception.GlobalErrorCode;
 import spring.beautiq.domain.skinanalysis.dto.common.SkinStatusHistory;

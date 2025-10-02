@@ -12,7 +12,7 @@ import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
 import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
-import spring.beautiq.domain.user.entity.User;
+import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class MakeUpService {
 
 
         // todo: 예외처리, 피부분석이 저장이 안되어서.. 일단 보류했습니다. 유저는 잘 됩니닷.
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 //        SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(userId)
 //                .orElseThrow(() -> new RuntimeException("Skin analysis not found"));
