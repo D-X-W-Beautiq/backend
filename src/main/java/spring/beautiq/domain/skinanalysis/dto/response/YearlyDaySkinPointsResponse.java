@@ -48,8 +48,12 @@ public class YearlyDaySkinPointsResponse {
     )
     private String feedback;
 
-    // 내부적으로 어떤 enum에서 왔는지 추적이 필요할 경우(직렬화 제외)
-    @Schema(hidden = true)
+    @NotNull
+    @Schema(
+        description = "연간 피부 상태 피드백 유형 (UPWARD, DOWNWARD, FLAT 중 하나)",
+        example = "UPWARD",
+        type = "string"
+    )
     private SkinYearFeedbackType feedbackType;
 
     public static YearlyDaySkinPointsResponse of(List<MonthPoint> monthlyPoints, SkinYearFeedbackType type) {
