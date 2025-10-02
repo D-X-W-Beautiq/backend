@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import spring.beautiq.domain.skinanalysis.entity.SkinAnalysis;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
 
@@ -26,7 +26,7 @@ public class MakeUp extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skinAnalysis")
-    private SkinAnalysis skinAnalysis;
+    private SkinAnalysisEntity skinAnalysisEntity;
 
     public Boolean changeWish() {
         this.isLiked = !this.isLiked;
