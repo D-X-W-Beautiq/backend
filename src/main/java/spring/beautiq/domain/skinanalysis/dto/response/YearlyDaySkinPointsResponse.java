@@ -24,7 +24,8 @@ import java.util.List;
             { "monthDate": "2025-02", "point": 80 },
             { "monthDate": "2025-03", "point": 82 }
           ],
-          "feedback": "피부 종합 점수가 꾸준히 상승하고 있습니다. 좋은 관리 습관을 유지하세요!"
+          "feedback": "피부 종합 점수가 꾸준히 상승하고 있습니다. 좋은 관리 습관을 유지하세요!",
+          "feedbackType": "UPWARD"
         }
         """
 )
