@@ -78,7 +78,7 @@ public class SkinAnalysisEntity extends BaseEntity {
 
     @Column(name = "average_score", nullable = false)
     @NotNull
-    @DecimalMin(value = "0.0", inclusive = true)
-    @DecimalMax(value = "100.0", inclusive = true)
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "100.0")
     Float averageScore;
 }
