@@ -79,7 +79,8 @@ public class SkinAnalysisEntity extends BaseEntity {
     @Column(name = "feedback", nullable = false, columnDefinition = "LONGTEXT")
     String feedback;
 
-    @Column(name = "average_score", nullable = false, precision = 5, scale = 2)
+    @Column(name = "average_score", nullable = false)
     @NotNull
+    @Min(0) @Max(100)
     Float averageScore;
 }
