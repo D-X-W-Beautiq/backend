@@ -143,8 +143,9 @@ public class MakeUpService {
         }
 
         // Base64 -> MultipartFile 변환
-        MultipartFile[] styleImages = new MultipartFile[recommendAiResponseDto.getRecommendations().size()];
-        for (int i = 0; i < 3; i++) {
+        int count = recommendAiResponseDto.getRecommendations().size();
+        MultipartFile[] styleImages = new MultipartFile[count];
+        for (int i = 0; i < count; i++) {
             styleImages[i] = base64ToMultipart(recommendAiResponseDto.get(i));
         }
 
