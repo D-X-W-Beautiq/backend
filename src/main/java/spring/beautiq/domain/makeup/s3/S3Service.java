@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,19 +23,28 @@ import java.util.UUID;
 @Service
 public class S3Service {
     private static final Logger log = LoggerFactory.getLogger(S3Service.class);
-    private final AmazonS3 amazonS3;
 
-    @Value("${spring.cloud.aws.s3.bucket}")
+    // S3 빈이 조건부(@ConditionalOnProperty)로 생성되지 않을 수 있으므로 optional 주입
+    @Autowired(required = false)
+    private AmazonS3 amazonS3;
+
+    @Value("${spring.cloud.aws.s3.bucket:}")
     private String bucket;
 
-    public S3Service(AmazonS3 amazonS3) {
-        this.amazonS3 = amazonS3;
+    @Value("${app.s3.enabled:false}")
+    private boolean s3Enabled;
+
+    private void ensureEnabled() {
+        if (!s3Enabled || amazonS3 == null) {
+            throw new IllegalStateException("S3 기능이 비활성화되어 있거나 AmazonS3 빈이 없습니다. (app.s3.enabled=true 및 자격/리전 설정 확인)");
+        }
     }
 
     /**
      * S3에 이미지 임시 업로드 하기
      */
     public String uploadImage(MultipartFile image, UUID userId) throws IOException {
+        ensureEnabled();
         // 이미지 입력 유효 검증
         if (image == null || image.isEmpty()) {
             throw new IllegalArgumentException("Image cannot be null or empty");
@@ -43,7 +53,7 @@ public class S3Service {
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new IllegalArgumentException("Invalid image file type");
         }
-        
+
         // 이미지 확장자 보존하며 고유한 이름 생성
         String originalImageName = image.getOriginalFilename();
         String extension = (originalImageName != null && originalImageName.contains("."))
@@ -108,29 +118,32 @@ public class S3Service {
     }
 
     /**
-     * S3 이미지에 대한 임시 접근 URL 생성하기 (Pre-signed URL)
+     * Pre-signed URL 생성 (GET)
      */
     public String getPreSignedUrl(String fileName) {
-        // 1. URL이 만료될 시간 설정
+        ensureEnabled();
         Date expiration = new Date();
-        long expTimeMillis = expiration.getTime();
-        expTimeMillis += 1000 * 60 * 5; // 5분 후 만료되도록 설정
-        expiration.setTime(expTimeMillis);
+        expiration.setTime(expiration.getTime() + 1000L * 60 * 5); // 5분
 
-        // 2. Pre-signed URL 요청 생성
-        GeneratePresignedUrlRequest generatePresignedUrlRequest =
-                new GeneratePresignedUrlRequest(bucket, fileName)
-                        .withMethod(HttpMethod.GET)
-                        .withExpiration(expiration);
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, fileName)
+                .withMethod(HttpMethod.GET)
+                .withExpiration(expiration);
 
-        // 3. URL 생성
-        URL url = amazonS3.generatePresignedUrl(generatePresignedUrlRequest);
-
+        URL url = amazonS3.generatePresignedUrl(request);
         return url.toString();
     }
 
-    private String getPublicUrl(String fileName) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, amazonS3.getRegionName(), fileName);
+    /**
+     * 퍼블릭 URL 헬퍼 (버킷 퍼블릭 정책일 때)
+     */
+    public String getPublicUrl(String fileName) {
+        ensureEnabled();
+        try {
+            return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, amazonS3.getRegionName(), fileName);
+        } catch (Exception e) {
+            log.debug("Region 조회 실패, 기본 URL 형식 사용: {}", e.getMessage());
+            return String.format("https://%s.s3.amazonaws.com/%s", bucket, fileName);
+        }
     }
 
     public void deleteImage(String imageName) {

@@ -75,4 +75,8 @@ app:
     cookie-domain: ${COOKIE_DOMAIN}
     use-cookie-secure: ${COOKIE_SECURE}
   ai-server:
-    url: ${AI_SERVER_URL}
+    url: ${AI_SERVER_URL}# AWS SDK v1 deprecation 경고 비활성화
+aws:
+  java:
+    v1:
+      disableDeprecationAnnouncement: true
