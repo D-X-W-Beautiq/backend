@@ -52,6 +52,11 @@ public class S3Service {
      * S3에 이미지 영구 저장하기
      */
     public String saveImage(String imageName) {
+        // temp/ 이미지 삭제하는지 확인
+        // todo: 예외처리
+        if (!imageName.startsWith("temp/")) {
+            throw new IllegalArgumentException("Only temp images can be saved");
+        }
 
         // image 폴더로 복사
         String newFileName = "images/" + UUID.randomUUID(); // 고유한 파일 이름 생성
