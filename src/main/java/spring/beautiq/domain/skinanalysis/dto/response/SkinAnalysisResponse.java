@@ -6,6 +6,9 @@ import lombok.*;
 import spring.beautiq.domain.skinanalysis.dto.common.SkinAnalysisScores;
 import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 @Getter
 @Setter
 @Builder
@@ -117,7 +120,9 @@ public class SkinAnalysisResponse {
                         .build())
                 .feedback(e.getFeedback())
                 .averageScore(e.getAverageScore())
-                .createdAt(e.getCreatedAt().toString())
+                .createdAt(e.getCreatedAt()
+                        .atOffset(ZoneOffset.UTC)
+                        .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
                 .build();
     }
 }
