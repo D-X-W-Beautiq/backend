@@ -12,7 +12,9 @@ public enum GlobalErrorCode implements ErrorCode {
     INVALID_ACCESS_TOKEN("유효하지 않은 액세스 토큰입니다.", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_EXPIRED_JWT("토큰이 만료되었거나 유효하지 않습니다.", HttpStatus.UNAUTHORIZED),
-    INVALID_JWT("유효하지 않은 JWT입니다.", HttpStatus.UNAUTHORIZED);
+    INVALID_JWT("유효하지 않은 JWT입니다.", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED("인증이 필요합니다.", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN("접근 권한이 없습니다.", HttpStatus.FORBIDDEN);
     private final String message;
     private final HttpStatus httpStatus;
 
