@@ -2,12 +2,6 @@ package spring.beautiq.domain.product.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.List;
-import jakarta.validation.constraints.NotNull;
-import spring.beautiq.domain.product.dto.common.SkinCategories;
-
-import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
@@ -16,30 +10,54 @@ import spring.beautiq.global.base.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "product")
 public class ProductEntity extends BaseEntity {
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
-
-    @ElementCollection
-    @CollectionTable(name = "product_needs", joinColumns = @JoinColumn(name = "product_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "need", nullable = false)
-    List<SkinCategories> needs;
 
     @Column(nullable = false)
-    String productName;
+    private String category;
+
+    @Column
+    private Integer overallRank;
+
+    @Column
+    private Integer pageNumber;
+
+    @Column
+    private Integer pageRank;
+
+    @Column
+    private String brand;
 
     @Column(nullable = false)
-    String category;
+    private String productName;
 
-    @Column(nullable = false)
-    Integer price;
+    @Column
+    private Integer listPrice;
 
-    @Column(nullable = false)
-    Integer reviewCount;
+    @Column
+    private Integer salePrice;
 
-    @Column(nullable = false)
-    String reason;
+    @Column
+    private Double reviewScore;
+
+    @Column
+    private Integer reviewCount;
+
+    @Column(columnDefinition = "TEXT")
+    private String ingredients;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(length = 500)
+    private String tags;
+
+    @Column(length = 50)
+    private String bestOrNew;
+
+    @Column(length = 500)
+    private String imageUrl;
+
+    @Column(length = 500, nullable = false)
+    private String productUrl;
 }

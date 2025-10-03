@@ -32,15 +32,17 @@ public class SkinAnalysisController {
 
     @GetMapping("/{analysisId}")
     public ResponseEntity<SkinAnalysisResponse> getAnalysis(
-            @PathVariable UUID analysisId,
-            @CurrentUserId UUID userId) {
+            @CurrentUserId UUID userId,
+            @PathVariable UUID analysisId
+    ) {
         return ResponseEntity.ok(skinAnalysisService.getAnalysis(userId, analysisId));
     }
 
     @DeleteMapping("/{analysisId}")
     public ResponseEntity<Void> deleteAnalysis(
-            @PathVariable UUID analysisId,
-            @CurrentUserId UUID userId) {
+            @CurrentUserId UUID userId,
+            @PathVariable UUID analysisId
+    ) {
         skinAnalysisService.deleteAnalysis(userId, analysisId);
         return ResponseEntity.noContent().build();
     }

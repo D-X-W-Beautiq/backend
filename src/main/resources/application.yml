@@ -2,7 +2,6 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
-
   cloud:
     aws:
       credentials:
@@ -22,11 +21,11 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: create
+    show-sql: false  # SQL 로그 비활성화
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false  # SQL 포맷팅도 비활성화
         dialect: org.hibernate.dialect.MySQL8Dialect
 
   security:
@@ -72,3 +71,14 @@ app:
     use-cookie-secure: ${COOKIE_SECURE}
   ai-server:
     url: ${AI_SERVER_URL}
+
+  product:
+    init:
+      enabled: true  # false로 설정하면 초기 로드 비활성화
+      file: classpath:oliveyoung_data_set.xlsx
+
+# AWS SDK v1 deprecation 경고 비활성화
+aws:
+  java:
+    v1:
+      disableDeprecationAnnouncement: true
