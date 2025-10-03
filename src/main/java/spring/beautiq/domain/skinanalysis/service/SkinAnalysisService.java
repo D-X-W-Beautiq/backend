@@ -1,15 +1,16 @@
 package spring.beautiq.domain.skinanalysis.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.skinanalysis.dto.ai.request.SkinAnalysisAIRequest;
 import spring.beautiq.domain.skinanalysis.dto.ai.response.SkinAnalysisAIResponse;
 import spring.beautiq.domain.skinanalysis.dto.common.DayPoint;
 import spring.beautiq.domain.skinanalysis.dto.common.MonthPoint;
+import spring.beautiq.domain.skinanalysis.dto.common.SkinStatusHistory;
 import spring.beautiq.domain.skinanalysis.dto.common.SkinYearFeedbackType;
 import spring.beautiq.domain.skinanalysis.dto.response.*;
 import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
@@ -19,18 +20,12 @@ import spring.beautiq.domain.skinanalysis.util.SkinAnalysisCalculator;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.exception.GlobalErrorCode;
-import spring.beautiq.domain.skinanalysis.dto.common.SkinStatusHistory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.Comparator;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -112,7 +107,7 @@ public class SkinAnalysisService {
             // 6. 응답 변환
             return SkinAnalysisResponse.from(skinAnalysisEntity);
         } catch (RuntimeException e) {
-            if (e instanceof spring.beautiq.global.exception.BusinessException) throw e;
+            if (e instanceof spring.beautiq.global.exception.ApiException) throw e;
             throw new RuntimeException("AI 서버 분석 요청 실패", e);
         } catch (Exception e) {
             throw new RuntimeException("AI 서버 분석 요청 실패", e);
