@@ -29,12 +29,17 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         //OAuth2User
         Object principal = authentication.getPrincipal();
+        String userId;
         String username;
 
         if (principal instanceof CustomOAuth2User) {
-            username = ((CustomOAuth2User) principal).getUsername();
+            CustomOAuth2User oAuth2User = (CustomOAuth2User) principal;
+            userId = oAuth2User.getUserId();
+            username = oAuth2User.getUsername();
         } else if (principal instanceof DefaultOAuth2User) {
-            username = ((DefaultOAuth2User) principal).getName();
+            DefaultOAuth2User oAuth2User = (DefaultOAuth2User) principal;
+            userId = (String) oAuth2User.getAttributes().get("userId");
+            username = oAuth2User.getAttribute("username");
         } else {
             throw new IllegalArgumentException("지원하지 않는 principal 타입:: " + principal.getClass().getName());
         }
@@ -44,13 +49,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority authority = iterator.next();
         String role = authority.getAuthority();
 
-        String token = jwtUtil.createJwt(username, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
+        String token = jwtUtil.createJwt(userId, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
 
         response.addCookie(createCookie("Authorization", token));
-
         // 프론트 측 특정 리다이렉트 url
         response.sendRedirect("http://localhost:8080/success");
-
     }
 
 
@@ -60,8 +63,6 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setMaxAge(60*30);
         cookie.setPath("/");
         cookie.setHttpOnly(false);
-
         return cookie;
     }
-
 }

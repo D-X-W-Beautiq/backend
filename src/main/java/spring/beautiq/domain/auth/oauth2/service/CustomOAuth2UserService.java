@@ -15,7 +15,7 @@ import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
 import spring.beautiq.domain.auth.oauth2.dto.GoogleResponse;
 import spring.beautiq.domain.auth.oauth2.dto.KakaoResponse;
 import spring.beautiq.domain.auth.oauth2.dto.OAuth2Response;
-import spring.beautiq.domain.user.dto.UserDTO;
+import spring.beautiq.domain.user.dto.OAuth2UserDTO;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
@@ -54,15 +54,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
         }
 
-
         String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
 
-            UserDTO userDTO = new UserDTO();
+
+            OAuth2UserDTO userDTO = new OAuth2UserDTO();
+            userDTO.setUserId(userDTO.getUserId());
             userDTO.setUsername(username);
             userDTO.setName(oAuth2Response.getName());
             userDTO.setRole("ROLE_USER");
 
             return new CustomOAuth2User(userDTO);
         }
+
+
 
 }

@@ -51,7 +51,7 @@ public class SecurityConfig {
                 //경로별 인가 작업
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/login", "/oauth2/authorization/**" ,"/success/", "/success/**", "/users/update/**", "/css/**", "/js/**","/users/join","/auth/**"
+                                "/", "/login", "/oauth2/authorization/**" ,"/success/", "/success/**", "/users/**", "/css/**", "/js/**","/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
