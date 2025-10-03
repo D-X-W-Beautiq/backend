@@ -4,6 +4,8 @@ package spring.beautiq.domain.auth.oauth2.service;
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -23,16 +25,26 @@ import spring.beautiq.domain.user.repository.UserRepository;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final OidcUserService oidcUserService = new OidcUserService();
 
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-
+        OAuth2User oAuth2User;
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        OAuth2Response oAuth2Response = null;
+        if ("google".equals(registrationId)) {
+            if (userRequest instanceof OidcUserRequest) {
+                oAuth2User = oidcUserService.loadUser((OidcUserRequest) userRequest);
+            }
+                else{
+                    oAuth2User = super.loadUser(userRequest);
+            }
+        } else {
+            oAuth2User = super.loadUser(userRequest);
+        }
+
+        OAuth2Response oAuth2Response;
         if (registrationId.equals("google")) {
             oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
 
