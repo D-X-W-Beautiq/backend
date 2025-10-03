@@ -3,6 +3,8 @@ package spring.beautiq.domain.product.wishlist.dto.common;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import spring.beautiq.domain.product.exception.ProductExceptions;
+import spring.beautiq.global.exception.ApiException;
 
 @Getter
 @RequiredArgsConstructor
@@ -26,7 +28,6 @@ public enum WishlistOrderOption {
                 return option;
             }
         }
-        throw new IllegalArgumentException("Invalid order parameter: " + param);
+        throw new ApiException(ProductExceptions.INVALID_WISHLIST_ORDER_OPTION);
     }
 }
-
