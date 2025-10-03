@@ -186,24 +186,34 @@ public class Product {
     private String productUrl;
 
     public static Product from(ProductEntity entity) {
+        if (entity == null) {
+            throw new IllegalArgumentException("ProductEntity must not be null");
+        }
+        // 필수값 체크 (id, productName 등)
+        if (entity.getId() == null) {
+            throw new IllegalArgumentException("ProductEntity.id must not be null");
+        }
+        if (entity.getProductName() == null) {
+            throw new IllegalArgumentException("ProductEntity.productName must not be null");
+        }
         return Product.builder()
                 .id(entity.getId().toString())
-                .category(entity.getCategory())
-                .overallRank(entity.getOverallRank())
-                .pageNumber(entity.getPageNumber())
-                .pageRank(entity.getPageRank())
-                .brand(entity.getBrand())
+                .category(entity.getCategory() != null ? entity.getCategory() : "")
+                .overallRank(entity.getOverallRank() != null ? entity.getOverallRank() : 0)
+                .pageNumber(entity.getPageNumber() != null ? entity.getPageNumber() : 0)
+                .pageRank(entity.getPageRank() != null ? entity.getPageRank() : 0)
+                .brand(entity.getBrand() != null ? entity.getBrand() : "")
                 .productName(entity.getProductName())
-                .listPrice(entity.getListPrice())
-                .salePrice(entity.getSalePrice())
+                .listPrice(entity.getListPrice() != null ? entity.getListPrice() : 0)
+                .salePrice(entity.getSalePrice() != null ? entity.getSalePrice() : 0)
                 .reviewScore(entity.getReviewScore() != null ? entity.getReviewScore().floatValue() : 0.0f)
-                .reviewCount(entity.getReviewCount())
-                .ingredients(entity.getIngredients())
-                .description(entity.getDescription())
-                .tags(entity.getTags())
-                .bestOrNew(entity.getBestOrNew())
-                .imageUrl(entity.getImageUrl())
-                .productUrl(entity.getProductUrl())
+                .reviewCount(entity.getReviewCount() != null ? entity.getReviewCount() : 0)
+                .ingredients(entity.getIngredients() != null ? entity.getIngredients() : "")
+                .description(entity.getDescription() != null ? entity.getDescription() : "")
+                .tags(entity.getTags() != null ? entity.getTags() : "")
+                .bestOrNew(entity.getBestOrNew() != null ? entity.getBestOrNew() : "")
+                .imageUrl(entity.getImageUrl() != null ? entity.getImageUrl() : "")
+                .productUrl(entity.getProductUrl() != null ? entity.getProductUrl() : "")
                 .build();
     }
 }
