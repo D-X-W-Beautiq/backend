@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import spring.beautiq.domain.product.entity.ProductEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -73,10 +74,10 @@ public class ProductResponse {
      * @param reason LLM이 생성한 추천 이유
      * @return ProductResponse
      */
-    public static ProductResponse from(spring.beautiq.domain.product.entity.ProductEntity entity, String reason) {
+    public static ProductResponse from(ProductEntity entity, String reason) {
         return ProductResponse.builder()
                 .product(ProductInfo.builder()
-                        .productId(entity.getId())
+                        .id(entity.getId())
                         .category(entity.getCategory())
                         .overallRank(entity.getOverallRank())
                         .pageNumber(entity.getPageNumber())
@@ -106,7 +107,7 @@ public class ProductResponse {
      * @return ProductResponse 리스트
      */
     public static List<ProductResponse> fromList(
-            List<spring.beautiq.domain.product.entity.ProductEntity> entities,
+            List<ProductEntity> entities,
             List<String> reasons) {
         if (entities.size() != reasons.size()) {
             throw new IllegalArgumentException("제품 수와 추천 이유 수가 일치하지 않습니다.");
@@ -135,7 +136,7 @@ public class ProductResponse {
                 format = "uuid",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
-        private UUID productId;
+        private UUID id;
 
         @NotNull
         @Schema(
