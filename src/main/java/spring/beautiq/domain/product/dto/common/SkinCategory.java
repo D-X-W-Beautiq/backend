@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum SkinCategories {
+public enum SkinCategory {
     MOISTURE("수분"),
     ELASTICITY("탄력"),
     WRINKLE("주름"),

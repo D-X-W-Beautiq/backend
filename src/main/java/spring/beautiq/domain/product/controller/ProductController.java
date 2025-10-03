@@ -1,21 +1,8 @@
 package spring.beautiq.domain.product.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import spring.beautiq.domain.product.dto.ai.response.ProductAIResponse;
-import spring.beautiq.domain.product.dto.common.Product;
-import spring.beautiq.domain.product.dto.request.ProductRequest;
-import spring.beautiq.domain.product.dto.common.ProductReqRes;
-import spring.beautiq.domain.product.service.ProductService;
+import org.springframework.web.bind.annotation.RestController;
 import spring.beautiq.global.security.guard.MemberGuard;
-import spring.beautiq.global.security.annotation.CurrentUserId;
-
-import java.util.UUID;
-
-import spring.beautiq.domain.product.dto.common.OrderOption;
 
 @MemberGuard
 @RestController
