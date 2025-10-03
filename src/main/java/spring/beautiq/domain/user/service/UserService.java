@@ -1,12 +1,8 @@
 package spring.beautiq.domain.user.service;
 
-
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import spring.beautiq.domain.user.dto.UserRequest;
@@ -16,7 +12,7 @@ import spring.beautiq.domain.user.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
@@ -54,15 +50,24 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void updateOneUser(UserRequest dto, String username) {
-        //기본 유저 정보 읽기
+
+        if (dto == null) {
+            throw new IllegalArgumentException("요청 본문이 비어있습니다.");
+        }
+
         UserEntity userEntity = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."+ username));
 
-        if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
-            userEntity.setUsername(dto.getUsername());
+        if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
+            String newUsername = dto.getUsername().trim();
+            if (!newUsername.equals(username) && userRepository.existsByUsername(newUsername)) {
+                throw new IllegalArgumentException("이미 사용중인 사용자명입니다: " + newUsername);
+            }
+            userEntity.setUsername(newUsername);
+
         }
 
-        if(dto.getProfileImage() != null && !dto.getProfileImage().isEmpty()) {
+        if(dto.getProfileImage() != null && !dto.getProfileImage().trim().isEmpty()) {
             userEntity.setProfileImage(dto.getProfileImage());
         }
 
@@ -79,15 +84,20 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void deleteOneUser(String username) {
-        if (!userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("사용자를 찾을 수 없습니다." + username);
-        }
+        UserEntity entity = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다." + username));
         userRepository.deleteByUsername(username);
     }
 
-
     public boolean isAccess(String username) {
-        return true;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated())
+            return false;
+        String current = auth.getName();
+        boolean isOwner = username != null && username.equals(current);
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        return isOwner || isAdmin;
     }
 
     @Transactional(readOnly = true)
@@ -95,9 +105,5 @@ public class UserService implements UserDetailsService {
         return userRepository.existsByUsername(username);
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
-    }
 }
 
