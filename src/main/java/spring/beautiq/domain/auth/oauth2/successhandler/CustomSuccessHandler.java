@@ -6,15 +6,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor; // 추가
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import spring.beautiq.domain.user.entity.UserEntity;
-import spring.beautiq.domain.user.service.UserAuthService; // 공통 upsert 서비스
+import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
 import spring.beautiq.global.jwt.JwtUtil;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -25,38 +25,22 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private static final String REDIRECT_SUCCESS = "http://localhost:8080/success";
 
     private final JwtUtil jwtUtil;
-    private final UserAuthService userAuthService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         Object principal = authentication.getPrincipal();
 
-        String role = firstAuthority(authentication);
-        String authKey;
-
-        if (principal instanceof OidcUser oidcUser) { // Google OIDC
-            UserEntity user = userAuthService.upsert(
-                    "google",
-                    oidcUser.getSubject(),
-                    safeName(oidcUser),
-                    oidcUser.getEmail(),
-                    role
-            );
-            authKey = user.getAuthKey();
-        } else { // CustomOAuth2User (Kakao 등)
-            authKey = authentication.getName();
+        if (!(principal instanceof CustomOAuth2User customUser)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid authentication principal");
+            return;
         }
 
-        String token = jwtUtil.createJwt(authKey, role, TimeUnit.HOURS.toMillis(TOKEN_EXPIRE_HOURS));
+        String role = firstAuthority(authentication);
+        UUID userId = UUID.fromString(customUser.getName()); // getName()은 userId를 반환
+
+        String token = jwtUtil.createJwt(userId, role, TimeUnit.HOURS.toMillis(TOKEN_EXPIRE_HOURS));
         response.addCookie(cookie(token));
         response.sendRedirect(REDIRECT_SUCCESS);
-    }
-
-    private String safeName(OidcUser user) {
-        String full = user.getFullName();
-        if (full != null && !full.isBlank()) return full;
-        String attr = user.getAttribute("name");
-        return attr != null ? attr : "USER";
     }
 
     private String firstAuthority(Authentication auth) {
@@ -69,7 +53,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         Cookie c = new Cookie("Authorization", value);
         c.setMaxAge(COOKIE_MAX_AGE_SEC);
         c.setPath("/");
-        c.setHttpOnly(false); // 정책 유지
+        c.setHttpOnly(true);
+        c.setSecure(true);
+        c.setAttribute("SameSite", "None");
         return c;
     }
 }

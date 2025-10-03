@@ -10,7 +10,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor; // Lombok
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -86,11 +87,21 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private Optional<UsernamePasswordAuthenticationToken> buildAuthentication(String token) {
         try {
-            String authKey = jwtUtil.getUsername(token);
+            UUID userId = jwtUtil.getUserId(token);
             String role = jwtUtil.getRole(token);
-            UserEntity user = userRepository.findByAuthKey(authKey);
+
+            UserEntity user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                // 사용자가 삭제되거나 존재하지 않으면 인증 실패
+                return Optional.empty();
+            }
+
             UserDTO dto = UserDTO.from(user);
-            if (dto == null) { dto = new UserDTO(); dto.setAuthKey(authKey); dto.setRole(role); }
+            if (dto == null) {
+                // DTO 변환 실패 시에도 인증 실패
+                return Optional.empty();
+            }
+
             CustomOAuth2User principal = new CustomOAuth2User(dto);
             return Optional.of(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
         } catch (Exception e) {

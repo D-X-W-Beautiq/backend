@@ -19,7 +19,6 @@ public class CustomOAuth2User implements OAuth2User {
     private Map<String, Object> buildAttributes(UserDTO dto) {
         Map<String, Object> map = new HashMap<>();
         if (dto.getId() != null) map.put("userId", dto.getId().toString());
-        if (dto.getAuthKey() != null) map.put("authKey", dto.getAuthKey());
         if (dto.getUsername() != null) map.put("username", dto.getUsername()); // 닉네임
         if (dto.getName() != null) map.put("name", dto.getName());
         if (dto.getRole() != null) map.put("role", dto.getRole());
@@ -40,8 +39,7 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-        // Spring Security principal 고유 식별자로 authKey 사용
-        if (userDTO.getAuthKey() != null) return userDTO.getAuthKey();
+        // Spring Security principal 고유 식별자로 userId 사용
         if (userDTO.getId() != null) return userDTO.getId().toString();
         return "anonymous";
     }

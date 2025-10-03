@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -32,8 +33,9 @@ public class JwtUtil {
 
     }
 
-    public String getUsername(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("username", String.class);
+    public UUID getUserId(String token) {
+        String userId = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("userId", String.class);
+        return userId != null ? UUID.fromString(userId) : null;
     }
 
     public String getRole(String token) {
@@ -45,11 +47,11 @@ public class JwtUtil {
     }
 
 
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String createJwt(UUID userId, String role, Long expiredMs) {
 
         Claims claims = Jwts.claims();
 
-        claims.put("username", username);
+        claims.put("userId", userId.toString());
         claims.put("role", role);
 
         return Jwts.builder()
