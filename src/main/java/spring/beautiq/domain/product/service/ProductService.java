@@ -1,155 +1,220 @@
 package spring.beautiq.domain.product.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.product.dto.ai.request.ProductAIRequest;
-import spring.beautiq.domain.product.dto.common.ProductReqRes;
-import spring.beautiq.domain.product.dto.request.ProductRequest;
 import spring.beautiq.domain.product.dto.ai.response.ProductAIResponse;
-import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
-import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
+import spring.beautiq.domain.product.dto.common.ProductFilters;
+import spring.beautiq.domain.product.dto.request.ProductRequest;
+import spring.beautiq.domain.product.dto.response.ProductResponse;
 import spring.beautiq.domain.product.entity.ProductEntity;
 import spring.beautiq.domain.product.exception.ProductExceptions;
 import spring.beautiq.domain.product.repository.ProductRepository;
-import spring.beautiq.domain.user.entity.UserEntity;
+import spring.beautiq.domain.product.wishlist.dto.common.WishlistOrderOption;
+import spring.beautiq.domain.product.wishlist.dto.response.WishProductResponse;
+import spring.beautiq.domain.product.wishlist.entity.WishlistProductEntity;
+import spring.beautiq.domain.product.wishlist.repository.WishlistProductRepository;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
+import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
+import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.user.repository.UserRepository;
-
-import java.util.UUID;
-
-import spring.beautiq.domain.product.dto.common.Product;
 import spring.beautiq.global.exception.GlobalErrorCode;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import spring.beautiq.domain.product.dto.common.OrderOption;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
-//    private final SkinAnalysisRepository skinAnalysisRepository;
-//    private final WebClient.Builder webClientBuilder;
-//    private final ProductRepository productRepository;
-//    private final UserRepository userRepository;
-//
-//    // AI를 활용한 제품 추천
-//    @Transactional(readOnly = true)
-//    public ProductAIResponse productsRecommend(
-//            UUID userId,
-//            UUID analysisId,
-//            ProductRequest clientRequest
-//    ) {
-//        // 1. analysisId로 SkinAnalysis 조회
-//        SkinAnalysis analysis = skinAnalysisRepository.findById(analysisId)
-//                .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
-//
-//        // 2. 해당 SkinAnalysis가 userId와 일치하는지 확인
-//        if (analysis.getUser() == null || analysis.getUser().getId() == null || !analysis.getUser().getId().equals(userId)) {
-//            throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
-//        }
-//
-//        // 3. AI 서버에 요청 보내기
-//        ProductAIRequest request = ProductAIRequest.builder()
-//                .analysis(ProductAIRequest.toAnalysis(analysis))
-//                .topN(clientRequest.getTopN())
-//                .locale(clientRequest.getLocale())
-//                .filters(clientRequest.getFilters())
-//                .build();
-//
-//        // 4. AI 서버 응답 받기
-//        ProductAIResponse aiResponse = webClientBuilder.build().post()
-//                .uri("/skin/products/recommend")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .bodyValue(request)
-//                .retrieve()
-//                .bodyToMono(ProductAIResponse.class)
-//                .block();
-//
-//        // 5. 응답이 null이면 예외 처리
-//        if (aiResponse == null) {
-//            throw SkinAnalysisExceptions.AI_SERVER_RESPONSE_EMPTY.toException();
-//        }
-//
-//        return aiResponse;
-//    }
-//
-//    // Wishlist 제품 추가
-//    @Transactional
-//    public ProductReqRes addWishlist(UUID userId, ProductReqRes request) {
-//        // userId로 User 조회
-//        UserEntity user = userRepository.findById(userId)
-//                .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException);
-//
-//        // request에서 제품 정보 추출
-//        Product product = request.getRecommendations();
-//        if (product == null) {
-//            throw ProductExceptions.RECOMMENDATION_REQUIRED.toException();
-//        }
-//
-//        return ProductReqRes.from(
-//                productRepository.save(ProductEntity.builder()
-//                .user(user)
-//                .needs(request.getNeeds())
-//                .productName(product.getProductName())
-//                .category(product.getCategory())
-//                .price(product.getPrice())
-//                .reviewCount(product.getReviewCount())
-//                .reason(product.getReason())
-//                .build()
-//            )
-//        );
-//    }
-//
-//    // 전체 Wishlist 제품 조회 (페이징, 정렬)
-//    @Transactional(readOnly = true)
-//    public Page<Product> getAllWishProduct(UUID userId, OrderOption order, int page, int size) {
-//
-//        Sort sort = switch (order) {
-//            case POPULAR -> Sort.by(Sort.Order.desc("reviewCount"));
-//            case NEWEST -> Sort.by(Sort.Order.desc("createdAt"));
-//        };
-//
-//        Pageable pageable = PageRequest.of(page, size, sort);
-//        Page<ProductEntity> result = productRepository.findAllByUser_Id(userId, pageable);
-//
-//        return result.map(entity -> Product.builder()
-//                .productName(entity.getProductName())
-//                .category(entity.getCategory())
-//                .price(entity.getPrice())
-//                .reviewCount(entity.getReviewCount())
-//                .reason(entity.getReason())
-//                .build()
-//        );
-//    }
-//
-//    // 특정 Wishlist 제품 상세 조회
-//    @Transactional(readOnly = true)
-//    public ProductReqRes getWishProduct(UUID userId, UUID productId) {
-//        ProductEntity entity = productRepository.findByIdAndUser_Id(productId, userId)
-//                .orElseThrow(ProductExceptions.WISHLIST_NOT_FOUND::toException);
-//
-//        return ProductReqRes.builder()
-//                .needs(entity.getNeeds())
-//                .recommendations(Product.builder()
-//                        .productName(entity.getProductName())
-//                        .category(entity.getCategory())
-//                        .price(entity.getPrice())
-//                        .reviewCount(entity.getReviewCount())
-//                        .reason(entity.getReason())
-//                        .build())
-//                .build();
-//    }
-//
-//    // Wishlist 제품 삭제
-//    @Transactional
-//    public void deleteWishlist(UUID userId, UUID productId) {
-//
-//        ProductEntity productEntity = productRepository.findByIdAndUser_Id(productId, userId)
-//                .orElseThrow(ProductExceptions.WISHLIST_NOT_FOUND::toException);
-//
-//        productRepository.delete(productEntity);
-//    }
+    private final ProductRepository productRepository;
+    private final WishlistProductRepository wishlistProductRepository;
+    private final UserRepository userRepository;
+    private final SkinAnalysisRepository skinAnalysisRepository;
+    private final WebClient.Builder webClientBuilder;
+
+    @Transactional(readOnly = true)
+    public ProductResponse getRecommendProducts(UUID userId, UUID analysisId, ProductRequest request) {
+        // 피부 분석 조회 및 권한 검증
+        SkinAnalysisEntity analysis = skinAnalysisRepository.findById(analysisId)
+                .orElseThrow(SkinAnalysisExceptions.SKIN_ANALYSIS_NOT_FOUND::toException);
+
+        if (!analysis.getUser().getId().equals(userId)) {
+            throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
+        }
+
+        // 카테고리별 점수 계산
+        int moistureScore = Math.min(analysis.getDryness(), analysis.getMoistureReg());
+        int elasticityScore = Math.min(analysis.getSagging(), analysis.getElasticityReg());
+        int wrinkleScore = Math.min(analysis.getWrinkle(), analysis.getWrinkleReg());
+        int pigmentationScore = Math.min(analysis.getPigmentation(), analysis.getPigmentationReg());
+        int poreScore = Math.min(analysis.getPore(), analysis.getPoreReg());
+
+        // 기준 미달 카테고리 선정
+        List<String> recommendedCategories = new ArrayList<>();
+        if (moistureScore < 65) recommendedCategories.add("moisture");
+        if (pigmentationScore < 70) recommendedCategories.add("pigmentation");
+        if (elasticityScore < 60) recommendedCategories.add("elasticity");
+        if (wrinkleScore < 50) recommendedCategories.add("wrinkle");
+        if (poreScore < 55) recommendedCategories.add("pore");
+
+        // 기준 미달 카테고리가 없으면 모든 카테고리에서 조회
+        if (recommendedCategories.isEmpty()) {
+            recommendedCategories.add("moisture");
+            recommendedCategories.add("pigmentation");
+            recommendedCategories.add("elasticity");
+            recommendedCategories.add("wrinkle");
+            recommendedCategories.add("pore");
+        }
+
+        // 각 카테고리별로 제품 조회 및 수집
+        List<ProductEntity> allProducts = new ArrayList<>();
+        for (String category : recommendedCategories) {
+            // 제품 필터링 Specification 생성
+            Specification<ProductEntity> spec = (root, query, cb) -> {
+                List<Predicate> predicates = new ArrayList<>();
+
+                // 카테고리 필터
+                predicates.add(cb.equal(root.get("category"), category));
+
+                // 가격, 리뷰 필터
+                ProductFilters filters = request.getFilters();
+                if (filters != null) {
+                    addPricePredicates(root, cb, filters.getPrice(), predicates);
+                    addReviewScorePredicate(root, cb, filters.getReviewScore(), predicates);
+                    addReviewCountPredicate(root, cb, filters.getReviewCount(), predicates);
+                }
+
+                return cb.and(predicates.toArray(new Predicate[0]));
+            };
+
+            // 정렬 옵션 생성
+            Sort sort = (request.getSort() == null || request.getSort().getBy() == null)
+                    ? Sort.by(Sort.Direction.DESC, "reviewScore")
+                    : Sort.by("asc".equalsIgnoreCase(request.getSort().getOrder())
+                            ? Sort.Direction.ASC : Sort.Direction.DESC,
+                    request.getSort().getBy());
+
+            // 카테고리별 제품 조회 및 제한 (topN개씩)
+            List<ProductEntity> categoryProducts = productRepository.findAll(spec, sort)
+                    .stream()
+                    .limit(request.getTopN())
+                    .toList();
+
+            allProducts.addAll(categoryProducts);
+        }
+
+        // AI 서버 호출
+        ProductAIRequest aiRequest = ProductAIRequest.from(analysis, recommendedCategories, allProducts);
+        ProductAIResponse aiResponse = webClientBuilder.build()
+                .post()
+                .uri("/product/recommend")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(aiRequest)
+                .retrieve()
+                .bodyToMono(ProductAIResponse.class)
+                .block();
+
+        if (aiResponse == null || !"success".equals(aiResponse.getStatus())) {
+            throw ProductExceptions.AI_SERVER_INVALID_RESPONSE.toException();
+        }
+
+        // 추천 결과 매핑
+        List<ProductResponse.ProductRecommendation> recommendations = aiResponse.getRecommendations().stream()
+                .map(aiRec -> {
+                    ProductEntity product = allProducts.stream()
+                            .filter(p -> p.getId().toString().equals(aiRec.getProductId()))
+                            .findFirst()
+                            .orElseThrow(ProductExceptions.PRODUCT_NOT_IN_FILTERED_LIST::toException);
+                    return ProductResponse.ProductRecommendation.of(product, aiRec.getReason());
+                })
+                .collect(Collectors.toList());
+
+        return ProductResponse.from(recommendations);
+    }
+
+    @Transactional
+    public WishProductResponse addWishlist(UUID userId, UUID productId) {
+        if (wishlistProductRepository.existsByUser_IdAndProduct_Id(userId, productId)) {
+            throw ProductExceptions.WISHLIST_ALREADY_EXISTS.toException();
+        }
+
+        WishlistProductEntity saved = wishlistProductRepository.save(
+                WishlistProductEntity.builder()
+                        .user(userRepository.findById(userId)
+                                .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException))
+                        .product(productRepository.findById(productId)
+                                .orElseThrow(ProductExceptions.PRODUCT_NOT_FOUND::toException))
+                        .build()
+        );
+
+        return WishProductResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WishProductResponse> getAllWishProduct(UUID userId, WishlistOrderOption order, int page, int size) {
+        Sort sort = switch (order) {
+            case RATE -> Sort.by(Sort.Order.desc("product.reviewScore"));
+            case POPULAR -> Sort.by(Sort.Order.desc("product.reviewCount"));
+            case NEWEST -> Sort.by(Sort.Order.desc("createdAt"));
+        };
+
+        return wishlistProductRepository.findAllByUser_Id(userId, PageRequest.of(page, size, sort))
+                .map(WishProductResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public WishProductResponse getWishProduct(UUID userId, UUID productId) {
+        return wishlistProductRepository.findByUser_IdAndProduct_Id(userId, productId)
+                .map(WishProductResponse::from)
+                .orElseThrow(ProductExceptions.WISHLIST_NOT_FOUND::toException);
+    }
+
+    @Transactional
+    public void deleteWishlist(UUID userId, UUID productId) {
+        if (!wishlistProductRepository.existsByUser_IdAndProduct_Id(userId, productId)) {
+            throw ProductExceptions.WISHLIST_NOT_FOUND.toException();
+        }
+        wishlistProductRepository.deleteByUser_IdAndProduct_Id(userId, productId);
+    }
+
+    // Specification 헬퍼 메서드들
+    private void addPricePredicates(Root<ProductEntity> root, CriteriaBuilder cb,
+                                    ProductFilters.PriceFilter price, List<Predicate> predicates) {
+        if (price == null) return;
+
+        Optional.ofNullable(price.getMin())
+                .ifPresent(min -> predicates.add(cb.greaterThanOrEqualTo(root.get("salePrice"), min)));
+        Optional.ofNullable(price.getMax())
+                .ifPresent(max -> predicates.add(cb.lessThanOrEqualTo(root.get("salePrice"), max)));
+    }
+
+    private void addReviewScorePredicate(Root<ProductEntity> root, CriteriaBuilder cb,
+                                         ProductFilters.ReviewScoreFilter reviewScore, List<Predicate> predicates) {
+        if (reviewScore == null) return;
+
+        Optional.ofNullable(reviewScore.getMin())
+                .ifPresent(min -> predicates.add(cb.greaterThanOrEqualTo(root.get("reviewScore"), min)));
+    }
+
+    private void addReviewCountPredicate(Root<ProductEntity> root, CriteriaBuilder cb,
+                                         ProductFilters.ReviewCountFilter reviewCount, List<Predicate> predicates) {
+        if (reviewCount == null) return;
+
+        Optional.ofNullable(reviewCount.getMin())
+                .ifPresent(min -> predicates.add(cb.greaterThanOrEqualTo(root.get("reviewCount"), min)));
+    }
 }
