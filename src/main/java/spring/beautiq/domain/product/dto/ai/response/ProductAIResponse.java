@@ -1,27 +1,54 @@
 package spring.beautiq.domain.product.dto.ai.response;
 
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import spring.beautiq.domain.product.dto.common.Product;
-import spring.beautiq.domain.product.dto.common.SkinCategories;
+import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(
+        description = "AI 제품 추천 응답 DTO",
+        example = """
+                {
+                  "status": "success",
+                  "recommendations": [
+                    {
+                      "product_id": "550e8400-e29b-41d4-a716-446655440000",
+                      "reason": "히알루론산과 판테놀 성분이 풍부하여 건조한 피부에 깊은 수분을 공급합니다."
+                    }
+                  ]
+                }
+                """
+)
 public class ProductAIResponse {
 
     @NotNull
+    @Schema(description = "처리 상태", allowableValues = {"success", "fail"}, example = "success", requiredMode = Schema.RequiredMode.REQUIRED)
     private String status;
+
     @NotNull
-    private List<SkinCategories> needs;
-    @NotNull
-    private List<Product> recommendations;
+    @Schema(description = "추천 제품 리스트", requiredMode = Schema.RequiredMode.REQUIRED)
+    private List<Recommendation> recommendations;
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "제품 추천 정보")
+    public static class Recommendation {
+        @NotNull
+        @JsonProperty("product_id")
+        @Schema(description = "제품 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+        private String productId;
+        @NotNull
+        @Schema(description = "LLM이 생성한 개인화 추천 이유", example = "히알루론산과 판테놀 성분이 풍부하여 건조한 피부에 깊은 수분을 공급합니다.")
+        private String reason;
+    }
 }
