@@ -1,27 +1,209 @@
 package spring.beautiq.domain.product.dto.common;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+/**
+ * 제품 정보 DTO
+ * 올리브영 제품의 모든 상세 정보를 포함
+ */
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(
+        description = "제품 상세 정보",
+        example = """
+                {
+                  "category": "스킨케어",
+                  "overallRank": 1,
+                  "pageNumber": 1,
+                  "pageRank": 1,
+                  "brand": "라운드랩",
+                  "productName": "1025 독도 토너",
+                  "listPrice": 20000,
+                  "salePrice": 15000,
+                  "reviewScore": 4.8,
+                  "reviewCount": 1234,
+                  "ingredients": "정제수, 글리세린, 부틸렌글라이콜, 판테놀, 해조추출물",
+                  "description": "민감한 피부를 진정시키는 토너",
+                  "tags": "민감성피부, 진정, 보습",
+                  "bestOrNew": "BEST",
+                  "imageUrl": "https://image.oliveyoung.co.kr/uploads/images/goods/400/10/0000/0018/A00000018321012ko.jpg",
+                  "productUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000183210"
+                }
+                """
+)
 public class Product {
 
     @NotNull
-    String productName;
+    @Schema(
+            description = "제품 카테고리",
+            example = "스킨케어",
+            type = "string",
+            maxLength = 50,
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String category;
+
     @NotNull
-    String category;
+    @Schema(
+            description = "전체 순위 (올리브영 전체 랭킹)",
+            example = "1",
+            type = "integer",
+            format = "int32",
+            minimum = "1",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Integer overallRank;
+
     @NotNull
-    Integer price;
+    @Schema(
+            description = "페이지 번호",
+            example = "1",
+            type = "integer",
+            format = "int32",
+            minimum = "1",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Integer pageNumber;
+
     @NotNull
-    Integer reviewCount;
+    @Schema(
+            description = "페이지 내 순위",
+            example = "1",
+            type = "integer",
+            format = "int32",
+            minimum = "1",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Integer pageRank;
+
     @NotNull
-    String reason;
+    @Schema(
+            description = "브랜드명",
+            example = "라운드랩",
+            type = "string",
+            maxLength = 100,
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String brand;
+
+    @NotNull
+    @Schema(
+            description = "제품명",
+            example = "1025 독도 토너",
+            type = "string",
+            maxLength = 200,
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String productName;
+
+    @NotNull
+    @Schema(
+            description = "정가 (원)",
+            example = "20000",
+            type = "integer",
+            format = "int32",
+            minimum = "0",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Integer listPrice;
+
+    @NotNull
+    @Schema(
+            description = "판매가 (원)",
+            example = "15000",
+            type = "integer",
+            format = "int32",
+            minimum = "0",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Integer salePrice;
+
+    @NotNull
+    @Schema(
+            description = "리뷰 평점 (0.0-5.0)",
+            example = "4.8",
+            type = "number",
+            format = "float",
+            minimum = "0.0",
+            maximum = "5.0",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Float reviewScore;
+
+    @NotNull
+    @Schema(
+            description = "리뷰 개수",
+            example = "1234",
+            type = "integer",
+            format = "int32",
+            minimum = "0",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private Integer reviewCount;
+
+    @NotNull
+    @Schema(
+            description = "제품 성분 목록",
+            example = "정제수, 글리세린, 부틸렌글라이콜, 판테놀, 해조추출물",
+            type = "string",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String ingredients;
+
+    @NotNull
+    @Schema(
+            description = "제품 설명",
+            example = "민감한 피부를 진정시키는 토너",
+            type = "string",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String description;
+
+    @NotNull
+    @Schema(
+            description = "제품 태그 (쉼표로 구분)",
+            example = "민감성피부, 진정, 보습",
+            type = "string",
+            maxLength = 500,
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String tags;
+
+    @NotNull
+    @Schema(
+            description = "베스트/신제품 구분",
+            example = "BEST",
+            type = "string",
+            maxLength = 50,
+            allowableValues = {"BEST", "NEW", ""},
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String bestOrNew;
+
+    @NotNull
+    @Schema(
+            description = "제품 이미지 URL",
+            example = "https://image.oliveyoung.co.kr/uploads/images/goods/400/10/0000/0018/A00000018321012ko.jpg",
+            type = "string",
+            format = "uri",
+            maxLength = 500,
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String imageUrl;
+
+    @NotNull
+    @Schema(
+            description = "제품 상세 페이지 URL",
+            example = "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000183210",
+            type = "string",
+            format = "uri",
+            maxLength = 500,
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String productUrl;
 }

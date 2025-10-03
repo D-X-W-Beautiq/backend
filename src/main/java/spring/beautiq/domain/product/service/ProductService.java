@@ -2,29 +2,6 @@ package spring.beautiq.domain.product.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import spring.beautiq.domain.product.dto.ai.request.ProductAIRequest;
-import spring.beautiq.domain.product.dto.common.ProductReqRes;
-import spring.beautiq.domain.product.dto.request.ProductRequest;
-import spring.beautiq.domain.product.dto.ai.response.ProductAIResponse;
-import spring.beautiq.domain.skinanalysis.exception.SkinAnalysisExceptions;
-import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
-import spring.beautiq.domain.product.entity.ProductEntity;
-import spring.beautiq.domain.product.exception.ProductExceptions;
-import spring.beautiq.domain.product.repository.ProductRepository;
-import spring.beautiq.domain.user.entity.UserEntity;
-import spring.beautiq.domain.user.repository.UserRepository;
-
-import java.util.UUID;
-
-import spring.beautiq.domain.product.dto.common.Product;
-import spring.beautiq.global.exception.GlobalErrorCode;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import spring.beautiq.domain.product.dto.common.OrderOption;
 
 @Service
 @RequiredArgsConstructor
