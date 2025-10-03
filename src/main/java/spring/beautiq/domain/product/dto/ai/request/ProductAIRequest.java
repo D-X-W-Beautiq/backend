@@ -70,7 +70,7 @@ public class ProductAIRequest {
     private List<FilteredProduct> filteredProducts;
 
     @NotNull
-    @Schema(description = "언어 설정", example = "ko-KR", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "언어 설정", example = "ko-KR", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
     private String locale;
 
     public static ProductAIRequest from(
@@ -95,49 +95,50 @@ public class ProductAIRequest {
     @AllArgsConstructor
     @Schema(description = "피부 분석 데이터")
     public static class SkinAnalysisData {
+
         @NotNull
-        @Schema(description = "건조 점수", example = "75", type = "integer", format = "int32")
+        @Schema(description = "건조 점수", example = "75", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer dryness;
 
         @NotNull
-        @Schema(description = "색소침착 점수", example = "45", type = "integer", format = "int32")
+        @Schema(description = "색소침착 점수", example = "45", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer pigmentation;
 
         @NotNull
-        @Schema(description = "모공 점수", example = "60", type = "integer", format = "int32")
+        @Schema(description = "모공 점수", example = "60", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer pore;
 
         @NotNull
-        @Schema(description = "처짐 점수", example = "30", type = "integer", format = "int32")
+        @Schema(description = "처짐 점수", example = "30", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer sagging;
 
         @NotNull
-        @Schema(description = "주름 점수", example = "40", type = "integer", format = "int32")
+        @Schema(description = "주름 점수", example = "40", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer wrinkle;
 
         @NotNull
         @JsonProperty("pigmentation_reg")
-        @Schema(description = "색소침착 회귀 점수", example = "50", type = "integer", format = "int32")
+        @Schema(description = "색소침착 회귀 점수", example = "50", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer pigmentationReg;
 
         @NotNull
         @JsonProperty("moisture_reg")
-        @Schema(description = "수분 점수", example = "65", type = "integer", format = "int32")
+        @Schema(description = "수분 점수", example = "65", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer moistureReg;
 
         @NotNull
         @JsonProperty("elasticity_reg")
-        @Schema(description = "탄력 점수", example = "78.5", type = "number", format = "float")
+        @Schema(description = "탄력 점수", example = "78.5", type = "number", format = "float", requiredMode = Schema.RequiredMode.REQUIRED)
         private Float elasticityReg;
 
         @NotNull
         @JsonProperty("wrinkle_reg")
-        @Schema(description = "주름 회귀 점수", example = "35", type = "integer", format = "int32")
+        @Schema(description = "주름 회귀 점수", example = "35", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer wrinkleReg;
 
         @NotNull
         @JsonProperty("pore_reg")
-        @Schema(description = "모공 회귀 점수", example = "55", type = "integer", format = "int32")
+        @Schema(description = "모공 회귀 점수", example = "55", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer poreReg;
 
         public static SkinAnalysisData from(SkinAnalysisEntity entity) {
@@ -163,6 +164,7 @@ public class ProductAIRequest {
     @AllArgsConstructor
     @Schema(description = "필터링된 제품 정보")
     public static class FilteredProduct {
+
         @NotNull
         @JsonProperty("product_id")
         @Schema(description = "제품 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000", type = "string", format = "uuid", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -178,7 +180,7 @@ public class ProductAIRequest {
         private String brand;
 
         @NotNull
-        @Schema(description = "NIA 카테고리", example = "moisture", type = "string", allowableValues = {"moisture", "elasticity", "wrinkle", "pigmentation", "pore"}, requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "NIA 카테고리", example = "moisture", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
         private String category;
 
         @NotNull

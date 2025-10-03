@@ -13,34 +13,89 @@ import lombok.*;
 public class WishProduct {
 
     @NotNull
-    @Schema(description = "브랜드명", example = "라운드랩")
-    private String brand;
+    @Schema(
+            description = "제품 고유 ID",
+            example = "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+            type = "string",
+            format = "uuid",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String productId;
 
     @NotNull
-    @Schema(description = "제품명", example = "[라운드랩] 1025 독도 토너 200ml")
+    @Schema(
+            description = "제품명",
+            example = "[라운드랩] 1025 독도 토너 200ml",
+            type = "string",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String productName;
 
     @NotNull
-    @Schema(description = "정가", example = "30000")
+    @Schema(
+            description = "브랜드명",
+            example = "라운드랩",
+            type = "string",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String brand;
+
+    @NotNull
+    @Schema(
+            description = "정가",
+            example = "30000",
+            type = "integer",
+            format = "int32",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private Integer listPrice;
 
     @NotNull
-    @Schema(description = "판매가", example = "25000")
+    @Schema(
+            description = "판매가",
+            example = "25000",
+            type = "integer",
+            format = "int32",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private Integer salePrice;
 
     @NotNull
-    @Schema(description = "리뷰 평점", example = "4.5")
+    @Schema(
+            description = "리뷰 평점",
+            example = "4.5",
+            type = "number",
+            format = "float",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private Float reviewScore;
 
     @NotNull
-    @Schema(description = "리뷰 개수", example = "1234")
+    @Schema(
+            description = "리뷰 개수",
+            example = "1234",
+            type = "integer",
+            format = "int32",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private Integer reviewCount;
 
     @NotNull
-    @Schema(description = "제품 설명", example = "독도 해양심층수로 피부를 진정시키는 토너")
+    @Schema(
+            description = "제품 설명",
+            example = "독도 해양심층수로 피부를 진정시키는 토너",
+            type = "string",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String description;
 
     @NotNull
-    @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
+    @Schema(
+            description = "이미지 URL",
+            example = "https://example.com/image.jpg",
+            type = "string",
+            format = "uri",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String imageUrl;
 }

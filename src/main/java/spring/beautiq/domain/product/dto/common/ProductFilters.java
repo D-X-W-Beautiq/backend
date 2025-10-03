@@ -38,23 +38,11 @@ public class ProductFilters {
     public static class PriceFilter {
 
         @Min(0)
-        @Schema(
-                description = "최소 가격 (원)",
-                example = "10000",
-                type = "integer",
-                format = "int32",
-                minimum = "0"
-        )
+        @Schema(description = "최소 가격 (원)", example = "10000", type = "integer", format = "int32", minimum = "0")
         private Integer min;
 
         @Min(0)
-        @Schema(
-                description = "최대 가격 (원)",
-                example = "50000",
-                type = "integer",
-                format = "int32",
-                minimum = "0"
-        )
+        @Schema(description = "최대 가격 (원)", example = "50000", type = "integer", format = "int32", minimum = "0")
         private Integer max;
     }
 
@@ -71,14 +59,7 @@ public class ProductFilters {
 
         @DecimalMin("0.0")
         @DecimalMax("5.0")
-        @Schema(
-                description = "최소 리뷰 평점 (0.0-5.0)",
-                example = "4.0",
-                type = "number",
-                format = "float",
-                minimum = "0.0",
-                maximum = "5.0"
-        )
+        @Schema(description = "최소 리뷰 평점 (0.0-5.0)", example = "4.0", type = "number", format = "float", minimum = "0.0", maximum = "5.0")
         private Float min;
     }
 
@@ -94,14 +75,7 @@ public class ProductFilters {
     public static class ReviewCountFilter {
 
         @Min(0)
-        @Schema(
-                description = "최소 리뷰 개수",
-                example = "50",
-                type = "integer",
-                format = "int32",
-                minimum = "0"
-        )
+        @Schema(description = "최소 리뷰 개수", example = "50", type = "integer", format = "int32", minimum = "0")
         private Integer min;
     }
 }
-
