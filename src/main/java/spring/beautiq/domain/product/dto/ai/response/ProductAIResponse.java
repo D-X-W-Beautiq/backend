@@ -29,7 +29,7 @@ import java.util.List;
 public class ProductAIResponse {
 
     @NotNull
-    @Schema(description = "처리 상태", allowableValues = {"success", "fail"}, example = "success", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "처리 상태", allowableValues = {"success", "fail"}, example = "success", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
     private String status;
 
     @NotNull
@@ -43,12 +43,14 @@ public class ProductAIResponse {
     @AllArgsConstructor
     @Schema(description = "제품 추천 정보")
     public static class Recommendation {
+
         @NotNull
         @JsonProperty("product_id")
-        @Schema(description = "제품 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+        @Schema(description = "제품 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000", type = "string", format = "uuid", requiredMode = Schema.RequiredMode.REQUIRED)
         private String productId;
+
         @NotNull
-        @Schema(description = "LLM이 생성한 개인화 추천 이유", example = "히알루론산과 판테놀 성분이 풍부하여 건조한 피부에 깊은 수분을 공급합니다.")
+        @Schema(description = "LLM이 생성한 개인화 추천 이유", example = "히알루론산과 판테놀 성분이 풍부하여 건조한 피부에 깊은 수분을 공급합니다.", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
         private String reason;
     }
 }

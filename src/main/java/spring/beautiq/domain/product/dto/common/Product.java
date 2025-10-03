@@ -3,6 +3,7 @@ package spring.beautiq.domain.product.dto.common;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import spring.beautiq.domain.product.entity.ProductEntity;
 
 /**
  * 제품 정보 DTO
@@ -17,6 +18,7 @@ import lombok.*;
         description = "제품 상세 정보",
         example = """
                 {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
                   "category": "스킨케어",
                   "overallRank": 1,
                   "pageNumber": 1,
@@ -37,6 +39,16 @@ import lombok.*;
                 """
 )
 public class Product {
+
+    @NotNull
+    @Schema(
+            description = "제품 고유 ID",
+            example = "550e8400-e29b-41d4-a716-446655440000",
+            type = "string",
+            format = "uuid",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private String id;
 
     @NotNull
     @Schema(
@@ -206,4 +218,26 @@ public class Product {
             requiredMode = Schema.RequiredMode.REQUIRED
     )
     private String productUrl;
+
+    public static Product from(ProductEntity entity) {
+        return Product.builder()
+                .id(entity.getId().toString())
+                .category(entity.getCategory())
+                .overallRank(entity.getOverallRank())
+                .pageNumber(entity.getPageNumber())
+                .pageRank(entity.getPageRank())
+                .brand(entity.getBrand())
+                .productName(entity.getProductName())
+                .listPrice(entity.getListPrice())
+                .salePrice(entity.getSalePrice())
+                .reviewScore(entity.getReviewScore() != null ? entity.getReviewScore().floatValue() : null)
+                .reviewCount(entity.getReviewCount())
+                .ingredients(entity.getIngredients())
+                .description(entity.getDescription())
+                .tags(entity.getTags())
+                .bestOrNew(entity.getBestOrNew())
+                .imageUrl(entity.getImageUrl())
+                .productUrl(entity.getProductUrl())
+                .build();
+    }
 }
