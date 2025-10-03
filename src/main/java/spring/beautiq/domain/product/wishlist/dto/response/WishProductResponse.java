@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import spring.beautiq.domain.product.entity.ProductEntity;
 import spring.beautiq.domain.product.wishlist.dto.common.WishProduct;
+import spring.beautiq.domain.product.wishlist.entity.WishlistProductEntity;
 
 @Getter
 @Setter
@@ -49,4 +51,24 @@ public class WishProductResponse {
     @Valid
     @Schema(description = "위시리스트 제품 정보")
     private WishProduct wishlistProduct;
+
+    public static WishProductResponse from(WishlistProductEntity entity) {
+        ProductEntity product = entity.getProduct();
+
+        return WishProductResponse.builder()
+                .wishlistProductId(entity.getId().toString())
+                .userId(entity.getUser().getId().toString())
+                .productId(product.getId().toString())
+                .wishlistProduct(WishProduct.builder()
+                        .brand(product.getBrand())
+                        .productName(product.getProductName())
+                        .listPrice(product.getListPrice())
+                        .salePrice(product.getSalePrice())
+                        .reviewScore(product.getReviewScore() != null ? product.getReviewScore().floatValue() : 0.0f)
+                        .reviewCount(product.getReviewCount())
+                        .description(product.getDescription())
+                        .imageUrl(product.getImageUrl())
+                        .build())
+                .build();
+    }
 }

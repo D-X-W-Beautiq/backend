@@ -5,8 +5,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import spring.beautiq.domain.product.entity.ProductEntity;
+import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -69,6 +73,21 @@ public class ProductAIRequest {
     @Schema(description = "언어 설정", example = "ko-KR", requiredMode = Schema.RequiredMode.REQUIRED)
     private String locale;
 
+    public static ProductAIRequest from(
+            SkinAnalysisEntity analysis,
+            List<String> recommendedCategories,
+            List<ProductEntity> products
+    ) {
+        return ProductAIRequest.builder()
+                .skinAnalysis(SkinAnalysisData.from(analysis))
+                .recommendedCategories(recommendedCategories)
+                .filteredProducts(products.stream()
+                        .map(FilteredProduct::from)
+                        .collect(Collectors.toList()))
+                .locale("ko-KR")
+                .build();
+    }
+
     @Getter
     @Setter
     @Builder
@@ -77,40 +96,64 @@ public class ProductAIRequest {
     @Schema(description = "피부 분석 데이터")
     public static class SkinAnalysisData {
         @NotNull
-        @Schema(description = "건조 점수", example = "75")
+        @Schema(description = "건조 점수", example = "75", type = "integer", format = "int32")
         private Integer dryness;
+
         @NotNull
-        @Schema(description = "색소침착 점수", example = "45")
+        @Schema(description = "색소침착 점수", example = "45", type = "integer", format = "int32")
         private Integer pigmentation;
+
         @NotNull
-        @Schema(description = "모공 점수", example = "60")
+        @Schema(description = "모공 점수", example = "60", type = "integer", format = "int32")
         private Integer pore;
+
         @NotNull
-        @Schema(description = "처짐 점수", example = "30")
+        @Schema(description = "처짐 점수", example = "30", type = "integer", format = "int32")
         private Integer sagging;
+
         @NotNull
-        @Schema(description = "주름 점수", example = "40")
+        @Schema(description = "주름 점수", example = "40", type = "integer", format = "int32")
         private Integer wrinkle;
+
         @NotNull
         @JsonProperty("pigmentation_reg")
-        @Schema(description = "색소침착 회귀 점수", example = "50")
+        @Schema(description = "색소침착 회귀 점수", example = "50", type = "integer", format = "int32")
         private Integer pigmentationReg;
+
         @NotNull
         @JsonProperty("moisture_reg")
-        @Schema(description = "수분 점수", example = "65")
+        @Schema(description = "수분 점수", example = "65", type = "integer", format = "int32")
         private Integer moistureReg;
+
         @NotNull
         @JsonProperty("elasticity_reg")
-        @Schema(description = "탄력 점수", example = "78.5")
+        @Schema(description = "탄력 점수", example = "78.5", type = "number", format = "float")
         private Float elasticityReg;
+
         @NotNull
         @JsonProperty("wrinkle_reg")
-        @Schema(description = "주름 회귀 점수", example = "35")
+        @Schema(description = "주름 회귀 점수", example = "35", type = "integer", format = "int32")
         private Integer wrinkleReg;
+
         @NotNull
         @JsonProperty("pore_reg")
-        @Schema(description = "모공 회귀 점수", example = "55")
+        @Schema(description = "모공 회귀 점수", example = "55", type = "integer", format = "int32")
         private Integer poreReg;
+
+        public static SkinAnalysisData from(SkinAnalysisEntity entity) {
+            return SkinAnalysisData.builder()
+                    .dryness(entity.getDryness())
+                    .pigmentation(entity.getPigmentation())
+                    .pore(entity.getPore())
+                    .sagging(entity.getSagging())
+                    .wrinkle(entity.getWrinkle())
+                    .pigmentationReg(entity.getPigmentationReg())
+                    .moistureReg(entity.getMoistureReg())
+                    .elasticityReg(entity.getElasticityReg().floatValue())
+                    .wrinkleReg(entity.getWrinkleReg())
+                    .poreReg(entity.getPoreReg())
+                    .build();
+        }
     }
 
     @Getter
@@ -122,31 +165,53 @@ public class ProductAIRequest {
     public static class FilteredProduct {
         @NotNull
         @JsonProperty("product_id")
-        @Schema(description = "제품 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+        @Schema(description = "제품 고유 ID", example = "550e8400-e29b-41d4-a716-446655440000", type = "string", format = "uuid", requiredMode = Schema.RequiredMode.REQUIRED)
         private String productId;
+
         @NotNull
         @JsonProperty("product_name")
-        @Schema(description = "제품명", example = "[라운드랩] 1025 독도 토너 200ml")
+        @Schema(description = "제품명", example = "[라운드랩] 1025 독도 토너 200ml", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
         private String productName;
+
         @NotNull
-        @Schema(description = "브랜드명", example = "라운드랩")
+        @Schema(description = "브랜드명", example = "라운드랩", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
         private String brand;
+
         @NotNull
-        @Schema(description = "NIA 카테고리", example = "moisture", allowableValues = {"moisture", "elasticity", "wrinkle", "pigmentation", "pore"})
+        @Schema(description = "NIA 카테고리", example = "moisture", type = "string", allowableValues = {"moisture", "elasticity", "wrinkle", "pigmentation", "pore"}, requiredMode = Schema.RequiredMode.REQUIRED)
         private String category;
+
         @NotNull
-        @Schema(description = "가격", example = "25000")
+        @Schema(description = "가격", example = "25000", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer price;
+
         @NotNull
         @JsonProperty("review_score")
-        @Schema(description = "리뷰 평점", example = "4.5")
+        @Schema(description = "리뷰 평점", example = "4.5", type = "number", format = "float", requiredMode = Schema.RequiredMode.REQUIRED)
         private Float reviewScore;
+
         @NotNull
         @JsonProperty("review_count")
-        @Schema(description = "리뷰 개수", example = "1234")
+        @Schema(description = "리뷰 개수", example = "1234", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer reviewCount;
+
         @NotNull
-        @Schema(description = "주요 성분 리스트", example = "[\"히알루론산\", \"나이아신아마이드\", \"판테놀\"]")
+        @Schema(description = "주요 성분 리스트", example = "[\"히알루론산\", \"나이아신아마이드\", \"판테놀\"]", type = "array", requiredMode = Schema.RequiredMode.REQUIRED)
         private List<String> ingredients;
+
+        public static FilteredProduct from(ProductEntity entity) {
+            return FilteredProduct.builder()
+                    .productId(entity.getId().toString())
+                    .productName(entity.getProductName())
+                    .brand(entity.getBrand())
+                    .category(entity.getCategory())
+                    .price(entity.getSalePrice() != null ? entity.getSalePrice() : entity.getListPrice())
+                    .reviewScore(entity.getReviewScore() != null ? entity.getReviewScore().floatValue() : 0.0f)
+                    .reviewCount(entity.getReviewCount() != null ? entity.getReviewCount() : 0)
+                    .ingredients(entity.getIngredients() != null
+                            ? Arrays.asList(entity.getIngredients().split(",\\s*"))
+                            : List.of())
+                    .build();
+        }
     }
 }
