@@ -13,7 +13,9 @@ import java.util.UUID;
  */
 public interface WishlistProductRepository extends JpaRepository<WishlistProductEntity, UUID> {
     Page<WishlistProductEntity> findAllByUser_Id(UUID userId, Pageable pageable);
-    Optional<WishlistProductEntity> findByIdAndUser_Id(UUID id, UUID userId);
-    boolean existsByUser_IdAndProduct_Id(UUID userId, UUID productId);
-}
 
+    Optional<WishlistProductEntity> findByUser_IdAndProduct_Id(UUID userId, UUID productId);
+    boolean existsByUser_IdAndProduct_Id(UUID userId, UUID productId);
+
+    void deleteByUser_IdAndProduct_Id(UUID userId, UUID productId);
+}
