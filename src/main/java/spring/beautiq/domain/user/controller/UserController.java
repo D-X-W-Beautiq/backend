@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,64 +38,70 @@ public class UserController {
         return "OAuth2 Login Success! JWT 쿠키가 발급되었습니다 🚀";
     }
 
-    //회원 가입
-    @PostMapping("/signup")
-    public ResponseEntity<String> joinProcess(@RequestBody UserRequest userRequest) {
-        userService.cretaeOneUser(userRequest);
-
-        return ResponseEntity.ok("회원가입 성공");
-    }
-
     //회원 정보 조회
-    @GetMapping("/users/me")
-    public ResponseEntity<?> getUser(@PathVariable("usernmae") String username) {
-        if (userService.isAccess(username)) {
-            UserResponse dto = userService.readOneUser(username);
-            return ResponseEntity.ok(dto);
+    @GetMapping("/users/{username}")
+    public ResponseEntity<?> getUser(@PathVariable("username") String username) {
+        if (!userService.isAccess(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "접근 권한이 없습니다."));
         }
+        UserResponse dto = userService.readOneUser(username);
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("접근 권한이 없습니다.");
+        return ResponseEntity.ok(dto);
     }
 
     //회원 수정
-    @PutMapping("/users/update/{username}")
-    public ResponseEntity<?> updateUser(@PathVariable("usernmae") String username,
+    @PutMapping("/users/{username}")
+    public ResponseEntity<?> updateUser(@PathVariable("username") String username,
                                         @RequestBody UserRequest userRequest) {
-        if (userService.isAccess(username)) {
-            userService.updateOneUser(userRequest, username);
-            return ResponseEntity.ok("회원 정보가 수정되었습니다.");
+        if (!userService.isAccess(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "접근 권한이 없습니다."));
         }
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("접근 권한이 없습니다.");
-    }
-
-    @PostMapping("/users/{username}/profile-image")
-    public ResponseEntity<?> uploadProfileImage(@PathVariable String username,
-    @RequestParam("file") MultipartFile file) throws IOException {
-
-        UUID fileId = UUID.randomUUID();
-        s3Service.uploadImage(file, fileId);
-
-        String imageurl = String.format(
-                "https://%s.s3.%s.amazonaws.com/%s.",
-                bucket,
-                region,
-                fileId.toString()
-        );
-
-        userService.updateProfileImage(username, imageurl);
-
+        userService.updateOneUser(userRequest, username);
         return ResponseEntity.ok(
-                Map.of("success", true,
-                        "message", "프로필 이미지가 변경되었습니다.",
-                        "imageUrl", imageurl)
+                Map.of("message", "회원 정보가 수정되었습니다.")
         );
     }
 
+    @PutMapping("/users/{username}/profile-image")
+    public ResponseEntity<?> uploadProfileImage(@PathVariable String username,
+    @RequestParam("file") MultipartFile file) {
+        if (!userService.isAccess(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "접근 권한이 없습니다."));
+        }
 
-    //회원 삭제
-    @DeleteMapping("/delete/{username}")
-    public ResponseEntity<?> deleteUser(@PathVariable("usernmae") String username) {
+        try {
+            UUID fileId = UUID.randomUUID();
+            s3Service.uploadImage(file, fileId);
+
+            String imageUrl = String.format(
+                    "https://%s.s3.%s.amazonaws.com/%s",
+                    bucket, region, fileId.toString()
+            );
+
+            userService.updateProfileImage(username, imageUrl);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "message", "프로필 이미지가 변경되었습니다.",
+                            "imageUrl", imageUrl
+                    )
+            );
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "이미지 업로드에 실패했습니다."));
+        }
+    }
+
+
+
+    //회원 탈퇴
+    @DeleteMapping("/users/{username}}")
+    public ResponseEntity<?> deleteUser(@PathVariable("username") String username) {
         if (userService.isAccess(username)) {
             userService.deleteOneUser(username);
 

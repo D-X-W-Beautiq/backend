@@ -21,4 +21,6 @@ public class UserResponse {
     private String email;
     @NotNull
     private String username;
+
+    private String profileImage;
 }
