@@ -100,7 +100,7 @@ public class UserController {
 
 
     //회원 탈퇴
-    @DeleteMapping("/users/{username}}")
+    @DeleteMapping("/users/{username}")
     public ResponseEntity<?> deleteUser(@PathVariable("username") String username) {
         if (userService.isAccess(username)) {
             userService.deleteOneUser(username);

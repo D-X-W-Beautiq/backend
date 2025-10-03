@@ -1,6 +1,7 @@
 package spring.beautiq.domain.user.entity;
 
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,9 +20,10 @@ public class UserEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String email;
+
+    @Column(unique = true, nullable = false)
     private String username;
     private String role;
-    private String password;
     private String profileImage;
 
 }
