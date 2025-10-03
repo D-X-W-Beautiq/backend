@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
@@ -26,9 +28,16 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
         //OAuth2User
-        CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
+        String username;
 
-        String username = customUserDetails.getUsername();
+        if (principal instanceof CustomOAuth2User) {
+            username = ((CustomOAuth2User) principal).getUsername();
+        } else if (principal instanceof DefaultOAuth2User) {
+            username = ((DefaultOAuth2User) principal).getName();
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 principal 타입:: " + principal.getClass().getName());
+        }
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();

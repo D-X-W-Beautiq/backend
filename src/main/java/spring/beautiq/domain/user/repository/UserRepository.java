@@ -10,7 +10,6 @@ import spring.beautiq.domain.user.entity.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByUsername(String username);
     Boolean existsByUsername(String username);
-
     void deleteByUsername(String username);
 }
 
