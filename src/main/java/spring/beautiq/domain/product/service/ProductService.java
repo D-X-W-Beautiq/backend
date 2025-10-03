@@ -56,46 +56,69 @@ public class ProductService {
             throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
         }
 
-        // 카테고리 매핑
-        List<String> categories = request.getCategories().stream()
-                .map(cat -> cat.name().toLowerCase())
-                .collect(Collectors.toList());
+        // 카테고리별 점수 계산
+        int moistureScore = Math.min(analysis.getDryness(), analysis.getMoistureReg());
+        int elasticityScore = Math.min(analysis.getSagging(), analysis.getElasticityReg());
+        int wrinkleScore = Math.min(analysis.getWrinkle(), analysis.getWrinkleReg());
+        int pigmentationScore = Math.min(analysis.getPigmentation(), analysis.getPigmentationReg());
+        int poreScore = Math.min(analysis.getPore(), analysis.getPoreReg());
 
-        // 제품 필터링 Specification 생성
-        Specification<ProductEntity> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        // 기준 미달 카테고리 선정
+        List<String> recommendedCategories = new ArrayList<>();
+        if (moistureScore < 65) recommendedCategories.add("moisture");
+        if (pigmentationScore < 70) recommendedCategories.add("pigmentation");
+        if (elasticityScore < 60) recommendedCategories.add("elasticity");
+        if (wrinkleScore < 50) recommendedCategories.add("wrinkle");
+        if (poreScore < 55) recommendedCategories.add("pore");
 
-            // 카테고리 필터
-            if (request.getCategories() != null && !request.getCategories().isEmpty()) {
-                predicates.add(root.get("category").in(categories));
-            }
+        // 기준 미달 카테고리가 없으면 모든 카테고리에서 조회
+        if (recommendedCategories.isEmpty()) {
+            recommendedCategories.add("moisture");
+            recommendedCategories.add("pigmentation");
+            recommendedCategories.add("elasticity");
+            recommendedCategories.add("wrinkle");
+            recommendedCategories.add("pore");
+        }
 
-            // 가격, 리뷰 필터
-            ProductFilters filters = request.getFilters();
-            if (filters != null) {
-                addPricePredicates(root, cb, filters.getPrice(), predicates);
-                addReviewScorePredicate(root, cb, filters.getReviewScore(), predicates);
-                addReviewCountPredicate(root, cb, filters.getReviewCount(), predicates);
-            }
+        // 각 카테고리별로 제품 조회 및 수집
+        List<ProductEntity> allProducts = new ArrayList<>();
+        for (String category : recommendedCategories) {
+            // 제품 필터링 Specification 생성
+            Specification<ProductEntity> spec = (root, query, cb) -> {
+                List<Predicate> predicates = new ArrayList<>();
 
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+                // 카테고리 필터
+                predicates.add(cb.equal(root.get("category"), category));
 
-        // 정렬 옵션 생성
-        Sort sort = (request.getSort() == null || request.getSort().getBy() == null)
-                ? Sort.by(Sort.Direction.DESC, "reviewScore")
-                : Sort.by("asc".equalsIgnoreCase(request.getSort().getOrder())
-                        ? Sort.Direction.ASC : Sort.Direction.DESC,
-                request.getSort().getBy());
+                // 가격, 리뷰 필터
+                ProductFilters filters = request.getFilters();
+                if (filters != null) {
+                    addPricePredicates(root, cb, filters.getPrice(), predicates);
+                    addReviewScorePredicate(root, cb, filters.getReviewScore(), predicates);
+                    addReviewCountPredicate(root, cb, filters.getReviewCount(), predicates);
+                }
 
-        // 제품 조회 및 제한
-        List<ProductEntity> products = productRepository.findAll(spec, sort)
-                .stream()
-                .limit(request.getTopN())
-                .collect(Collectors.toList());
+                return cb.and(predicates.toArray(new Predicate[0]));
+            };
+
+            // 정렬 옵션 생성
+            Sort sort = (request.getSort() == null || request.getSort().getBy() == null)
+                    ? Sort.by(Sort.Direction.DESC, "reviewScore")
+                    : Sort.by("asc".equalsIgnoreCase(request.getSort().getOrder())
+                            ? Sort.Direction.ASC : Sort.Direction.DESC,
+                    request.getSort().getBy());
+
+            // 카테고리별 제품 조회 및 제한 (topN개씩)
+            List<ProductEntity> categoryProducts = productRepository.findAll(spec, sort)
+                    .stream()
+                    .limit(request.getTopN())
+                    .toList();
+
+            allProducts.addAll(categoryProducts);
+        }
 
         // AI 서버 호출
-        ProductAIRequest aiRequest = ProductAIRequest.from(analysis, categories, products);
+        ProductAIRequest aiRequest = ProductAIRequest.from(analysis, recommendedCategories, allProducts);
         ProductAIResponse aiResponse = webClientBuilder.build()
                 .post()
                 .uri("/product/recommend")
@@ -112,7 +135,7 @@ public class ProductService {
         // 추천 결과 매핑
         List<ProductResponse.ProductRecommendation> recommendations = aiResponse.getRecommendations().stream()
                 .map(aiRec -> {
-                    ProductEntity product = products.stream()
+                    ProductEntity product = allProducts.stream()
                             .filter(p -> p.getId().toString().equals(aiRec.getProductId()))
                             .findFirst()
                             .orElseThrow(ProductExceptions.PRODUCT_NOT_IN_FILTERED_LIST::toException);
