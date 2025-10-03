@@ -29,10 +29,6 @@ public class GlobalExceptionHandler {
         return createErrorResponse(exception.getErrorCode());
     }
 
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException exception) {
-        return createErrorResponse(exception.getErrorCode());
-    }
 
     @ExceptionHandler({AccessDeniedException.class, AuthenticationException.class})
     public ResponseEntity<ErrorResponse> handleSecurityException(Exception exception) {
