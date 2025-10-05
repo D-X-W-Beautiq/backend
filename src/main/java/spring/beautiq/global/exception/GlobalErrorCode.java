@@ -17,5 +17,4 @@ public enum GlobalErrorCode implements ErrorCode {
     FORBIDDEN("접근 권한이 없습니다.", HttpStatus.FORBIDDEN);
     private final String message;
     private final HttpStatus httpStatus;
-
 }

@@ -1,6 +1,5 @@
 package spring.beautiq.global.jwt;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -9,11 +8,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
-import spring.beautiq.domain.user.dto.UserDTO;
+import spring.beautiq.domain.user.dto.OAuth2UserDTO;
 
 public class JwtFilter extends OncePerRequestFilter {
 
@@ -73,7 +71,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String role = jwtUtil.getRole(token);
 
         //userDto를 생성하여 값 set
-        UserDTO userDTO = new UserDTO();
+        OAuth2UserDTO userDTO = new OAuth2UserDTO();
         userDTO.setUsername(username);
         userDTO.setRole(role);
 

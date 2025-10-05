@@ -1,26 +1,19 @@
 package spring.beautiq.domain.user.dto;
 
-import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
-
-@Getter
-@Setter
+@Getter @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class UserResponse {
-    @NotNull
-    private UUID id;
-    @NotNull
-    private String email;
-    @NotNull
+public class OAuth2UserDTO {
+    private String userId;
     private String username;
-
-    private String profileImage;
+    private String name;
+    private String role;
 }
