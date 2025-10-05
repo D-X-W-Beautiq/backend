@@ -30,42 +30,39 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User;
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+
+
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User);
 
-        if ("google".equals(registrationId)) {
-            if (userRequest instanceof OidcUserRequest) {
-                oAuth2User = oidcUserService.loadUser((OidcUserRequest) userRequest);
-            }
-                else{
-                    oAuth2User = super.loadUser(userRequest);
-            }
-        } else {
-            oAuth2User = super.loadUser(userRequest);
-        }
+        String username = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
 
-        OAuth2Response oAuth2Response;
+        UserEntity userEntity = userRepository.findByUsername(username)
+                .orElseGet(() -> {
+                    UserEntity newUser = new UserEntity();
+                    newUser.setUsername(username);
+                    newUser.setEmail(oAuth2Response.getEmail());
+                    newUser.setRole("ROLE_USER");
+                    return userRepository.save(newUser);
+                });
+
+        OAuth2UserDTO userDTO = OAuth2UserDTO.builder()
+                .userId(userEntity.getId().toString())
+                .username(userEntity.getUsername())
+                .role(userEntity.getRole())
+                .build();
+
+        return new CustomOAuth2User(userDTO);
+    }
+
+    private OAuth2Response createOAuth2Response(String registrationId, OAuth2User oAuth2User) {
         if (registrationId.equals("google")) {
-            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
-
+            return new GoogleResponse(oAuth2User.getAttributes());
         } else if (registrationId.equals("kakao")) {
-            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
-        } else {
-            throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
+            return new KakaoResponse(oAuth2User.getAttributes());
         }
-
-        String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
-
-
-            OAuth2UserDTO userDTO = new OAuth2UserDTO();
-            userDTO.setUserId(userDTO.getUserId());
-            userDTO.setUsername(username);
-            userDTO.setName(oAuth2Response.getName());
-            userDTO.setRole("ROLE_USER");
-
-            return new CustomOAuth2User(userDTO);
-        }
-
-
-
+        throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
+    }
 }
+
