@@ -13,7 +13,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = exception.getErrorCode();
         ErrorResponse errorResponseDTO = ErrorResponse.from(errorCode, Instant.now());
         HttpStatus httpStatus = errorCode.getHttpStatus();
-
+        
         return new ResponseEntity<>(errorResponseDTO, httpStatus);
     }
 
