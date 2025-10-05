@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
@@ -31,7 +32,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User);
@@ -62,7 +62,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else if (registrationId.equals("kakao")) {
             return new KakaoResponse(oAuth2User.getAttributes());
         }
-        throw new OAuth2AuthenticationException("지원하지 않는 provider: " + registrationId);
+        throw new OAuth2AuthenticationException(
+                new OAuth2Error("unsupported_provider"),
+                "지원하지 않는 provider: " + registrationId);
     }
 }
 
