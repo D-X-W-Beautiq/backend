@@ -14,6 +14,5 @@ import lombok.Setter;
 public class OAuth2UserDTO {
     private String userId;
     private String username;
-    private String name;
     private String role;
 }
