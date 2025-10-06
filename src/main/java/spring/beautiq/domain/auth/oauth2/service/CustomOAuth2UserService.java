@@ -57,6 +57,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return new CustomOAuth2User(userDTO);
     }
 
+
+
+
     private OAuth2Response createOAuth2Response(String registrationId, OAuth2User oAuth2User) {
         if (registrationId.equals("google")) {
             return new GoogleResponse(oAuth2User.getAttributes());

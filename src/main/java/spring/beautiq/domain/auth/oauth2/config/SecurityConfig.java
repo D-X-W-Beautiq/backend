@@ -10,7 +10,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -61,9 +63,21 @@ public class SecurityConfig {
 
 
                 .oauth2Login((oauth2) -> oauth2
-                        .userInfoEndpoint((userInfoEndpointConfig -> userInfoEndpointConfig
-                                .userService(customOAuth2UserService)))
-                        .successHandler(customSuccessHandler))
+                        .userInfoEndpoint((userInfoEndpointConfig -> {
+                            userInfoEndpointConfig
+                                    .userService(customOAuth2UserService);
+                            userInfoEndpointConfig
+                                    .oidcUserService(oidcUserRequest -> {
+                                        OidcUserService delegate = new OidcUserService();
+                                        OidcUser oidcUser = delegate.loadUser(oidcUserRequest);
+
+                                        customOAuth2UserService.loadUser(oidcUserRequest);
+
+                                        return oidcUser;
+                                    });
+                        }))
+                        .successHandler(customSuccessHandler)
+                )
 
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
