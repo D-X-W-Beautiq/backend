@@ -3,10 +3,12 @@ package spring.beautiq.domain.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.*;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
+@Table(name = "user_entity")
 @Getter
 @Setter
 public class UserEntity extends BaseEntity {
