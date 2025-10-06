@@ -22,7 +22,6 @@ public class CustomOAuth2User implements OAuth2User {
         return Map.of(
                 "userId", userDTO.getUserId(),
                 "username", userDTO.getUsername(),
-                "name", userDTO.getName(),
                 "role", userDTO.getRole()
         );
     }
@@ -37,9 +36,11 @@ public class CustomOAuth2User implements OAuth2User {
         return userDTO.getUserId();
     }
 
+
+    //spring 내부 사용자 식별자
     @Override
     public String getName() {
-        return userDTO.getName();
+        return userDTO.getUsername();
     }
 
     public String getUsername() {

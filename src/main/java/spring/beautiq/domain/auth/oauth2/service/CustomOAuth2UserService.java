@@ -42,6 +42,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .orElseGet(() -> {
                     UserEntity newUser = new UserEntity();
                     newUser.setUsername(username);
+
                     newUser.setEmail(oAuth2Response.getEmail());
                     newUser.setRole("ROLE_USER");
                     return userRepository.save(newUser);
@@ -55,6 +56,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         return new CustomOAuth2User(userDTO);
     }
+
+
+
 
     private OAuth2Response createOAuth2Response(String registrationId, OAuth2User oAuth2User) {
         if (registrationId.equals("google")) {
