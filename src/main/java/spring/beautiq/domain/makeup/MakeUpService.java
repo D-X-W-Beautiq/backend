@@ -16,7 +16,7 @@ import spring.beautiq.domain.makeup.dto.ai.*;
 import spring.beautiq.domain.makeup.dto.common.Color;
 import spring.beautiq.domain.makeup.dto.common.ImageItem;
 import spring.beautiq.domain.makeup.dto.web.*;
-import spring.beautiq.domain.makeup.entity.MakeUp;
+import spring.beautiq.domain.makeup.entity.MakeUpEntity;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.repository.UserRepository;
@@ -50,7 +50,7 @@ public class MakeUpService {
         // s3에서 이미지 영구 저장
         String newImageName = s3Service.saveImage(saveRequestDto.getImageName(), userId);
 
-        MakeUp makeUp = MakeUp.builder()
+        MakeUpEntity makeUp = MakeUpEntity.builder()
                 .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
                 .imageName(newImageName)
                 .build();
@@ -63,23 +63,23 @@ public class MakeUpService {
      */
     public MakeUpListResponseDto getMakeUpList(UUID userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<MakeUp> makeUpPage = makeUpRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
+        Page<MakeUpEntity> makeUpPage = makeUpRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
 
         MakeUpListResponseDto makeUpListResponseDto = new MakeUpListResponseDto();
-        for (MakeUp makeUp : makeUpPage.getContent()) {
-            makeUpListResponseDto.getMakeUps().add(MakeUptoMakeUpDetailResponseDto(makeUp));
+        for (MakeUpEntity makeUpEntity : makeUpPage.getContent()) {
+            makeUpListResponseDto.getMakeUps().add(MakeUptoMakeUpDetailResponseDto(makeUpEntity));
         }
         return makeUpListResponseDto;
     }
 
-    private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUp makeUp) {
+    private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUpEntity makeUpEntity) {
         MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
-        makeUpDetailResponseDto.setMakeUpId(makeUp.getId());
-        makeUpDetailResponseDto.setImageName(makeUp.getImageName());
-        makeUpDetailResponseDto.setImageUrl(s3Service.getPreSignedUrl(makeUp.getImageName()));
-        makeUpDetailResponseDto.setCreatedAt(makeUp.getCreatedAt().toString());
+        makeUpDetailResponseDto.setMakeUpId(makeUpEntity.getId());
+        makeUpDetailResponseDto.setImageName(makeUpEntity.getImageName());
+        makeUpDetailResponseDto.setImageUrl(s3Service.getPreSignedUrl(makeUpEntity.getImageName()));
+        makeUpDetailResponseDto.setCreatedAt(makeUpEntity.getCreatedAt().toString());
 
-        String keywordsValue = makeUp.getKeywords();
+        String keywordsValue = makeUpEntity.getKeywords();
         String[] keywords = (keywordsValue == null || keywordsValue.isBlank())
                 ? new String[0]
                 : keywordsValue.split(","); // todo: 키워드 구분자 맞춰서 변경
@@ -92,9 +92,9 @@ public class MakeUpService {
      * 메이크업 상세 조회
      */
     public MakeUpDetailResponseDto getMakeUp(UUID userId, String imageName) {
-        MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        MakeUpEntity makeUpEntity = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
-        return MakeUptoMakeUpDetailResponseDto(makeUp);
+        return MakeUptoMakeUpDetailResponseDto(makeUpEntity);
     }
 
 
@@ -103,15 +103,15 @@ public class MakeUpService {
      */
     @Transactional
     public void deleteMakeUp(UUID userId, String imageName) {
-        MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        MakeUpEntity makeUpEntity = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
         // s3에서 이미지 삭제
         try {
-            s3Service.deleteImage(makeUp.getImageName());
+            s3Service.deleteImage(makeUpEntity.getImageName());
         } catch (Exception e) {
-            log.warn("Failed to delete S3 image: {}", makeUp.getImageName(), e);
+            log.warn("Failed to delete S3 image: {}", makeUpEntity.getImageName(), e);
         }
         // db에서 메이크업 기록 삭제
-        makeUpRepository.delete(makeUp);
+        makeUpRepository.delete(makeUpEntity);
     }
 
     /**
