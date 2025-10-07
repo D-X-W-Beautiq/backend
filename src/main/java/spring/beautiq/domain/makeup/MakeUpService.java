@@ -164,7 +164,7 @@ public class MakeUpService {
         int count = recommendAiResponseDto.getRecommendations().size();
         MultipartFile[] styleImages = new MultipartFile[count];
         for (int i = 0; i < count; i++) {
-            styleImages[i] = base64ToMultipart(recommendAiResponseDto.get(i));
+            styleImages[i] = base64ToMultipart(recommendAiResponseDto.getBase64(i));
         }
 
         // S3에 임시 업로드 후 URL dto에 담기

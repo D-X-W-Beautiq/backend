@@ -10,7 +10,7 @@ public class RecommendAiResponseDto {
     private String status;
     private List<RecommendAiItem> recommendations = new ArrayList<>();
 
-    public String get(int index) {
+    public String getBase64(int index) {
         return this.recommendations.get(index).getStyleImageBase64();
     }
 }
