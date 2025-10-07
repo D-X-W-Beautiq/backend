@@ -71,10 +71,10 @@ public class S3Service {
      * S3에 이미지 영구 저장하기
      */
     public String saveImage(String imageName, UUID userId) {
-        // temp/ 이미지 삭제하는지 확인
-        // todo: 예외처리
-        if (!imageName.startsWith("temp/")) {
-            throw new IllegalArgumentException("Only temp images can be saved");
+        // 사용자 소유권 검증
+        String expectedPrefix = "temp/" + userId + "/";
+        if (!imageName.startsWith(expectedPrefix)) {
+            throw new IllegalArgumentException("Access denied: image does not belong to user");
         }
 
         // image 폴더로 복사
