@@ -8,7 +8,7 @@ import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
-@Table(name = "wishlist_item", indexes = {
+@Table(name = "wishlist_product", indexes = {
         @Index(name = "idx_wishlist_user", columnList = "user_id"),
         @Index(name = "idx_wishlist_product", columnList = "product_id")
 })

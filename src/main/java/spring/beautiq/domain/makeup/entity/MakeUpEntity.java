@@ -14,7 +14,8 @@ import spring.beautiq.global.base.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MakeUp extends BaseEntity {
+@Table(name = "make_up")
+public class MakeUpEntity extends BaseEntity {
 
     private String keywords;
 
