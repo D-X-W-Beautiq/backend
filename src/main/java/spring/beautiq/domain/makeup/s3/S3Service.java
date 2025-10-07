@@ -5,20 +5,24 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import lombok.extern.slf4j.Slf4j;
+import com.amazonaws.services.s3.model.S3Object;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
-@Slf4j
 @Service
 public class S3Service {
+    private static final Logger log = LoggerFactory.getLogger(S3Service.class);
 
     // S3 빈이 조건부(@ConditionalOnProperty)로 생성되지 않을 수 있으므로 optional 주입
     @Autowired(required = false)
@@ -37,17 +41,87 @@ public class S3Service {
     }
 
     /**
-     * S3에 이미지 업로드
+     * S3에 이미지 임시 업로드 하기
      */
-    public void uploadImage(MultipartFile image, UUID id) throws IOException {
+    public String uploadImage(MultipartFile image, UUID userId) throws IOException {
         ensureEnabled();
-        String fileName = id.toString();
+        // 이미지 입력 유효 검증
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("Image cannot be null or empty");
+        }
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid image file type");
+        }
+
+        // 이미지 확장자 보존하며 고유한 이름 생성
+        String originalImageName = image.getOriginalFilename();
+        String extension = (originalImageName != null && originalImageName.contains("."))
+                ? originalImageName.substring(originalImageName.lastIndexOf("."))
+                : "";
+
+        // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록
+        String imageName = "temp/" + userId + "/" + UUID.randomUUID() + extension;
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(image.getContentType());
         metadata.setContentLength(image.getSize());
 
-        amazonS3.putObject(new PutObjectRequest(bucket, fileName, image.getInputStream(), metadata));
+        // S3에 이미지 업로드 요청 생성
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, imageName, image.getInputStream(), metadata);
+
+        // S3에 이미지 업로드
+        amazonS3.putObject(putObjectRequest);
+
+        return imageName; // 업로드된 이미지 이름 반환
+    }
+
+    /**
+     * S3에 이미지 영구 저장하기
+     */
+    public String saveImage(String imageName, UUID userId) {
+        // 사용자 소유권 검증
+        String expectedPrefix = "temp/" + userId + "/";
+        if (!imageName.startsWith(expectedPrefix)) {
+            throw new IllegalArgumentException("Access denied: image does not belong to user");
+        }
+
+        // image 폴더로 복사
+        String extension = imageName.contains(".") ? imageName.substring(imageName.lastIndexOf(".")) : "";
+        String newImageName = "images/" + userId + "/" + UUID.randomUUID() + extension; // 고유한 이미지 이름 생성 + 확장자 보존
+        amazonS3.copyObject(bucket, imageName, bucket, newImageName);
+
+        // temp 폴더의 이미지 삭제
+        deleteImage(imageName);
+
+        return newImageName; // 영구 저장된 이미지 이름 반환
+    }
+
+    /**
+     * S3에서 이미지 다운로드 및 Base64 인코딩
+     */
+    public String imageNameToBase64(String imageName) throws IOException {
+        // todo: 예외 처리
+        if(imageName == null || imageName.isBlank()) {
+            throw new IllegalArgumentException("Image name cannot be null or blank");
+        }
+        if(!amazonS3.doesObjectExist(bucket, imageName)) {
+            throw new IllegalArgumentException("Image does not exist in S3: " + imageName);
+        }
+
+        try (S3Object s3Object = amazonS3.getObject(bucket, imageName);
+             InputStream inputStream = s3Object.getObjectContent()) {
+            byte[] imageBytes = inputStream.readAllBytes();
+            return Base64.getEncoder().encodeToString(imageBytes);
+        }
+    }
+
+    public String downloadImage(String fileName) throws IOException {
+        try (S3Object s3Object = amazonS3.getObject(bucket, fileName);
+             InputStream inputStream = s3Object.getObjectContent()) {
+            byte[] imageBytes = inputStream.readAllBytes();
+            return Base64.getEncoder().encodeToString(imageBytes);
+        }
     }
 
     /**
@@ -77,5 +151,12 @@ public class S3Service {
             log.debug("Region 조회 실패, 기본 URL 형식 사용: {}", e.getMessage());
             return String.format("https://%s.s3.amazonaws.com/%s", bucket, fileName);
         }
+    }
+
+    public void deleteImage(String imageName) {
+        if(!amazonS3.doesObjectExist(bucket, imageName)) {
+            log.warn("Image does not exist, but proceeding with delete operation: {}", imageName);
+        }
+        amazonS3.deleteObject(bucket, imageName);
     }
 }
