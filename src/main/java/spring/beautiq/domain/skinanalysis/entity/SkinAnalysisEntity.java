@@ -7,13 +7,13 @@ import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
-@Table(name = "skin_analysis")
 @Getter
 @Setter
 @Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "skin_analysis")
 public class SkinAnalysisEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
