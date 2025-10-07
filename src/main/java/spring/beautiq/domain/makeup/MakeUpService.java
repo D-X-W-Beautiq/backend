@@ -72,7 +72,6 @@ public class MakeUpService {
         return makeUpListResponseDto;
     }
 
-    //todo: MakeUpDetailResponseDto로 집어넣기
     private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUp makeUp) {
         MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
         makeUpDetailResponseDto.setMakeUpId(makeUp.getId());
