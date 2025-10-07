@@ -254,6 +254,9 @@ public class MakeUpService {
         customizeAiRequestDto.setBaseImageBase64(currentImageBase64); // 현재 이미지
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
             if(editForWeb.isEdited()) {
+                if(editForWeb.getColor() == null) {
+                    throw new IllegalArgumentException("Color must be provided for edited regions");
+                }
                 customizeAiRequestDto.addEdit(
                         editForWeb.getRegion(),
                         editForWeb.getIntensity(),
