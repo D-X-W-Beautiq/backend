@@ -64,8 +64,8 @@ public class MakeUpService {
     public MakeUpListResponseDto getMakeUpList(UUID userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<MakeUp> makeUpPage = makeUpRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
+
         MakeUpListResponseDto makeUpListResponseDto = new MakeUpListResponseDto();
-        // todo: 페이징 처리
         for (MakeUp makeUp : makeUpPage.getContent()) {
             makeUpListResponseDto.getMakeUps().add(MakeUptoMakeUpDetailResponseDto(makeUp));
         }
