@@ -20,6 +20,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class S3Service {
     private static final Logger log = LoggerFactory.getLogger(S3Service.class);
@@ -63,7 +64,6 @@ public class S3Service {
         // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록
         String imageName = "temp/" + userId + "/" + UUID.randomUUID() + extension;
 
-        // 메타데이터 설정
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(image.getContentType());
         metadata.setContentLength(image.getSize());
