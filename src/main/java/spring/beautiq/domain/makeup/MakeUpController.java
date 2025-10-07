@@ -78,10 +78,11 @@ public class MakeUpController {
      */
     @PostMapping(value = "/recommendation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendResponseDto styleRecommend(
+            @CurrentUserId UUID userId,
             @RequestPart("sourceImage") MultipartFile sourceImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
     ) throws IOException {
-        return makeUpService.styleRecommend(sourceImage, recommendRequestDto);
+        return makeUpService.styleRecommend(userId, sourceImage, recommendRequestDto);
     }
 
     /**
@@ -89,11 +90,12 @@ public class MakeUpController {
      */
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImageItem simulateMakeUp(
+            @CurrentUserId UUID userId,
             @RequestPart("sourceImage") MultipartFile sourceImage,
             @RequestPart("styleImage") MultipartFile styleImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
     ) throws IOException {
-        return makeUpService.simulateMakeUp(sourceImage, styleImage, recommendRequestDto);
+        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage, recommendRequestDto);
     }
 
     /**

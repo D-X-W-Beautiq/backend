@@ -48,7 +48,7 @@ public class MakeUpService {
     public void saveMakeUp(UUID userId, MakeUpSaveRequestDto saveRequestDto) {
 
         // s3에서 이미지 영구 저장
-        String newImageName = s3Service.saveImage(saveRequestDto.getImageName());
+        String newImageName = s3Service.saveImage(saveRequestDto.getImageName(), userId);
 
         MakeUp makeUp = MakeUp.builder()
                 .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
@@ -119,6 +119,7 @@ public class MakeUpService {
      * 스타일 추천
      */
     public RecommendResponseDto styleRecommend(
+            UUID userId,
             MultipartFile sourceImage,
             RecommendRequestDto recommendRequestDto // todo: 사진과 키워드 둘 중 하나만 받을지 미정
     ) throws IOException {
@@ -170,7 +171,7 @@ public class MakeUpService {
         // S3에 임시 업로드 후 URL dto에 담기
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
         for (MultipartFile styleImage : styleImages) {
-            String styleImageName = s3Service.uploadImage(styleImage);
+            String styleImageName = s3Service.uploadImage(styleImage, userId);
             recommendResponseDto.addRecommendation(styleImageName, s3Service.getPreSignedUrl(styleImageName));
         }
 
@@ -181,6 +182,7 @@ public class MakeUpService {
      * 메이크업 시뮬레이션
      */
     public ImageItem simulateMakeUp(
+            UUID userId,
             MultipartFile sourceImage,
             MultipartFile styleImage,
             RecommendRequestDto recommendRequestDto
@@ -232,7 +234,7 @@ public class MakeUpService {
         MultipartFile simulatedImage = base64ToMultipart(simulationAiResponseDto.getResultImageBase64());
 
         // S3에 임시 업로드 후 URL dto에 담기
-        String simulatedImageName = s3Service.uploadImage(simulatedImage);
+        String simulatedImageName = s3Service.uploadImage(simulatedImage, userId);
 
         return new ImageItem(simulatedImageName, s3Service.getPreSignedUrl(simulatedImageName));
     }
@@ -287,7 +289,7 @@ public class MakeUpService {
         MultipartFile customizedImage = base64ToMultipart(customizeAiResponseDto.getResultImageBase64());
 
         // S3에 임시 업로드 후 URL dto에 담기
-        String customizedImageName = s3Service.uploadImage(customizedImage);
+        String customizedImageName = s3Service.uploadImage(customizedImage, userId);
         return new ImageItem(customizedImageName, s3Service.getPreSignedUrl(customizedImageName));
     }
 

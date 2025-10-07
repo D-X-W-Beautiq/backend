@@ -34,7 +34,7 @@ public class S3Service {
     /**
      * S3에 이미지 임시 업로드 하기
      */
-    public String uploadImage(MultipartFile image) throws IOException {
+    public String uploadImage(MultipartFile image, UUID userId) throws IOException {
         // 이미지 입력 유효 검증
         if (image == null || image.isEmpty()) {
             throw new IllegalArgumentException("Image cannot be null or empty");
@@ -50,7 +50,8 @@ public class S3Service {
                 ? originalImageName.substring(originalImageName.lastIndexOf("."))
                 : "";
 
-        String imageName = "temp/" + UUID.randomUUID() + extension;
+        // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록
+        String imageName = "temp/" + userId + "/" + UUID.randomUUID() + extension;
 
         // 메타데이터 설정
         ObjectMetadata metadata = new ObjectMetadata();
@@ -69,7 +70,7 @@ public class S3Service {
     /**
      * S3에 이미지 영구 저장하기
      */
-    public String saveImage(String imageName) {
+    public String saveImage(String imageName, UUID userId) {
         // temp/ 이미지 삭제하는지 확인
         // todo: 예외처리
         if (!imageName.startsWith("temp/")) {
@@ -78,7 +79,7 @@ public class S3Service {
 
         // image 폴더로 복사
         String extension = imageName.contains(".") ? imageName.substring(imageName.lastIndexOf(".")) : "";
-        String newImageName = "images/" + UUID.randomUUID() + extension; // 고유한 이미지 이름 생성 + 확장자 보존
+        String newImageName = "images/" + userId + "/" + UUID.randomUUID() + extension; // 고유한 이미지 이름 생성 + 확장자 보존
         amazonS3.copyObject(bucket, imageName, bucket, newImageName);
 
         // temp 폴더의 이미지 삭제
