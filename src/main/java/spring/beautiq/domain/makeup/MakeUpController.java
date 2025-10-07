@@ -41,9 +41,11 @@ public class MakeUpController {
      */
     @GetMapping()
     public MakeUpListResponseDto getMakeUpList(
-            @CurrentUserId UUID userId
+            @CurrentUserId UUID userId, // todo: 페이징
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-        return makeUpService.getMakeUpList(userId);
+        return makeUpService.getMakeUpList(userId, page, size);
     }
 
     /**

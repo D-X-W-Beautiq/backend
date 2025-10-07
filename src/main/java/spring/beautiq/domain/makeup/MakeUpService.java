@@ -3,6 +3,10 @@ package spring.beautiq.domain.makeup;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.UUID;
+
+import static java.util.Arrays.asList;
 
 @Service
 @Transactional(readOnly = true)
@@ -55,13 +61,32 @@ public class MakeUpService {
     /**
      * 저장한 메이크업 목록 조회
      */
-    public MakeUpListResponseDto getMakeUpList(UUID userId) {
-        RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        for (MakeUp makeUp : makeUpRepository.findAllByUserId(userId)) {
-            String imageName = makeUp.getImageName();
-            recommendResponseDto.addRecommendation(imageName, s3Service.getPreSignedUrl(imageName));
+    public MakeUpListResponseDto getMakeUpList(UUID userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<MakeUp> makeUpPage = makeUpRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
+        MakeUpListResponseDto makeUpListResponseDto = new MakeUpListResponseDto();
+        // todo: 페이징 처리
+        for (MakeUp makeUp : makeUpPage.getContent()) {
+            makeUpListResponseDto.getMakeUps().add(MakeUptoMakeUpDetailResponseDto(makeUp));
         }
-        return null;
+        return makeUpListResponseDto;
+    }
+
+    //todo: MakeUpDetailResponseDto로 집어넣기
+    private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUp makeUp) {
+        MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
+        makeUpDetailResponseDto.setMakeUpId(makeUp.getId());
+        makeUpDetailResponseDto.setImageName(makeUp.getImageName());
+        makeUpDetailResponseDto.setImageUrl(s3Service.getPreSignedUrl(makeUp.getImageName()));
+        makeUpDetailResponseDto.setCreatedAt(makeUp.getCreatedAt().toString());
+
+        String keywordsValue = makeUp.getKeywords();
+        String[] keywords = (keywordsValue == null || keywordsValue.isBlank())
+                ? new String[0]
+                : keywordsValue.split(","); // todo: 키워드 구분자 맞춰서 변경
+        makeUpDetailResponseDto.setKeywords(asList(keywords));
+
+        return makeUpDetailResponseDto;
     }
 
     /**
@@ -70,17 +95,9 @@ public class MakeUpService {
     public MakeUpDetailResponseDto getMakeUp(UUID userId, String imageName) {
         MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
-        MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
-        makeUpDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
-
-        String keywordsValue = makeUp.getKeywords();
-        String[] keywords = (keywordsValue == null || keywordsValue.isBlank())
-                        ? new String[0]
-                        : keywordsValue.split(","); // todo: 키워드 구분자 맞춰서 변경
-        makeUpDetailResponseDto.setKeywords(keywords);
-
-        return makeUpDetailResponseDto;
+        return MakeUptoMakeUpDetailResponseDto(makeUp);
     }
+
 
     /**
      * 메이크업 삭제
