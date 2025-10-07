@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import spring.beautiq.domain.makeup.dto.common.ImageItem;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.global.security.annotation.CurrentUserId;
 import spring.beautiq.global.security.guard.MemberGuard;
@@ -39,7 +40,7 @@ public class MakeUpController {
      * @return recommendResponseDto
      */
     @GetMapping()
-    public RecommendResponseDto getMakeUpList(
+    public MakeUpListResponseDto getMakeUpList(
             @CurrentUserId UUID userId
     ) {
         return makeUpService.getMakeUpList(userId);
@@ -50,7 +51,7 @@ public class MakeUpController {
      * @return recommendDetailResponseDto
      */
     @GetMapping("/detail")
-    public RecommendDetailResponseDto getMakeUp(
+    public MakeUpDetailResponseDto getMakeUp(
             @CurrentUserId UUID userId,
             @RequestParam("imageName") String imageName
     ) {
@@ -85,7 +86,7 @@ public class MakeUpController {
      * 메이크업 시뮬레이션
      */
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public RecommendationItem simulateMakeUp(
+    public ImageItem simulateMakeUp(
             @RequestPart("sourceImage") MultipartFile sourceImage,
             @RequestPart("styleImage") MultipartFile styleImage,
             @RequestPart("data") RecommendRequestDto recommendRequestDto
@@ -97,7 +98,7 @@ public class MakeUpController {
      * 메이크업 커스터마이즈
      */
     @PostMapping(value = "/customize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public RecommendationItem customize(
+    public ImageItem customize(
             @CurrentUserId UUID userId,
             @RequestPart("data") CustomizeRequestDto customizeRequestDto
     ) throws IOException {

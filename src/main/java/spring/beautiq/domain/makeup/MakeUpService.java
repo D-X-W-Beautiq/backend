@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.makeup.dto.ai.*;
 import spring.beautiq.domain.makeup.dto.common.Color;
+import spring.beautiq.domain.makeup.dto.common.ImageItem;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUp;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
@@ -54,31 +55,31 @@ public class MakeUpService {
     /**
      * 저장한 메이크업 목록 조회
      */
-    public RecommendResponseDto getMakeUpList(UUID userId) {
+    public MakeUpListResponseDto getMakeUpList(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
         for (MakeUp makeUp : makeUpRepository.findAllByUserId(userId)) {
             String imageName = makeUp.getImageName();
             recommendResponseDto.addRecommendation(imageName, s3Service.getPreSignedUrl(imageName));
         }
-        return recommendResponseDto;
+        return null;
     }
 
     /**
      * 메이크업 상세 조회
      */
-    public RecommendDetailResponseDto getMakeUp(UUID userId, String imageName) {
+    public MakeUpDetailResponseDto getMakeUp(UUID userId, String imageName) {
         MakeUp makeUp = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
-        RecommendDetailResponseDto recommendDetailResponseDto = new RecommendDetailResponseDto();
-        recommendDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
+        MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
+        makeUpDetailResponseDto.addRecommendation(makeUp.getImageName(), s3Service.getPreSignedUrl(makeUp.getImageName()));
 
         String keywordsValue = makeUp.getKeywords();
         String[] keywords = (keywordsValue == null || keywordsValue.isBlank())
                         ? new String[0]
                         : keywordsValue.split(","); // todo: 키워드 구분자 맞춰서 변경
-        recommendDetailResponseDto.setKeywords(keywords);
+        makeUpDetailResponseDto.setKeywords(keywords);
 
-        return recommendDetailResponseDto;
+        return makeUpDetailResponseDto;
     }
 
     /**
@@ -162,7 +163,7 @@ public class MakeUpService {
     /**
      * 메이크업 시뮬레이션
      */
-    public RecommendationItem simulateMakeUp(
+    public ImageItem simulateMakeUp(
             MultipartFile sourceImage,
             MultipartFile styleImage,
             RecommendRequestDto recommendRequestDto
@@ -216,13 +217,13 @@ public class MakeUpService {
         // S3에 임시 업로드 후 URL dto에 담기
         String simulatedImageName = s3Service.uploadImage(simulatedImage);
 
-        return new RecommendationItem(simulatedImageName, s3Service.getPreSignedUrl(simulatedImageName));
+        return new ImageItem(simulatedImageName, s3Service.getPreSignedUrl(simulatedImageName));
     }
 
     /**
      * 메이크업 커스터마이즈
      */
-    public RecommendationItem customize(
+    public ImageItem customize(
             UUID userId,
             CustomizeRequestDto customizeRequestDto
     ) throws IOException {
@@ -267,7 +268,7 @@ public class MakeUpService {
 
         // S3에 임시 업로드 후 URL dto에 담기
         String customizedImageName = s3Service.uploadImage(customizedImage);
-        return new RecommendationItem(customizedImageName, s3Service.getPreSignedUrl(customizedImageName));
+        return new ImageItem(customizedImageName, s3Service.getPreSignedUrl(customizedImageName));
     }
 
     static String multipartToBase64(MultipartFile file) throws IOException {
