@@ -20,7 +20,6 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
-@Slf4j
 @Service
 public class S3Service {
     private static final Logger log = LoggerFactory.getLogger(S3Service.class);
