@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import spring.beautiq.domain.makeup.entity.MakeUp;
+import spring.beautiq.domain.makeup.entity.MakeUpEntity;
 import spring.beautiq.domain.makeup.dto.RecommendRequestDto;
 import spring.beautiq.domain.makeup.dto.RecommendResponseDto;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
@@ -47,23 +47,23 @@ public class MakeUpService {
 //        SkinAnalysis skinAnalysis = skinAnalysisRepository.findById(userId)
 //                .orElseThrow(() -> new RuntimeException("Skin analysis not found"));
 
-        MakeUp makeUp = MakeUp.builder()
+        MakeUpEntity makeUpEntity = MakeUpEntity.builder()
                 .keywords(recommendRequestDto.getKeywords())
                 .isLiked(false)
                 .user(user)
 //                .skinAnalysis(skinAnalysis)
                 .build();
 
-        makeUpRepository.save(makeUp);
+        makeUpRepository.save(makeUpEntity);
 
         // 이미지를 받아오고 엔티티 아이디를 파일 이름으로 설정하여 저장한다.
         // 그러면 이미지 url을 따로 저장하지 않고 사용할 수 있지 않을까..합니다 -> 가능!
         // todo: 예외 처리 (업로드 실패 시)
-        s3Service.uploadImage(responseImg, makeUp.getId());
+        s3Service.uploadImage(responseImg, makeUpEntity.getId());
 
 
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
-        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
+        recommendResponseDto.getRecommendations().add(s3Service.getPreSignedUrl(String.valueOf(makeUpEntity.getId())));
 
         return recommendResponseDto;
     }
@@ -72,8 +72,8 @@ public class MakeUpService {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
 
         makeUpRepository.findAllByUserId(userId).forEach(
-                makeUp -> {
-                    recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(makeUp.getId().toString()));
+                makeUpEntity -> {
+                    recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(makeUpEntity.getId().toString()));
                 }
         );
         System.out.println("userId = " + userId);
@@ -83,10 +83,10 @@ public class MakeUpService {
 
     @Transactional
     public String changeWish(UUID makeupId) {
-        Optional<MakeUp> optionalMakeUp = makeUpRepository.findById(makeupId);
+        Optional<MakeUpEntity> optionalMakeUp = makeUpRepository.findById(makeupId);
         if (optionalMakeUp.isPresent()) {
-            MakeUp makeUp = optionalMakeUp.get();
-            return makeUp.changeWish().toString();
+            MakeUpEntity makeUpEntity = optionalMakeUp.get();
+            return makeUpEntity.changeWish().toString();
         } else {
             throw new RuntimeException("Make up not found");
         }
@@ -95,8 +95,8 @@ public class MakeUpService {
     public ResponseEntity<RecommendResponseDto> getAllWish(UUID userId) {
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
 
-        makeUpRepository.findAllByUserIdAndIsLiked(userId, true).forEach(makeUp -> {
-            recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(String.valueOf(makeUp.getId())));
+        makeUpRepository.findAllByUserIdAndIsLiked(userId, true).forEach(makeUpEntity -> {
+            recommendResponseDto.addMakeup(s3Service.getPreSignedUrl(String.valueOf(makeUpEntity.getId())));
         });
 
         return ResponseEntity.ok(recommendResponseDto);

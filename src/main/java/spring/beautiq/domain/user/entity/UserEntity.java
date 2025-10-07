@@ -8,9 +8,9 @@ import lombok.*;
 import spring.beautiq.global.base.BaseEntity;
 
 @Entity
-@Table(name = "user_entity")
 @Getter
 @Setter
+@Table(name = "user")
 public class UserEntity extends BaseEntity {
     @Column(nullable = false)
     private String email;
