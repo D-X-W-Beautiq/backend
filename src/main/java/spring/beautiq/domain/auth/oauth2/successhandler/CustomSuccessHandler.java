@@ -6,10 +6,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
@@ -32,34 +32,33 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String userId;
         String username;
 
-        if (principal instanceof CustomOAuth2User) {
-            CustomOAuth2User oAuth2User = (CustomOAuth2User) principal;
+        if (principal instanceof CustomOAuth2User oAuth2User) {
             userId = oAuth2User.getUserId();
             username = oAuth2User.getUsername();
-        } else if (principal instanceof DefaultOAuth2User) {
-            DefaultOAuth2User oAuth2User = (DefaultOAuth2User) principal;
+        } else if (principal instanceof DefaultOAuth2User oAuth2User) {
             userId = (String) oAuth2User.getAttributes().get("userId");
             username = oAuth2User.getAttribute("username");
         } else {
             throw new IllegalArgumentException("지원하지 않는 principal 타입:: " + principal.getClass().getName());
         }
 
+
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority authority = iterator.next();
         String role = authority.getAuthority();
 
-        String token = jwtUtil.createJwt(userId, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
+        String token = jwtUtil.createJwt(userId, username, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
 
-        response.addCookie(createCookie("Authorization", token));
+        response.addCookie(createCookie(token));
         // 프론트 측 특정 리다이렉트 url
         response.sendRedirect("http://localhost:8080/success");
     }
 
 
 
-    private Cookie createCookie(String key, String value) {
-        Cookie cookie = new Cookie(key, value);
+    private Cookie createCookie(String value) {
+        Cookie cookie = new Cookie("Authorization", value);
         cookie.setMaxAge(60*30);
         cookie.setPath("/");
         cookie.setHttpOnly(false);

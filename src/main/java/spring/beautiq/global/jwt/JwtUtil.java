@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class JwtUtil {
 
-    private Key key;
+    private final Key key;
 
     public JwtUtil(@Value("${jwt.secret}") String secret) {
         System.out.println("JwtUtil 생성자 호출됨");
@@ -36,6 +36,10 @@ public class JwtUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("username", String.class);
     }
 
+    public String getUserId(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("userId", String.class);
+    }
+
     public String getRole(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("role", String.class);
     }
@@ -45,10 +49,11 @@ public class JwtUtil {
     }
 
 
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String createJwt(String userId, String username, String role, Long expiredMs) {
 
         Claims claims = Jwts.claims();
 
+        claims.put("userId", userId);
         claims.put("username", username);
         claims.put("role", role);
 
