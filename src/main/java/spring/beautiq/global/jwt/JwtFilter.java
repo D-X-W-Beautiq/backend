@@ -6,6 +6,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -66,12 +67,15 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
 
-        //토큰에서 username과 role 획득
-        String username= jwtUtil.getUsername(token);
+        //토큰에서 userId, username, role 획득
+        String userId = jwtUtil.getUserId(token);
+        String username = jwtUtil.getUsername(token);
         String role = jwtUtil.getRole(token);
+
 
         //userDto를 생성하여 값 set
         OAuth2UserDTO userDTO = new OAuth2UserDTO();
+        userDTO.setUserId(userId);
         userDTO.setUsername(username);
         userDTO.setRole(role);
 
