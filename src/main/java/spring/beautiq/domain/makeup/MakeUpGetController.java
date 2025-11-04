@@ -38,9 +38,9 @@ public class MakeUpGetController {
     @GetMapping("/{makeUpId}")
     public MakeUpDetailResponseDto getMakeUp(
             @CurrentUserId UUID userId,
-            @RequestParam("imageName") String imageName // todo: pathvariable로 바꾸기
+            @PathVariable("makeUpId") UUID makeUpId
     ) {
-        return makeUpService.getMakeUp(userId, imageName);
+        return makeUpService.getMakeUp(userId, makeUpId);
     }
 
     /**
@@ -49,9 +49,9 @@ public class MakeUpGetController {
     @DeleteMapping("/{makeUpId}")
     public ResponseEntity<Void> deleteMakeUp(
             @CurrentUserId UUID userId,
-            @RequestParam("imageName") String imageName // todo: pathvariable로 바꾸기
+            @PathVariable("makeUpId") UUID makeUpId
     ) {
-        makeUpService.deleteMakeUp(userId, imageName);
+        makeUpService.deleteMakeUp(userId, makeUpId);
         return ResponseEntity.noContent().build();
     }
 }

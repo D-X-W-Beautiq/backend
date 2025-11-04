@@ -90,8 +90,8 @@ public class MakeUpService {
     /**
      * 메이크업 상세 조회
      */
-    public MakeUpDetailResponseDto getMakeUp(UUID userId, String imageName) {
-        MakeUpEntity makeUpEntity = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public MakeUpDetailResponseDto getMakeUp(UUID userId, UUID makeUpId) {
+        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
         return MakeUptoMakeUpDetailResponseDto(makeUpEntity);
     }
@@ -101,8 +101,8 @@ public class MakeUpService {
      * 메이크업 삭제
      */
     @Transactional
-    public void deleteMakeUp(UUID userId, String imageName) {
-        MakeUpEntity makeUpEntity = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public void deleteMakeUp(UUID userId, UUID makeUpId) {
+        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
         // s3에서 이미지 삭제
         try {
             s3Service.deleteImage(makeUpEntity.getImageName());
