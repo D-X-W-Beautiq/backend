@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +42,10 @@ public class UserController {
     @Value("${S3_BUCKET}")
     private String bucket;
 
-
+    @GetMapping("/success")
+    public String success() {
+        return "OAuth2 Login Success! JWT 쿠키가 발급되었습니다";
+    }
 
     @Operation(summary = "사용자 정보 조회", description = "username으로 사용자 정보를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공",
