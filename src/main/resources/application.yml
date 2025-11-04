@@ -88,3 +88,30 @@ aws:
   java:
     v1:
       disableDeprecationAnnouncement: true
+
+
+openapi: 3.0.3
+info:
+  title: Demo API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /users/me:
+    get:
+      summary: 내 정보 보기
+      security:
+        - BearerAuth: []   # <- 여기에 인증 적용
+      responses:
+        "200":
+          description: 성공
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []   # <- 전역 설정 (원하면 생략 가능)
