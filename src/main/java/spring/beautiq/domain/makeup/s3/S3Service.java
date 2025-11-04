@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -88,7 +89,7 @@ public class S3Service {
 
         // image 폴더로 복사
         String extension = imageName.contains(".") ? imageName.substring(imageName.lastIndexOf(".")) : "";
-        String newImageName = "images/" + userId + "/" + UUID.randomUUID() + extension; // 고유한 이미지 이름 생성 + 확장자 보존
+        String newImageName = "images/" + userId + "/" + LocalDateTime.now().toLocalDate().toString() + "/" + UUID.randomUUID() + extension; // images/userId/2023-10-05/uuid.jpg
         amazonS3.copyObject(bucket, imageName, bucket, newImageName);
 
         // temp 폴더의 이미지 삭제
