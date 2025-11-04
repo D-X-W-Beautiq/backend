@@ -1,6 +1,6 @@
 spring:
-  profiles:
-    active: mock-ai  # AI Mock 클라이언트 사용 (개발/테스트용)
+#  profiles:
+#    active: mock-ai  # AI Mock 클라이언트 사용 (개발/테스트용)
   config:
     import: optional:file:.env[.properties]
 
