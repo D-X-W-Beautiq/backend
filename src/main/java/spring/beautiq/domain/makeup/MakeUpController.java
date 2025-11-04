@@ -34,44 +34,6 @@ public class MakeUpController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // todo: 조회, 삭제 api url을 어떻게 할까요
-    /**
-     * 저장한 메이크업 목록 조회
-     * @return recommendResponseDto
-     */
-    @GetMapping()
-    public MakeUpListResponseDto getMakeUpList(
-            @CurrentUserId UUID userId, // todo: 페이징
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
-    ) {
-        return makeUpService.getMakeUpList(userId, page, size);
-    }
-
-    /**
-     * 메이크업 상세 조회
-     * @return recommendDetailResponseDto
-     */
-    @GetMapping("/detail")
-    public MakeUpDetailResponseDto getMakeUp(
-            @CurrentUserId UUID userId,
-            @RequestParam("imageName") String imageName
-    ) {
-        return makeUpService.getMakeUp(userId, imageName);
-    }
-
-    /**
-     * 메이크업 삭제
-     */
-    @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteMakeUp(
-            @CurrentUserId UUID userId,
-            @RequestParam("imageName") String imageName
-    ) {
-        makeUpService.deleteMakeUp(userId, imageName);
-        return ResponseEntity.noContent().build();
-    }
-
     /**
      * 메이크업 스타일 추천
      * todo: 이미지와 키워드 양자택일일지 둘 다 받을지 논의 필요
