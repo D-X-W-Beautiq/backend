@@ -1,4 +1,6 @@
 spring:
+#  profiles:
+#    active: mock-ai  # AI Mock 클라이언트 사용 (개발/테스트용)
   config:
     import: optional:file:.env[.properties]
 
@@ -56,6 +58,10 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
 
 jwt:
   secret: ${JWT_SECRET}
