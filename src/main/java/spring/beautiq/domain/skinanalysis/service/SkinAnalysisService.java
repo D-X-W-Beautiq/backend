@@ -1,11 +1,10 @@
 package spring.beautiq.domain.skinanalysis.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
+import spring.beautiq.domain.skinanalysis.client.AIClient;
 import spring.beautiq.domain.skinanalysis.dto.ai.request.SkinAnalysisAIRequest;
 import spring.beautiq.domain.skinanalysis.dto.ai.response.SkinAnalysisAIResponse;
 import spring.beautiq.domain.skinanalysis.dto.common.DayPoint;
@@ -34,7 +33,7 @@ public class SkinAnalysisService {
 
     private final UserRepository userRepository;
     private final SkinAnalysisRepository skinAnalysisRepository;
-    private final WebClient.Builder webClientBuilder;
+    private final AIClient aiClient;
 
 
     // 프런트에서 이미지 받기 → AI 서버에 이미지 넘기기 → 분석 결과 받기  → 종합 점수 산출 후 분석 결과 DB에 저장 및 프런트로 응답 반환하기
@@ -66,14 +65,8 @@ public class SkinAnalysisService {
             SkinAnalysisAIRequest aiRequest = new SkinAnalysisAIRequest();
             aiRequest.setImageBase64(base64);
 
-            // 3. AI 서버 호출
-            SkinAnalysisAIResponse aiResult = webClientBuilder.build().post()
-                    .uri("/skin/analysis")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(aiRequest)
-                    .retrieve()
-                    .bodyToMono(SkinAnalysisAIResponse.class)
-                    .block(); // 동기 처리
+            // 3. AI 서버 호출 (추상화된 AIClient 사용)
+            SkinAnalysisAIResponse aiResult = aiClient.analyzeSkin(aiRequest);
 
             if (aiResult == null || aiResult.getPredictions() == null) {
                 throw SkinAnalysisExceptions.AI_SERVER_RESPONSE_EMPTY.toException();
