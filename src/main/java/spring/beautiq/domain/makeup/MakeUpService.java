@@ -182,8 +182,7 @@ public class MakeUpService {
     public ImageItem simulateMakeUp(
             UUID userId,
             MultipartFile sourceImage,
-            MultipartFile styleImage,
-            RecommendRequestDto recommendRequestDto
+            MultipartFile styleImage
             ) throws IOException {
 
         // sourceImage, styleImage 유효설 검증
@@ -210,7 +209,6 @@ public class MakeUpService {
         SimulationAiRequestDto simulationAiRequestDto = SimulationAiRequestDto.builder()
                 .sourceImageBase64(sourceImageBase64)
                 .styleImageBase64(styleImageBase64)
-                .keywords(recommendRequestDto.getKeywords())
                 .build();
 
         // AI 서버에 JSON 요청

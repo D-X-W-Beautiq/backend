@@ -8,5 +8,4 @@ import lombok.Data;
 public class SimulationAiRequestDto {
     private String sourceImageBase64;
     private String styleImageBase64;
-    private String[] keywords;
 }

@@ -92,10 +92,9 @@ public class MakeUpController {
     public ImageItem simulateMakeUp(
             @CurrentUserId UUID userId,
             @RequestPart("sourceImage") MultipartFile sourceImage,
-            @RequestPart("styleImage") MultipartFile styleImage,
-            @RequestPart("data") RecommendRequestDto recommendRequestDto
+            @RequestPart("styleImage") MultipartFile styleImage
     ) throws IOException {
-        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage, recommendRequestDto);
+        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage);
     }
 
     /**
