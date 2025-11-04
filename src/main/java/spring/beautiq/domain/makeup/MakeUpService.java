@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.makeup.dto.ai.*;
-import spring.beautiq.domain.makeup.dto.common.Color;
 import spring.beautiq.domain.makeup.dto.common.ImageItem;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUpEntity;
@@ -255,17 +254,9 @@ public class MakeUpService {
         customizeAiRequestDto.setBaseImageBase64(currentImageBase64); // 현재 이미지
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
             if(editForWeb.isEdited()) {
-                if(editForWeb.getColor() == null) {
-                    throw new IllegalArgumentException("Color must be provided for edited regions");
-                }
                 customizeAiRequestDto.addEdit(
                         editForWeb.getRegion(),
-                        editForWeb.getIntensity(),
-                        new Color(
-                                editForWeb.getColor().getR(),
-                                editForWeb.getColor().getG(),
-                                editForWeb.getColor().getB()
-                        )
+                        editForWeb.getIntensity()
                 );
             }
         }

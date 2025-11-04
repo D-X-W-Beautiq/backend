@@ -3,7 +3,6 @@ package spring.beautiq.domain.makeup.dto.web;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import spring.beautiq.domain.makeup.dto.common.Color;
 
 import java.util.List;
 
@@ -19,6 +18,5 @@ public class CustomizeRequestDto {
         private boolean isEdited;
         private String region; // "skin" | "eye" | "lip" | "blush"
         private int intensity; // 0~100
-        private Color color;
     }
 }

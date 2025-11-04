@@ -3,7 +3,6 @@ package spring.beautiq.domain.makeup.dto.ai;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import spring.beautiq.domain.makeup.dto.common.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +23,9 @@ public class CustomizeAiRequestDto {
         @Max(value = 100, message = "intensity는 100 이하여야 합니다")
         private int intensity; // 0~100
 
-        @NotNull(message = "color는 필수입니다")
-        private Color color;
     }
 
-    public void addEdit(String region, int intensity, Color color) {
-        this.edits.add(new EditForAi(region, intensity, color));
+    public void addEdit(String region, int intensity) {
+        this.edits.add(new EditForAi(region, intensity));
     }
 }
