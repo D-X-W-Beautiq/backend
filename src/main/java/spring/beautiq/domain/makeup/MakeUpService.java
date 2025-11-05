@@ -104,6 +104,9 @@ public class MakeUpService {
     @Transactional
     public void deleteMakeUp(UUID userId, UUID makeUpId) {
         MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        if(!makeUpEntity.getUser().getId().equals(userId)) { // 삭제 시 사용자 권한 검증
+            throw new RuntimeException("Unauthorized");
+        }
         // s3에서 이미지 삭제
         try {
             s3Service.deleteImage(makeUpEntity.getImageName());
