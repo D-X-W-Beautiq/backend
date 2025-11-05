@@ -51,6 +51,7 @@ public class MakeUpService {
 
         MakeUpEntity makeUp = MakeUpEntity.builder()
                 .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                .keywords(String.join(",", saveRequestDto.getKeywords()))
                 .imageName(newImageName)
                 .build();
 
