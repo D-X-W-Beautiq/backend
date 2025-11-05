@@ -92,7 +92,7 @@ public class MakeUpService {
     private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUpEntity makeUpEntity) {
         MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
         makeUpDetailResponseDto.setMakeUpId(makeUpEntity.getId());
-        makeUpDetailResponseDto.setImageName(makeUpEntity.getImageName().split("/")[3]);
+        makeUpDetailResponseDto.setImageName((makeUpEntity.getImageName().split("/")[3]).split("\\.")[0]);
         makeUpDetailResponseDto.setImageUrl(s3Service.getPreSignedUrl(makeUpEntity.getImageName()));
         makeUpDetailResponseDto.setCreatedAt(makeUpEntity.getCreatedAt().toString());
 
