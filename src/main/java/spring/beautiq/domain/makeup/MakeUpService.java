@@ -75,7 +75,19 @@ public class MakeUpService {
     private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUpEntity makeUpEntity) {
         MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
         makeUpDetailResponseDto.setMakeUpId(makeUpEntity.getId());
-        makeUpDetailResponseDto.setImageName((makeUpEntity.getImageName().split("/")[3]).split("\\.")[0]);
+        String fullPath = makeUpEntity.getImageName();
+        if (fullPath == null || fullPath.isBlank()) {
+            throw new IllegalStateException("Image name cannot be null or empty");
+        }
+        String[] pathSegments = fullPath.split("/");
+        if (pathSegments.length < 4) {
+            throw new IllegalStateException("Invalid image path format: " + fullPath);
+        }
+        String fileNameWithExt = pathSegments[3];
+        String fileName = fileNameWithExt.contains(".")
+                ? fileNameWithExt.substring(0, fileNameWithExt.lastIndexOf("."))
+                : fileNameWithExt;
+        makeUpDetailResponseDto.setImageName(fileName);
         makeUpDetailResponseDto.setImageUrl(s3Service.getPreSignedUrl(makeUpEntity.getImageName()));
         makeUpDetailResponseDto.setCreatedAt(makeUpEntity.getCreatedAt().toString());
 
