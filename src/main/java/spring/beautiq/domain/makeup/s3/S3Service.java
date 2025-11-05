@@ -89,7 +89,7 @@ public class S3Service {
 
         // image 폴더로 복사
         String extension = imageName.contains(".") ? imageName.substring(imageName.lastIndexOf(".")) : "";
-        String newImageName = "images/" + userId + "/" + LocalDateTime.now().toLocalDate().toString() + "/" + UUID.randomUUID() + extension; // images/userId/2023-10-05/uuid.jpg
+        String newImageName = "images/" + userId+ "/" + UUID.randomUUID() + "/" + LocalDateTime.now().toLocalDate().toString() + extension; // images/userId/uuid/2023-10-05.jpg
         amazonS3.copyObject(bucket, imageName, bucket, newImageName);
 
         // temp 폴더의 이미지 삭제
