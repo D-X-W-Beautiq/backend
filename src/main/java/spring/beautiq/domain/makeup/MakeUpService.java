@@ -117,6 +117,10 @@ public class MakeUpService {
             throw new RuntimeException("Access denied: not your makeup");
         }
 
+        if(!makeUpEntity.getUser().getId().equals(userId)) { // 조회 시 사용자 권한 검증
+            throw new RuntimeException("Unauthorized");
+        }
+
         return MakeUptoMakeUpDetailResponseDto(makeUpEntity);
     }
 
