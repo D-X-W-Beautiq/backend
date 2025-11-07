@@ -24,14 +24,12 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
 
     private final UserRepository userRepository;
 
-    // currentUserId 어노테이션이 붙어있고, 파라미터 타입이 UUID인 경우 이 리졸버가 동작
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUserId.class)
                 && UUID.class.isAssignableFrom(parameter.getParameterType());
     }
 
-    // 실제로 파라미터를 어떻게 처리할지 정의
     @Override
     public Object resolveArgument(MethodParameter parameter,
                                   @Nullable ModelAndViewContainer mavContainer,
@@ -44,69 +42,54 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            return handleMissingUser(required);
+            return handleMissingAuthentication(required);
         }
 
         Object principal = authentication.getPrincipal();
 
         if (!(principal instanceof OAuth2User oAuth2User)) {
-            return handleMissingUser(required);
+            return handleMissingAuthentication(required);
         }
 
-        // 1차 시도: OAuth2User attributes에서 userId 추출
-        UUID userId = extractUserIdFromAttributes(oAuth2User);
-        if (userId != null) {
-            return userId;
+        // userId 추출 시도
+        return extractUserId(oAuth2User, required);
+    }
+
+    private UUID extractUserId(OAuth2User oAuth2User, boolean required) {
+        // 1차: attributes에서 직접 추출
+        Object userIdAttr = oAuth2User.getAttribute("userId");
+        if (userIdAttr != null) {
+            try {
+                return UUID.fromString(String.valueOf(userIdAttr));
+            } catch (IllegalArgumentException e) {
+                if (required) {
+                    throw GlobalErrorCode.INVALID_ACCESS_TOKEN.toException();
+                }
+            }
         }
 
-        // 2차 시도: username으로 DB 조회
-        userId = extractUserIdFromDatabase(oAuth2User);
-        if (userId != null) {
-            return userId;
+        // 2차: username으로 DB 조회 (JWT에 username이 포함되므로)
+        Object usernameAttr = oAuth2User.getAttribute("username");
+        if (usernameAttr != null) {
+            String username = String.valueOf(usernameAttr);
+            if (!username.isBlank() && !"null".equals(username)) {
+                return userRepository.findByUsername(username)
+                        .map(BaseEntity::getId)
+                        .orElseGet(() -> handleMissingUser(required));
+            }
         }
 
         return handleMissingUser(required);
     }
 
-    private UUID extractUserIdFromAttributes(OAuth2User oAuth2User) {
-        Object userIdAttr = oAuth2User.getAttribute("userId");
-
-        if (userIdAttr == null) {
-            return null;
+    private UUID handleMissingAuthentication(boolean required) {
+        if (required) {
+            throw GlobalErrorCode.SECURITY_USER_NOT_FOUND.toException();
         }
-
-        String userIdStr = String.valueOf(userIdAttr);
-
-        if (userIdStr.isBlank() || "null".equals(userIdStr)) {
-            return null;
-        }
-
-        try {
-            return UUID.fromString(userIdStr);
-        } catch (IllegalArgumentException e) {
-            throw GlobalErrorCode.INVALID_ACCESS_TOKEN.toException();
-        }
+        return null;
     }
 
-    private UUID extractUserIdFromDatabase(OAuth2User oAuth2User) {
-        Object usernameAttr = oAuth2User.getAttribute("username");
-
-        if (usernameAttr == null) {
-            return null;
-        }
-
-        String username = String.valueOf(usernameAttr);
-
-        if (username.isBlank() || "null".equals(username)) {
-            return null;
-        }
-
-        return userRepository.findByUsername(username)
-                .map(BaseEntity::getId)
-                .orElse(null);
-    }
-
-    private Object handleMissingUser(boolean required) {
+    private UUID handleMissingUser(boolean required) {
         if (required) {
             throw GlobalErrorCode.SECURITY_USER_NOT_FOUND.toException();
         }

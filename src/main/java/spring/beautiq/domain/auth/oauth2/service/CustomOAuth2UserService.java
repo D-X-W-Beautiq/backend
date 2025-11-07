@@ -2,10 +2,7 @@ package spring.beautiq.domain.auth.oauth2.service;
 
 
 import jakarta.transaction.Transactional;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -26,7 +23,6 @@ import spring.beautiq.domain.user.repository.UserRepository;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-    private final OidcUserService oidcUserService = new OidcUserService();
 
 
     @Override
@@ -36,16 +32,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         OAuth2Response oAuth2Response = createOAuth2Response(registrationId, oAuth2User);
 
-        String username = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
+        String providerId = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
+        String email = oAuth2Response.getEmail();
 
-        UserEntity userEntity = userRepository.findByUsername(username)
+        // providerId로 먼저 조회 (이메일 변경 케이스 대응)
+        UserEntity userEntity = userRepository.findByProviderId(providerId)
                 .orElseGet(() -> {
-                    UserEntity newUser = new UserEntity();
-                    newUser.setUsername(username);
-
-                    newUser.setEmail(oAuth2Response.getEmail());
-                    newUser.setRole("ROLE_USER");
-                    return userRepository.save(newUser);
+                    // providerId 없으면 이메일로 조회
+                    return userRepository.findByEmail(email)
+                            .map(existing -> {
+                                // 이메일로 찾았지만 providerId가 없는 경우 업데이트
+                                existing.setProviderId(providerId);
+                                return userRepository.save(existing);
+                            })
+                            .orElseGet(() -> {
+                                // 완전 신규 사용자
+                                UserEntity newUser = new UserEntity();
+                                newUser.setProviderId(providerId);
+                                newUser.setEmail(email);
+                                newUser.setUsername(generateDefaultUsername(email));
+                                newUser.setRole("ROLE_USER");
+                                return userRepository.save(newUser);
+                            });
                 });
 
         OAuth2UserDTO userDTO = OAuth2UserDTO.builder()
@@ -57,6 +65,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return new CustomOAuth2User(userDTO);
     }
 
+    private String generateDefaultUsername(String email) {
+        // 이메일 @ 앞부분을 기본 닉네임으로 사용
+        String baseUsername = email.split("@")[0];
+
+        // 중복 체크 후 숫자 suffix 추가
+        String username = baseUsername;
+        int suffix = 1;
+        while (userRepository.existsByUsername(username)) {
+            username = baseUsername + suffix;
+            suffix++;
+        }
+        return username;
+    }
 
 
 
@@ -71,4 +92,3 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 "지원하지 않는 provider: " + registrationId);
     }
 }
-

@@ -72,7 +72,7 @@ app:
     description: Beautiq REST API
     version: ${spring.application.version:0.0.1-SNAPSHOT}
   oauth2:
-    redirect-success: ${OAUTH_REDIRECT_SUCCESS}
+    redirect: ${OAUTH_REDIRECT}
     cookie-domain: ${COOKIE_DOMAIN}
     use-cookie-secure: ${COOKIE_SECURE}
   ai-server:

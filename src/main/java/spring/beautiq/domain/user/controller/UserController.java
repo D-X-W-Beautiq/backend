@@ -7,30 +7,29 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.dto.UserRequest;
 import spring.beautiq.domain.user.dto.UserResponse;
 import spring.beautiq.domain.user.service.UserService;
+import spring.beautiq.global.security.annotation.CurrentUserId;
+import spring.beautiq.global.security.guard.MemberGuard;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "User", description = "사용자 관리 API")
+@Tag(name = "User", description = "사용자 관리 API - OAuth2 로그인 후 사용 가능")
+@MemberGuard
 public class UserController {
 
     private final UserService userService;
@@ -42,114 +41,235 @@ public class UserController {
     @Value("${S3_BUCKET}")
     private String bucket;
 
-    @GetMapping("/success")
-    public String success() {
-        return "OAuth2 Login Success! JWT 쿠키가 발급되었습니다";
-    }
-
-    @Operation(summary = "사용자 정보 조회", description = "username으로 사용자 정보를 조회합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공",
-            content = @Content(
-                    mediaType = "*/*",
-                    schema = @Schema(implementation = UserResponse.class)
-            ))
-    @GetMapping("/users/{username}")
-    public ResponseEntity<UserResponse> getUser(
-            @Parameter(description = "조회할 사용자명", required = true)
-            @PathVariable("username") String username) {
-        if (!userService.isAccess(username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        UserResponse dto = userService.readOneUser(username);
-
+    @Operation(
+            summary = "내 정보 조회",
+            description = "현재 로그인한 사용자의 정보를 조회합니다. JWT 쿠키 인증 필요.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = UserResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "성공 예시",
+                                            value = """
+                                                    {
+                                                      "id": "550e8400-e29b-41d4-a716-446655440000",
+                                                      "username": "홍길동",
+                                                      "email": "hong@example.com",
+                                                      "profileImage": "https://bucket.s3.region.amazonaws.com/profile.jpg",
+                                                      "createdAt": "2024-01-15T10:30:00"
+                                                    }
+                                                    """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패 - 로그인 필요",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"Unauthorized\"}")
+                            )
+                    )
+            }
+    )
+    @GetMapping("/users/me")
+    public ResponseEntity<UserResponse> getMe(@CurrentUserId UUID userId) {
+        UserResponse dto = userService.readOneUserById(userId);
         return ResponseEntity.ok(dto);
     }
 
-    @Operation(summary = "사용자 정보 수정", description = "사용자의 기본 정보를 수정합니다.")
-    @ApiResponse(responseCode = "200", description = "수정 성공",
-            content = @Content(
-                    mediaType = "*/*",
-                    examples = @ExampleObject(value = "{\"message\": \"회원 정보가 수정되었습니다.\"}")
-            ))
-    @PutMapping("/users/{username}")
-    public ResponseEntity<?> updateUser(
-            @Parameter(description = "수정할 사용자명", required = true)
-            @PathVariable("username") String username,
-            @RequestBody UserRequest userRequest) {
-        if (!userService.isAccess(username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "접근 권한이 없습니다."));
-        }
-
-        userService.updateOneUser(userRequest, username);
-        return ResponseEntity.ok(
-                Map.of("message", "회원 정보가 수정되었습니다.")
-        );
+    @Operation(
+            summary = "로그아웃",
+            description = "인증 쿠키(Authorization)를 삭제하여 로그아웃합니다. 서버 세션은 stateless이므로 쿠키만 삭제됩니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "로그아웃 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"message\": \"로그아웃되었습니다.\"}")
+                            )
+                    )
+            }
+    )
+    @PostMapping("/users/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("Authorization", "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
+        return ResponseEntity.ok(Map.of("message", "로그아웃되었습니다."));
     }
 
-    @Operation(summary = "프로필 이미지 업로드", description = "사용자의 프로필 이미지를 업로드합니다.")
-    @ApiResponse(responseCode = "200", description = "업로드 성공",
-            content = @Content(
-                    mediaType = "*/*",
-                    examples = @ExampleObject(value = """
-                {
-                    "success": true,
-                    "message": "프로필 이미지가 변경되었습니다.",
-                    "imageUrl": "https://bucket.s3.region.amazonaws.com/550e8400-e29b-41d4-a716-446655440000"
-                }
-                """)
-            ))
-    @PutMapping("/users/{username}/profile-image")
-    public ResponseEntity<?> uploadProfileImage(
-            @Parameter(description = "사용자명", required = true)
-            @PathVariable String username,
-            @Parameter(description = "업로드할 이미지 파일", required = true)
-            @RequestParam("file") MultipartFile file) {
-        if (!userService.isAccess(username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "접근 권한이 없습니다."));
-        }
+    @Operation(
+            summary = "내 정보 수정",
+            description = "현재 로그인한 사용자의 닉네임과 이메일을 수정합니다. 프로필 이미지는 별도 엔드포인트(/users/profile-image)를 사용하세요.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "수정 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"message\": \"회원 정보가 수정되었습니다.\"}")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "잘못된 요청 - 유효성 검증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"이미 사용중인 사용자명입니다.\"}")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"Unauthorized\"}")
+                            )
+                    )
+            }
+    )
+    @PutMapping("/users/edit")
+    public ResponseEntity<Map<String, String>> updateMyUser(
+            @CurrentUserId UUID userId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "수정할 사용자 정보 (닉네임과 이메일 변경 가능)",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserRequest.class),
+                            examples = @ExampleObject(
+                                    name = "정보 변경 예시",
+                                    value = "{\"username\": \"새로운닉네임\", \"email\": \"newemail@example.com\"}"
+                            )
+                    )
+            )
+            @RequestBody UserRequest userRequest) {
+        userService.updateOneUserById(userRequest, userId);
+        return ResponseEntity.ok(Map.of("message", "회원 정보가 수정되었습니다."));
+    }
 
+    @Operation(
+            summary = "회원 탈퇴",
+            description = "현재 로그인한 사용자의 계정을 영구적으로 삭제합니다. 삭제 후 자동으로 로그아웃됩니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "탈퇴 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"message\": \"회원 탈퇴가 완료되었습니다.\"}")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"Unauthorized\"}")
+                            )
+                    )
+            }
+    )
+    @DeleteMapping("/users/me")
+    public ResponseEntity<Map<String, String>> deleteMe(
+            @CurrentUserId UUID userId,
+            HttpServletResponse response) {
+        userService.deleteUserById(userId);
+
+        // 탈퇴 후 쿠키 삭제
+        Cookie cookie = new Cookie("Authorization", "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(Map.of("message", "회원 탈퇴가 완료되었습니다."));
+    }
+
+    @Operation(
+            summary = "프로필 이미지 업로드",
+            description = """
+                    현재 로그인한 사용자의 프로필 이미지를 변경합니다.
+                    - 이미지는 S3에 업로드되며, URL이 DB에 저장됩니다.
+                    - 지원 형식: JPG, PNG, GIF 등
+                    - 최대 크기: 50MB (설정에 따라 변경 가능)
+                    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "업로드 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "성공 응답",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "message": "프로필 이미지가 변경되었습니다.",
+                                                      "imageUrl": "https://beautiq-test.s3.ap-northeast-2.amazonaws.com/550e8400-e29b-41d4-a716-446655440000"
+                                                    }
+                                                    """
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "잘못된 요청 - 파일이 비어있거나 형식 오류",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"파일이 비어있습니다.\"}")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"Unauthorized\"}")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "서버 오류 - S3 업로드 실패",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = "{\"error\": \"이미지 업로드에 실패했습니다.\"}")
+                            )
+                    )
+            }
+    )
+    @PostMapping(value = "/users/profile-image", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadMyProfileImage(
+            @CurrentUserId UUID userId,
+            @Parameter(
+                    description = "업로드할 프로필 이미지 파일",
+                    required = true,
+                    content = @Content(mediaType = "multipart/form-data")
+            )
+            @RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "파일이 비어있습니다."));
+        }
         try {
             UUID fileId = UUID.randomUUID();
             s3Service.uploadImage(file, fileId);
-
-            String imageUrl = String.format(
-                    "https://%s.s3.%s.amazonaws.com/%s",
-                    bucket, region, fileId.toString()
-            );
-
-            userService.updateProfileImage(username, imageUrl);
-
-            return ResponseEntity.ok(
-                    Map.of(
-                            "success", true,
-                            "message", "프로필 이미지가 변경되었습니다.",
-                            "imageUrl", imageUrl
-                    )
-            );
+            String imageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, fileId);
+            userService.updateProfileImageById(userId, imageUrl);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "프로필 이미지가 변경되었습니다.",
+                    "imageUrl", imageUrl
+            ));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "이미지 업로드에 실패했습니다."));
         }
-    }
-
-    @Operation(summary = "회원 탈퇴", description = "사용자 계정을 삭제합니다.")
-    @ApiResponse(responseCode = "200", description = "삭제 성공",
-            content = @Content(
-                    mediaType = "*/*",
-                    examples = @ExampleObject(value = "정상적으로 삭제되었습니다.")
-            ))
-    @DeleteMapping("/users/{username}")
-    public ResponseEntity<?> deleteUser(
-            @Parameter(description = "삭제할 사용자명", required = true)
-            @PathVariable("username") String username) {
-        if (userService.isAccess(username)) {
-            userService.deleteOneUser(username);
-
-            return ResponseEntity.ok("정상적으로 삭제되었습니다.");
-        }
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("접근 권한이 없습니다.");
     }
 }

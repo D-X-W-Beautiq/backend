@@ -1,40 +1,41 @@
 package spring.beautiq.domain.auth.oauth2.config;
 
-import io.jsonwebtoken.Jwt;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Collections;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
-import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import spring.beautiq.domain.auth.oauth2.successhandler.CustomSuccessHandler;
+import spring.beautiq.domain.auth.oauth2.failurehandler.CustomFailureHandler;
 import spring.beautiq.domain.auth.oauth2.service.CustomOAuth2UserService;
+import spring.beautiq.domain.auth.oauth2.successhandler.CustomSuccessHandler;
 import spring.beautiq.global.jwt.JwtFilter;
 import spring.beautiq.global.jwt.JwtUtil;
 
+import java.util.Collections;
+
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
     private final JwtUtil jwtUtil;
+    private final CustomFailureHandler customFailureHandler;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService, CustomSuccessHandler customSuccessHandler,
-                          JwtUtil jwtUtil) {
+                          JwtUtil jwtUtil, CustomFailureHandler customFailureHandler) {
         this.customOAuth2UserService = customOAuth2UserService;
         this.customSuccessHandler = customSuccessHandler;
         this.jwtUtil = jwtUtil;
+        this.customFailureHandler = customFailureHandler;
     }
 
     @Bean
@@ -53,8 +54,9 @@ public class SecurityConfig {
                 //경로별 인가 작업
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/login", "/oauth2/authorization/**" ,"/success/", "/success/**", "/users/**", "/css/**", "/js/**","/auth/**"
-                                ,"/swagger-ui/**",
+                                "/", "/login", "/oauth2/authorization/**",
+                                "/css/**", "/js/**", "/auth/**",
+                                "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/swagger-ui.html"
@@ -73,14 +75,11 @@ public class SecurityConfig {
                             userInfoEndpointConfig
                                     .oidcUserService(oidcUserRequest -> {
                                         OidcUserService delegate = new OidcUserService();
-                                        OidcUser oidcUser = delegate.loadUser(oidcUserRequest);
-
-                                        customOAuth2UserService.loadUser(oidcUserRequest);
-
-                                        return oidcUser;
+                                        return delegate.loadUser(oidcUserRequest); // keep raw OidcUser
                                     });
                         }))
                         .successHandler(customSuccessHandler)
+                        .failureHandler(customFailureHandler)
                 )
 
                 .exceptionHandling(ex -> ex
@@ -92,24 +91,20 @@ public class SecurityConfig {
                         })
                 )
 
-                .cors(corsCustomizer -> corsCustomizer.configurationSource(new CorsConfigurationSource() {
-                    @Override
-                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                        CorsConfiguration config = new CorsConfiguration();
+                .cors(corsCustomizer -> corsCustomizer.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
 
 
-                        //프론트 주소
-                        config.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
-                        config.setAllowedMethods(Collections.singletonList("*"));
-                        config.setAllowCredentials(true);
-                        config.setAllowedHeaders(Collections.singletonList("*"));
-                        config.setMaxAge(3600L);
+                    //프론트 주소
+                    config.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+                    config.setAllowedMethods(Collections.singletonList("*"));
+                    config.setAllowCredentials(true);
+                    config.setAllowedHeaders(Collections.singletonList("*"));
+                    config.setMaxAge(3600L);
 
-                        config.setExposedHeaders(Collections.singletonList("Set-Cookie"));
-                        config.setExposedHeaders(Collections.singletonList("Authorization"));
-                        return config;
+                    config.setExposedHeaders(java.util.Arrays.asList("Set-Cookie", "Authorization"));
+                    return config;
 
-                    }
                 }));
 
 
