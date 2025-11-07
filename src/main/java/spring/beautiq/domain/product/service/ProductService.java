@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.product.dto.ai.request.ProductAIRequest;
 import spring.beautiq.domain.product.dto.ai.response.ProductAIResponse;
 import spring.beautiq.domain.product.dto.common.ProductFilters;
+import spring.beautiq.domain.product.dto.common.SkinCategory;
 import spring.beautiq.domain.product.dto.request.ProductRequest;
 import spring.beautiq.domain.product.dto.response.ProductResponse;
 import spring.beautiq.domain.product.entity.ProductEntity;
@@ -30,6 +31,7 @@ import spring.beautiq.domain.skinanalysis.repository.SkinAnalysisRepository;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.exception.GlobalErrorCode;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -57,31 +59,31 @@ public class ProductService {
         }
 
         // 기준 미달 카테고리 선정
-        List<String> recommendedCategories = new ArrayList<>();
-        if (analysis.getMoistureReg() < 65) recommendedCategories.add("moisture");
-        if (analysis.getElasticityReg() < 70) recommendedCategories.add("pigmentation");
-        if (analysis.getWrinkleReg() < 60) recommendedCategories.add("elasticity");
-        if (analysis.getPigmentationReg() < 50) recommendedCategories.add("wrinkle");
-        if (analysis.getPoreReg() < 55) recommendedCategories.add("pore");
+        List<SkinCategory> recommendedCategories = new ArrayList<>();
+        if (analysis.getMoistureReg() < 65) recommendedCategories.add(SkinCategory.MOISTURE);
+        if (analysis.getElasticityReg() < 70) recommendedCategories.add(SkinCategory.ELASTICITY);
+        if (analysis.getWrinkleReg() < 60) recommendedCategories.add(SkinCategory.WRINKLE);
+        if (analysis.getPigmentationReg() < 50) recommendedCategories.add(SkinCategory.PIGMENTATION);
+        if (analysis.getPoreReg() < 55) recommendedCategories.add(SkinCategory.PORE);
 
         // 기준 미달 카테고리가 없으면 모든 카테고리에서 조회
         if (recommendedCategories.isEmpty()) {
-            recommendedCategories.add("moisture");
-            recommendedCategories.add("pigmentation");
-            recommendedCategories.add("elasticity");
-            recommendedCategories.add("wrinkle");
-            recommendedCategories.add("pore");
+            recommendedCategories.add(SkinCategory.MOISTURE);
+            recommendedCategories.add(SkinCategory.ELASTICITY);
+            recommendedCategories.add(SkinCategory.WRINKLE);
+            recommendedCategories.add(SkinCategory.PIGMENTATION);
+            recommendedCategories.add(SkinCategory.PORE);
         }
 
         // 각 카테고리별로 제품 조회 및 수집
         List<ProductEntity> allProducts = new ArrayList<>();
-        for (String category : recommendedCategories) {
+        for (SkinCategory category : recommendedCategories) {
             // 제품 필터링 Specification 생성
             Specification<ProductEntity> spec = (root, query, cb) -> {
                 List<Predicate> predicates = new ArrayList<>();
 
-                // 카테고리 필터
-                predicates.add(cb.equal(root.get("category"), category));
+                // 카테고리 필터 (한국어 description 사용)
+                predicates.add(cb.equal(root.get("category"), category.getDescription()));
 
                 // 가격, 리뷰 필터
                 ProductFilters filters = request.getFilters();
@@ -102,23 +104,34 @@ public class ProductService {
                     request.getSort().getBy());
 
             // 카테고리별 제품 조회 및 제한 (topN개씩)
+            int topN = (request.getTopN() != null && request.getTopN() > 0) ? request.getTopN() : 10;
             List<ProductEntity> categoryProducts = productRepository.findAll(spec, sort)
                     .stream()
-                    .limit(request.getTopN())
+                    .limit(topN)
                     .toList();
 
             allProducts.addAll(categoryProducts);
         }
 
+        // 필터링 결과가 없으면 예외 발생
+        if (allProducts.isEmpty()) {
+            throw ProductExceptions.NO_PRODUCTS_MATCH_FILTERS.toException();
+        }
+
         // AI 서버 호출
-        ProductAIRequest aiRequest = ProductAIRequest.from(analysis, recommendedCategories, allProducts);
+        List<String> categoryNames = recommendedCategories.stream()
+                .map(SkinCategory::getEnglishName)
+                .collect(Collectors.toList());
+
+        ProductAIRequest aiRequest = ProductAIRequest.from(analysis, categoryNames, allProducts);
         ProductAIResponse aiResponse = webClientBuilder.build()
                 .post()
-                .uri("/product/recommend")
+                .uri("/product/reason")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(aiRequest)
                 .retrieve()
                 .bodyToMono(ProductAIResponse.class)
+                .timeout(Duration.ofMinutes(5)) // 5분 타임아웃 설정
                 .block();
 
         if (aiResponse == null || !"success".equals(aiResponse.getStatus())) {
@@ -189,25 +202,31 @@ public class ProductService {
                                     ProductFilters.PriceFilter price, List<Predicate> predicates) {
         if (price == null) return;
 
+        predicates.add(cb.isNotNull(root.get("salePrice")));
+
         Optional.ofNullable(price.getMin())
-                .ifPresent(min -> predicates.add(cb.greaterThanOrEqualTo(root.get("salePrice"), min)));
+                .ifPresent(min -> predicates.add(cb.ge(root.get("salePrice"), min)));
         Optional.ofNullable(price.getMax())
-                .ifPresent(max -> predicates.add(cb.lessThanOrEqualTo(root.get("salePrice"), max)));
+                .ifPresent(max -> predicates.add(cb.le(root.get("salePrice"), max)));
     }
 
     private void addReviewScorePredicate(Root<ProductEntity> root, CriteriaBuilder cb,
                                          ProductFilters.ReviewScoreFilter reviewScore, List<Predicate> predicates) {
         if (reviewScore == null) return;
 
+        predicates.add(cb.isNotNull(root.get("reviewScore")));
+
         Optional.ofNullable(reviewScore.getMin())
-                .ifPresent(min -> predicates.add(cb.greaterThanOrEqualTo(root.get("reviewScore"), min)));
+                .ifPresent(min -> predicates.add(cb.ge(root.get("reviewScore"), min)));
     }
 
     private void addReviewCountPredicate(Root<ProductEntity> root, CriteriaBuilder cb,
                                          ProductFilters.ReviewCountFilter reviewCount, List<Predicate> predicates) {
         if (reviewCount == null) return;
 
+        predicates.add(cb.isNotNull(root.get("reviewCount")));
+
         Optional.ofNullable(reviewCount.getMin())
-                .ifPresent(min -> predicates.add(cb.greaterThanOrEqualTo(root.get("reviewCount"), min)));
+                .ifPresent(min -> predicates.add(cb.ge(root.get("reviewCount"), min)));
     }
 }

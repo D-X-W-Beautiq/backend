@@ -6,11 +6,12 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum SkinCategory {
-    MOISTURE("수분"),
-    ELASTICITY("탄력"),
-    WRINKLE("주름"),
-    PIGMENTATION("색소 침착"),
-    PORE("모공");
+    MOISTURE("수분", "moisture"),
+    ELASTICITY("탄력", "elasticity"),
+    WRINKLE("주름", "wrinkle"),
+    PIGMENTATION("색소침착", "pigmentation"),
+    PORE("모공", "pore");
 
     private final String description;
+    private final String englishName;
 }
