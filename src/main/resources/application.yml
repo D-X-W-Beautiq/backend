@@ -87,6 +87,13 @@ app:
       enabled: true  # false로 설정하면 초기 로드 비활성화
       file: classpath:oliveyoung_data_set.xlsx
 
+# Swagger UI 설정
+springdoc:
+  swagger-ui:
+    with-credentials: true
+    csrf:
+      enabled: false
+
 # AWS SDK v1 deprecation 경고 비활성화
 aws:
   java:
