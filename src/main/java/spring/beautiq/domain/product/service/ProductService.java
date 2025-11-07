@@ -56,20 +56,13 @@ public class ProductService {
             throw SkinAnalysisExceptions.SKIN_ANALYSIS_FORBIDDEN.toException();
         }
 
-        // 카테고리별 점수 계산
-        int moistureScore = Math.min(analysis.getDryness(), analysis.getMoistureReg());
-        int elasticityScore = Math.min(analysis.getSagging(), analysis.getElasticityReg());
-        int wrinkleScore = Math.min(analysis.getWrinkle(), analysis.getWrinkleReg());
-        int pigmentationScore = Math.min(analysis.getPigmentation(), analysis.getPigmentationReg());
-        int poreScore = Math.min(analysis.getPore(), analysis.getPoreReg());
-
         // 기준 미달 카테고리 선정
         List<String> recommendedCategories = new ArrayList<>();
-        if (moistureScore < 65) recommendedCategories.add("moisture");
-        if (pigmentationScore < 70) recommendedCategories.add("pigmentation");
-        if (elasticityScore < 60) recommendedCategories.add("elasticity");
-        if (wrinkleScore < 50) recommendedCategories.add("wrinkle");
-        if (poreScore < 55) recommendedCategories.add("pore");
+        if (analysis.getMoistureReg() < 65) recommendedCategories.add("moisture");
+        if (analysis.getElasticityReg() < 70) recommendedCategories.add("pigmentation");
+        if (analysis.getWrinkleReg() < 60) recommendedCategories.add("elasticity");
+        if (analysis.getPigmentationReg() < 50) recommendedCategories.add("wrinkle");
+        if (analysis.getPoreReg() < 55) recommendedCategories.add("pore");
 
         // 기준 미달 카테고리가 없으면 모든 카테고리에서 조회
         if (recommendedCategories.isEmpty()) {

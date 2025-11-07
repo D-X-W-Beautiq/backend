@@ -20,11 +20,6 @@ public class MockAIClient implements AIClient {
         log.info("MockAIClient 사용: 더미 데이터 반환");
 
         SkinAnalysisAIResponse.Predictions predictions = SkinAnalysisAIResponse.Predictions.builder()
-                .dryness(randomScore())
-                .pigmentation(randomScore())
-                .pore(randomScore())
-                .sagging(randomScore())
-                .wrinkle(randomScore())
                 .pigmentationReg(randomScore())
                 .moistureReg(randomScore())
                 .elasticityReg(randomScore())

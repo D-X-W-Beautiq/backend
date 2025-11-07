@@ -143,11 +143,6 @@ public class ProductAIRequest {
 
         public static SkinAnalysisData from(SkinAnalysisEntity entity) {
             return SkinAnalysisData.builder()
-                    .dryness(entity.getDryness())
-                    .pigmentation(entity.getPigmentation())
-                    .pore(entity.getPore())
-                    .sagging(entity.getSagging())
-                    .wrinkle(entity.getWrinkle())
                     .pigmentationReg(entity.getPigmentationReg())
                     .moistureReg(entity.getMoistureReg())
                     .elasticityReg(entity.getElasticityReg().floatValue())

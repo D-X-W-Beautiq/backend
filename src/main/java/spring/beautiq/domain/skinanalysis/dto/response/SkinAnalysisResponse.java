@@ -22,11 +22,6 @@ import java.time.temporal.ChronoUnit;
           "id": "550e8400-e29b-41d4-a716-446655440000",
           "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
           "skinAnalysis": {
-            "dryness": 75,
-            "pigmentation": 45,
-            "pore": 60,
-            "sagging": 30,
-            "wrinkle": 40,
             "pigmentationReg": 50,
             "moistureReg": 65,
             "elasticityReg": 78,
@@ -115,11 +110,6 @@ public class SkinAnalysisResponse {
                 .id(e.getId().toString())
                 .userId(e.getUser().getId().toString())
                 .skinAnalysis(SkinAnalysisScores.builder()
-                        .dryness(e.getDryness())
-                        .pigmentation(e.getPigmentation())
-                        .pore(e.getPore())
-                        .sagging(e.getSagging())
-                        .wrinkle(e.getWrinkle())
                         .pigmentationReg(e.getPigmentationReg())
                         .moistureReg(e.getMoistureReg())
                         .elasticityReg(e.getElasticityReg())

@@ -18,11 +18,6 @@ import lombok.*;
         {
           "status": "success",
           "predictions": {
-            "dryness": 70,
-            "pigmentation": 45,
-            "pore": 60,
-            "sagging": 35,
-            "wrinkle": 40,
             "pigmentation_reg": 48,
             "moisture_reg": 63,
             "elasticity_reg": 75,
@@ -69,36 +64,6 @@ public class SkinAnalysisAIResponse {
     @AllArgsConstructor
     @Schema(description = "AI 예측 점수 집합 (0~100)")
     public static class Predictions {
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "건조 점수", example = "70", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer dryness;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "색소침착 점수", example = "45", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer pigmentation;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "모공 점수", example = "60", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer pore;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "처짐 점수", example = "35", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer sagging;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "주름 점수", example = "40", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer wrinkle;
 
         @NotNull
         @Min(0)

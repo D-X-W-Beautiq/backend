@@ -1,6 +1,6 @@
 package spring.beautiq.domain.skinanalysis.util;
 
-import spring.beautiq.domain.skinanalysis.dto.ai.response.SkinAnalysisAIResponse; // 새 Predictions 사용
+import spring.beautiq.domain.skinanalysis.dto.ai.response.SkinAnalysisAIResponse;
 import spring.beautiq.domain.skinanalysis.dto.common.SkinStatusType;
 import spring.beautiq.domain.skinanalysis.entity.SkinAnalysisEntity;
 
@@ -12,11 +12,6 @@ public final class SkinAnalysisCalculator {
         if (p == null) return null;
         int sum = 0;
         int count = 0;
-        if (p.getDryness() != null) { sum += p.getDryness(); count++; }
-        if (p.getPigmentation() != null) { sum += p.getPigmentation(); count++; }
-        if (p.getPore() != null) { sum += p.getPore(); count++; }
-        if (p.getSagging() != null) { sum += p.getSagging(); count++; }
-        if (p.getWrinkle() != null) { sum += p.getWrinkle(); count++; }
         if (p.getPigmentationReg() != null) { sum += p.getPigmentationReg(); count++; }
         if (p.getMoistureReg() != null) { sum += p.getMoistureReg(); count++; }
         if (p.getElasticityReg() != null) { sum += p.getElasticityReg(); count++; }

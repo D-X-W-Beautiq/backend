@@ -20,7 +20,7 @@ public class RealAIClient implements AIClient {
     public SkinAnalysisAIResponse analyzeSkin(SkinAnalysisAIRequest request) {
         SkinAnalysisAIResponse response = webClientBuilder.build()
                 .post()
-                .uri("/skin/analysis")
+                .uri("/nia/analyze")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
