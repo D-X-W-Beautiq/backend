@@ -1,5 +1,7 @@
 package spring.beautiq.domain.makeup.dto.ai;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,12 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CustomizeAiRequestDto {
     private String baseImageBase64;
     private List<EditForAi> edits = new ArrayList<>();
 
     @Data
     @AllArgsConstructor
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class EditForAi {
         @NotBlank
         @Pattern(regexp = "^(skin|eye|lip|blush)$", message = "region은 skin, eye, lip, blush 중 하나여야 합니다")
