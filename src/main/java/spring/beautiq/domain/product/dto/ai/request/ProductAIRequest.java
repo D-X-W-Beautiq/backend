@@ -97,26 +97,6 @@ public class ProductAIRequest {
     public static class SkinAnalysisData {
 
         @NotNull
-        @Schema(description = "건조 점수", example = "75", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer dryness;
-
-        @NotNull
-        @Schema(description = "색소침착 점수", example = "45", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer pigmentation;
-
-        @NotNull
-        @Schema(description = "모공 점수", example = "60", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer pore;
-
-        @NotNull
-        @Schema(description = "처짐 점수", example = "30", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer sagging;
-
-        @NotNull
-        @Schema(description = "주름 점수", example = "40", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer wrinkle;
-
-        @NotNull
         @JsonProperty("pigmentation_reg")
         @Schema(description = "색소침착 회귀 점수", example = "50", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer pigmentationReg;
