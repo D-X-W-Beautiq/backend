@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.makeup.dto.ai.*;
-import spring.beautiq.domain.makeup.dto.common.Color;
 import spring.beautiq.domain.makeup.dto.common.ImageItem;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUpEntity;
@@ -52,6 +51,7 @@ public class MakeUpService {
 
         MakeUpEntity makeUp = MakeUpEntity.builder()
                 .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                .keywords(String.join(",", saveRequestDto.getKeywords()))
                 .imageName(newImageName)
                 .build();
 
@@ -75,7 +75,19 @@ public class MakeUpService {
     private MakeUpDetailResponseDto MakeUptoMakeUpDetailResponseDto(MakeUpEntity makeUpEntity) {
         MakeUpDetailResponseDto makeUpDetailResponseDto = new MakeUpDetailResponseDto();
         makeUpDetailResponseDto.setMakeUpId(makeUpEntity.getId());
-        makeUpDetailResponseDto.setImageName(makeUpEntity.getImageName());
+        String fullPath = makeUpEntity.getImageName();
+        if (fullPath == null || fullPath.isBlank()) {
+            throw new IllegalStateException("Image name cannot be null or empty");
+        }
+        String[] pathSegments = fullPath.split("/");
+        if (pathSegments.length < 4) {
+            throw new IllegalStateException("Invalid image path format: " + fullPath);
+        }
+        String fileNameWithExt = pathSegments[3];
+        String fileName = fileNameWithExt.contains(".")
+                ? fileNameWithExt.substring(0, fileNameWithExt.lastIndexOf("."))
+                : fileNameWithExt;
+        makeUpDetailResponseDto.setImageName(fileName);
         makeUpDetailResponseDto.setImageUrl(s3Service.getPreSignedUrl(makeUpEntity.getImageName()));
         makeUpDetailResponseDto.setCreatedAt(makeUpEntity.getCreatedAt().toString());
 
@@ -91,8 +103,12 @@ public class MakeUpService {
     /**
      * 메이크업 상세 조회
      */
-    public MakeUpDetailResponseDto getMakeUp(UUID userId, String imageName) {
-        MakeUpEntity makeUpEntity = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public MakeUpDetailResponseDto getMakeUp(UUID userId, UUID makeUpId) {
+        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+
+        if(!makeUpEntity.getUser().getId().equals(userId)) { // 조회 시 사용자 권한 검증
+            throw new RuntimeException("Unauthorized");
+        }
 
         return MakeUptoMakeUpDetailResponseDto(makeUpEntity);
     }
@@ -102,8 +118,11 @@ public class MakeUpService {
      * 메이크업 삭제
      */
     @Transactional
-    public void deleteMakeUp(UUID userId, String imageName) {
-        MakeUpEntity makeUpEntity = makeUpRepository.findByUserIdAndImageName(userId, imageName).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public void deleteMakeUp(UUID userId, UUID makeUpId) {
+        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        if(!makeUpEntity.getUser().getId().equals(userId)) { // 삭제 시 사용자 권한 검증
+            throw new RuntimeException("Unauthorized");
+        }
         // s3에서 이미지 삭제
         try {
             s3Service.deleteImage(makeUpEntity.getImageName());
@@ -183,8 +202,7 @@ public class MakeUpService {
     public ImageItem simulateMakeUp(
             UUID userId,
             MultipartFile sourceImage,
-            MultipartFile styleImage,
-            RecommendRequestDto recommendRequestDto
+            MultipartFile styleImage
             ) throws IOException {
 
         // sourceImage, styleImage 유효설 검증
@@ -211,7 +229,6 @@ public class MakeUpService {
         SimulationAiRequestDto simulationAiRequestDto = SimulationAiRequestDto.builder()
                 .sourceImageBase64(sourceImageBase64)
                 .styleImageBase64(styleImageBase64)
-                .keywords(recommendRequestDto.getKeywords())
                 .build();
 
         // AI 서버에 JSON 요청
@@ -255,17 +272,9 @@ public class MakeUpService {
         customizeAiRequestDto.setBaseImageBase64(currentImageBase64); // 현재 이미지
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
             if(editForWeb.isEdited()) {
-                if(editForWeb.getColor() == null) {
-                    throw new IllegalArgumentException("Color must be provided for edited regions");
-                }
                 customizeAiRequestDto.addEdit(
                         editForWeb.getRegion(),
-                        editForWeb.getIntensity(),
-                        new Color(
-                                editForWeb.getColor().getR(),
-                                editForWeb.getColor().getG(),
-                                editForWeb.getColor().getB()
-                        )
+                        editForWeb.getIntensity()
                 );
             }
         }
