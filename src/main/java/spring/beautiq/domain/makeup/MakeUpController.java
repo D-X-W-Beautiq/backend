@@ -103,22 +103,26 @@ public class MakeUpController {
             summary = "메이크업 시뮬레이션",
             description = """
                     원본 이미지(Base64)와 참조 스타일(파일 또는 Base64)을 받아 메이크업을 적용한 결과를 Base64로 반환합니다.
-                    
+
                     **흐름:**
                     1. 프론트: 원본 Base64 + (추천 이미지 Base64 선택 OR 새 파일 업로드)
                     2. 백엔드: AI 서버에 시뮬레이션 요청
                     3. 백엔드: 결과 Base64 반환
-                    
+
                     **S3 저장 없음** - 프론트 메모리에만 존재
                     """
     )
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SimulationResponseDto simulateMakeUp(
             @Valid @RequestPart(name = "data")
-            @Parameter(description = "시뮬레이션 요청 데이터 (원본 Base64 + 참조 이미지)")
-            SimulationRequestDto requestDto
+            @Parameter(description = "시뮬레이션 요청 데이터 (원본 Base64 + 선택적 styleImageBase64)")
+            SimulationRequestDto requestDto,
+
+            @RequestPart(name = "styleImage", required = false)
+            @Parameter(description = "참조 스타일 이미지 파일 (선택, 업로드 시 styleImageBase64는 무시됨)")
+            MultipartFile styleImage
     ) throws IOException {
-        return makeUpService.simulateMakeUp(requestDto);
+        return makeUpService.simulateMakeUp(requestDto, styleImage);
     }
 
     /**
@@ -135,6 +139,15 @@ public class MakeUpController {
                     3. 백엔드: 결과 Base64 반환
                     4. (반복 가능)
                     
+                    **편집 항목 설명:**
+                    - edits 배열의 각 항목은 region(필수)과 intensity(필수)를 가집니다.
+                    - region 종류 및 설명:
+                      - "skin": 피부 톤 조정
+                      - "lip": 입술 색상 intensity 조정
+                      - "eyelid": 아이섀도우 intensity 조정
+                      - "blush": 볼터치 intensity 조정
+                    - intensity는 0~100 범위이며 기본값은 50입니다. 50보다 크면 메이크업이 더 진하게 적용되고, 50보다 작으면 더 연하게 적용됩니다.
+                    
                     **S3 저장 없음** - save API 호출 전까지 프론트 메모리에만 존재
                     """
     )
@@ -146,4 +159,3 @@ public class MakeUpController {
     }
 
 }
-

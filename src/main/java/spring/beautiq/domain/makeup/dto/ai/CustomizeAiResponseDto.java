@@ -11,4 +11,5 @@ public class CustomizeAiResponseDto {
     private String status;
     @Getter
     private String resultImageBase64;
+    private String message;
 }

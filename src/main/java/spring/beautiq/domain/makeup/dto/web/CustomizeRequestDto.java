@@ -1,5 +1,7 @@
 package spring.beautiq.domain.makeup.dto.web;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -9,45 +11,46 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import spring.beautiq.domain.makeup.dto.common.Color;
 
 import java.util.List;
 
 @Data
-@Schema(description = "메이크업 커스터마이즈 요청 DTO")
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@Schema(description = "메이크업 커스터마이즈 요청 DTO",
+        example = """
+                {
+                  "base_image_base64": "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+                  "edits": [
+                    { "region": "lip", "intensity": 60 },
+                    { "region": "skin", "intensity": 40 }
+                  ]
+                }
+                """)
 public class CustomizeRequestDto {
-    @NotBlank(message = "이미지 Base64가 필수입니다")
-    @Schema(description = "원본 이미지 (Base64 인코딩)",
-            example = "/9j/4AAQSkZJRgABAQAAAQABAAD...",
-            requiredMode = Schema.RequiredMode.REQUIRED)
-    private String imageBase64;
+    @NotBlank(message = "base_image_base64 is required")
+    @Schema(description = "원본 얼굴 이미지 (Base64 인코딩)", example = "/9j/4AAQSkZJRgABAQAAAQABAAD...", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String baseImageBase64;
 
     @Valid
-    @Schema(description = "편집할 메이크업 영역 목록", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "edits는 필수입니다")
+    @Schema(description = "편집 항목 배열 (필수)")
     private List<EditForWeb> edits;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "메이크업 영역별 편집 정보")
+    @Schema(description = "편집 항목")
     public static class EditForWeb {
-        @Schema(description = "해당 영역이 편집되었는지 여부", example = "true")
-        private boolean isEdited;
-
         @NotBlank
-        @Schema(description = "편집 영역 (skin: 피부, eye: 아이, lip: 립, blush: 블러셔)",
-                example = "lip",
-                allowableValues = {"skin", "eye", "lip", "blush"},
-                requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "편집 영역 (필수): skin | lip | eyelid | blush", example = "lip", requiredMode = Schema.RequiredMode.REQUIRED)
         private String region;
 
+        @NotNull
         @Min(0)
         @Max(100)
-        @Schema(description = "메이크업 강도 (0~100)", example = "75", minimum = "0", maximum = "100")
-        private int intensity;
-
-        @NotNull
-        @Schema(description = "메이크업 색상 (RGB)", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Color color;
+        @Schema(description = "편집 강도 (0~100). 기본값은 50입니다 — 50보다 크면 메이크업이 더 진하게 적용되고, 50보다 작으면 더 연하게 적용됩니다.", example = "50", requiredMode = Schema.RequiredMode.REQUIRED)
+        private Integer intensity;
     }
 }

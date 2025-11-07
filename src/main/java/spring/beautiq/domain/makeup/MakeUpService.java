@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.makeup.dto.ai.*;
-import spring.beautiq.domain.makeup.dto.common.Color;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUpEntity;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
@@ -203,7 +202,8 @@ public class MakeUpService {
      * @return Base64 이미지 (S3에 저장하지 않음)
      */
     public SimulationResponseDto simulateMakeUp(
-            SimulationRequestDto requestDto
+            SimulationRequestDto requestDto,
+            MultipartFile styleImage
     ) throws IOException {
 
         // sourceImageBase64 필수 검증
@@ -215,13 +215,13 @@ public class MakeUpService {
         String styleImageBase64;
 
         // styleImage: 파일 또는 Base64 중 하나는 필수
-        if (requestDto.getStyleImage() != null && !requestDto.getStyleImage().isEmpty()) {
+        if (styleImage != null && !styleImage.isEmpty()) {
             // 파일이 제공된 경우
-            String contentType = requestDto.getStyleImage().getContentType();
+            String contentType = styleImage.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 throw new IllegalArgumentException("Invalid style image file");
             }
-            styleImageBase64 = multipartToBase64(requestDto.getStyleImage());
+            styleImageBase64 = multipartToBase64(styleImage);
         } else if (requestDto.getStyleImageBase64() != null && !requestDto.getStyleImageBase64().isBlank()) {
             // Base64가 제공된 경우
             styleImageBase64 = extractBase64(requestDto.getStyleImageBase64());
@@ -276,34 +276,31 @@ public class MakeUpService {
 
     /**
      * 메이크업 커스터마이즈
-     * @return Base64 이미지 (S3에 저장하지 않음)
+     * @return 처리 상태와 결과 이미지(Base64)
      */
     public CustomizeResponseDto customize(
             CustomizeRequestDto customizeRequestDto
     ) {
-        String imageBase64 = customizeRequestDto.getImageBase64();
+        // 입력 검증
+        if (customizeRequestDto == null || customizeRequestDto.getBaseImageBase64() == null || customizeRequestDto.getBaseImageBase64().isBlank()) {
+            return new CustomizeResponseDto("failed", null, "base_image_base64 is required");
+        }
+        if (customizeRequestDto.getEdits() == null || customizeRequestDto.getEdits().isEmpty()) {
+            return new CustomizeResponseDto("failed", null, "edits is required and must contain at least one item");
+        }
 
-        // Base64 data URI에서 순수 Base64 추출
-        String currentImageBase64 = extractBase64(imageBase64);
+        String baseImage = extractBase64(customizeRequestDto.getBaseImageBase64());
 
         // 요청 DTO에 이미지, 편집 정보 담기
         CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
-        customizeAiRequestDto.setBaseImageBase64(currentImageBase64);
-        for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
-            if(editForWeb.isEdited()) {
-                if(editForWeb.getColor() == null) {
-                    throw new IllegalArgumentException("Color must be provided for edited regions");
-                }
-                customizeAiRequestDto.addEdit(
-                        editForWeb.getRegion(),
-                        editForWeb.getIntensity(),
-                        new Color(
-                                editForWeb.getColor().getR(),
-                                editForWeb.getColor().getG(),
-                                editForWeb.getColor().getB()
-                        )
-                );
+        customizeAiRequestDto.setBaseImageBase64(baseImage);
+        for (CustomizeRequestDto.EditForWeb edit : customizeRequestDto.getEdits()) {
+            if (edit == null || edit.getRegion() == null || edit.getRegion().isBlank() || edit.getIntensity() == null) {
+                return new CustomizeResponseDto("failed", null, "Each edit must contain region and intensity");
             }
+            // intensity 범위는 DTO에서 검증되지만 방어적으로 보정
+            int intensity = Math.max(0, Math.min(100, edit.getIntensity()));
+            customizeAiRequestDto.addEdit(edit.getRegion(), intensity);
         }
 
         // AI 서버에 JSON 요청
@@ -316,12 +313,23 @@ public class MakeUpService {
                 .timeout(Duration.ofMinutes(5))
                 .block();
 
-        if(customizeAiResponseDto == null || customizeAiResponseDto.getResultImageBase64() == null) {
-            throw new RuntimeException("AI service error");
+        if (customizeAiResponseDto == null) {
+            return new CustomizeResponseDto("failed", null, "AI service error: no response");
         }
 
-        // Base64 응답 그대로 반환 (S3 저장하지 않음)
-        return new CustomizeResponseDto(customizeAiResponseDto.getResultImageBase64());
+        String status = customizeAiResponseDto.getStatus();
+        String resultBase64 = customizeAiResponseDto.getResultImageBase64();
+        String message = customizeAiResponseDto.getMessage();
+
+        if (!"success".equalsIgnoreCase(status)) {
+            return new CustomizeResponseDto(status == null ? "failed" : status, null, message == null ? "AI processing failed" : message);
+        }
+
+        if (resultBase64 == null || resultBase64.isBlank()) {
+            return new CustomizeResponseDto("failed", null, "AI returned empty result image");
+        }
+
+        return new CustomizeResponseDto("success", resultBase64, null);
     }
 
 
@@ -346,6 +354,7 @@ public class MakeUpService {
         return new Base64DecodedMultipartFile(imageBytes, "image.png", "image/png");
     }
 
+    @SuppressWarnings("null")
     static class Base64DecodedMultipartFile implements MultipartFile {
         private final byte[] imgContent;
         private final String fileName;
