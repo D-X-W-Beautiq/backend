@@ -162,6 +162,11 @@ public class SkinAnalysisService {
         List<SkinAnalysisEntity> analyses = skinAnalysisRepository
                 .findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
 
+        // 최근 60일 내 4회 이상의 기록이 있어야 함
+        if (analyses.size() < 4) {
+            throw SkinAnalysisExceptions.SKIN_ANALYSIS_TOO_SHORT_HISTORY_60DAYS.toException();
+        }
+
         // 날짜별 그룹핑 (yyyy-MM-dd)
         Map<String, List<SkinAnalysisEntity>> byDate = analyses.stream()
                 .collect(Collectors.groupingBy(a -> a.getCreatedAt().toLocalDate().toString()));
@@ -221,6 +226,17 @@ public class SkinAnalysisService {
         List<SkinAnalysisEntity> analyses = skinAnalysisRepository
                 .findAllByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(userId, start, end);
 
+        // 오늘 날짜 기준 3개월 이상 예전 기록이 있는지 확인
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime threeMonthsAgo = now.minusMonths(3);
+
+        boolean hasOldEnoughRecord = analyses.stream()
+                .anyMatch(a -> a.getCreatedAt().isBefore(threeMonthsAgo));
+
+        if (!hasOldEnoughRecord) {
+            throw SkinAnalysisExceptions.SKIN_ANALYSIS_TOO_SHORT_HISTORY_3MONTHS.toException();
+        }
+
         // 월별로 그룹핑 및 평균 계산
         var monthMap = analyses.stream()
                 .filter(a -> a.getAverageScore() != null)
@@ -231,10 +247,6 @@ public class SkinAnalysisService {
 
         // 월별 정렬
         List<String> sortedMonths = monthMap.keySet().stream().sorted().toList();
-        // 3개월 이상 기록이 없으면 예외
-        if (sortedMonths.size() < 3) {
-            throw SkinAnalysisExceptions.SKIN_ANALYSIS_TOO_SHORT_HISTORY.toException();
-        }
         // MonthPoint 리스트 생성
         List<MonthPoint> monthPoints = sortedMonths.stream()
                 .map(m -> MonthPoint.builder()
