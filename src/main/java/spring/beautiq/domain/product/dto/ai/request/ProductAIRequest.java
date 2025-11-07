@@ -22,11 +22,6 @@ import java.util.stream.Collectors;
         example = """
                 {
                   "skin_analysis": {
-                    "dryness": 75,
-                    "pigmentation": 45,
-                    "pore": 60,
-                    "sagging": 30,
-                    "wrinkle": 40,
                     "pigmentation_reg": 50,
                     "moisture_reg": 65,
                     "elasticity_reg": 78.5,
