@@ -15,6 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import spring.beautiq.domain.makeup.MakeUpService;
+import spring.beautiq.domain.makeup.dto.web.MakeUpDetailResponseDto;
+import spring.beautiq.domain.makeup.dto.web.MakeUpListResponseDto;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.dto.UserRequest;
 import spring.beautiq.domain.user.dto.UserResponse;
@@ -34,6 +37,7 @@ public class UserController {
 
     private final UserService userService;
     private final S3Service s3Service;
+    private final MakeUpService makeUpService;
 
     @Value("${AWS_REGION}")
     private String region;
@@ -271,5 +275,51 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "이미지 업로드에 실패했습니다."));
         }
+    }
+
+    /**
+     * 저장한 메이크업 목록 조회
+     */
+    @Operation(summary = "저장한 메이크업 목록 조회", description = "현재 사용자가 저장한 메이크업 목록을 페이징하여 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = MakeUpListResponseDto.class)))
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @GetMapping("/users/me/saved/makeups")
+    public MakeUpListResponseDto getSavedMakeups(
+            @CurrentUserId UUID userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(value = "page", defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        return makeUpService.getMakeUpList(userId, page, size);
+    }
+
+    /**
+     * 저장한 메이크업 상세 조회
+     */
+    @Operation(summary = "저장한 메이크업 상세 조회", description = "저장한 메이크업의 상세 정보를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = MakeUpDetailResponseDto.class)))
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "404", description = "메이크업을 찾을 수 없음", content = @Content)
+    @GetMapping("/users/me/saved/makeups/{makeupId}")
+    public MakeUpDetailResponseDto getSavedMakeup(
+            @CurrentUserId UUID userId,
+            @Parameter(description = "메이크업 ID (UUID)") @PathVariable("makeupId") UUID makeupId
+    ) {
+        return makeUpService.getMakeUpById(userId, makeupId);
+    }
+
+    /**
+     * 저장한 메이크업 삭제
+     */
+    @Operation(summary = "저장한 메이크업 삭제", description = "저장한 메이크업을 삭제합니다. S3에서도 함께 삭제됩니다.")
+    @ApiResponse(responseCode = "204", description = "삭제 성공", content = @Content)
+    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    @ApiResponse(responseCode = "404", description = "메이크업을 찾을 수 없음", content = @Content)
+    @DeleteMapping("/users/me/saved/makeups/{makeupId}")
+    public ResponseEntity<Void> deleteSavedMakeup(
+            @CurrentUserId UUID userId,
+            @Parameter(description = "메이크업 ID (UUID)") @PathVariable("makeupId") UUID makeupId
+    ) {
+        makeUpService.deleteMakeUpById(userId, makeupId);
+        return ResponseEntity.noContent().build();
     }
 }
