@@ -81,6 +81,8 @@ app:
     response-timeout-seconds: 180  # 3분
     read-timeout-seconds: 180      # 3분
     write-timeout-seconds: 60      # 1분
+  s3:
+    enabled: true
 
   product:
     init:
