@@ -129,9 +129,6 @@ public class MakeUpService {
             throw new RuntimeException("Access denied: not your makeup");
         }
 
-        if(!makeUpEntity.getUser().getId().equals(userId)) { // 조회 시 사용자 권한 검증
-            throw new RuntimeException("Unauthorized");
-        }
 
         return MakeUptoMakeUpDetailResponseDto(makeUpEntity);
     }
@@ -370,7 +367,7 @@ public class MakeUpService {
         return new Base64DecodedMultipartFile(imageBytes, "image.png", "image/png");
     }
 
-    @SuppressWarnings("null")
+    @SuppressWarnings({"NullableProblems", "null"})
     static class Base64DecodedMultipartFile implements MultipartFile {
         private final byte[] imgContent;
         private final String fileName;

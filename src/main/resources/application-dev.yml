@@ -1,0 +1,34 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          kakao:
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+app:
+  openapi:
+    enabled: ${SWAGGER_ENABLED:true}
+  oauth2:
+    redirect: ${OAUTH_REDIRECT:http://localhost:3000/oauth/callback}
+    cookie-domain: ${COOKIE_DOMAIN:}
+    use-cookie-secure: ${COOKIE_SECURE:false}
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+  auth:
+    dev-login-page-enabled: ${DEV_LOGIN_PAGE_ENABLED:true}
+  ai-server:
+    url: ${AI_SERVER_URL:http://localhost:8000}
+    connect-timeout-ms: ${AI_CONNECT_TIMEOUT_MS:10000}
+    response-timeout-seconds: ${AI_RESPONSE_TIMEOUT_SECONDS:180}
+    read-timeout-seconds: ${AI_READ_TIMEOUT_SECONDS:180}
+    write-timeout-seconds: ${AI_WRITE_TIMEOUT_SECONDS:60}
+    max-in-memory-mb: ${AI_MAX_IN_MEMORY_MB:50}
+  product:
+    init:
+      enabled: ${PRODUCT_INIT_ENABLED:false}

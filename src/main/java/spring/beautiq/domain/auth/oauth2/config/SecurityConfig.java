@@ -1,6 +1,7 @@
 package spring.beautiq.domain.auth.oauth2.config;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -29,6 +30,9 @@ public class SecurityConfig {
     private final CustomSuccessHandler customSuccessHandler;
     private final JwtUtil jwtUtil;
     private final CustomFailureHandler customFailureHandler;
+
+    @Value("${app.oauth2.allowed-origin}")
+    private String allowedOrigin;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService, CustomSuccessHandler customSuccessHandler,
                           JwtUtil jwtUtil, CustomFailureHandler customFailureHandler) {
@@ -59,7 +63,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/users/login"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -94,9 +99,8 @@ public class SecurityConfig {
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
 
-
-                    //프론트 주소
-                    config.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+                    // 환경 변수에서 프론트엔드 주소 가져오기
+                    config.setAllowedOrigins(Collections.singletonList(allowedOrigin));
                     config.setAllowedMethods(Collections.singletonList("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(Collections.singletonList("*"));

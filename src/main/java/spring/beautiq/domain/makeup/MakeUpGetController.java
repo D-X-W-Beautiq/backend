@@ -40,7 +40,7 @@ public class MakeUpGetController {
             @CurrentUserId UUID userId,
             @PathVariable("makeUpId") UUID makeUpId
     ) {
-        return makeUpService.getMakeUp(userId, makeUpId);
+        return makeUpService.getMakeUpById(userId, makeUpId);
     }
 
     /**
@@ -51,7 +51,7 @@ public class MakeUpGetController {
             @CurrentUserId UUID userId,
             @PathVariable("makeUpId") UUID makeUpId
     ) {
-        makeUpService.deleteMakeUp(userId, makeUpId);
+        makeUpService.deleteMakeUpById(userId, makeUpId);
         return ResponseEntity.noContent().build();
     }
 }

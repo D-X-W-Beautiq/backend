@@ -16,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import spring.beautiq.domain.makeup.MakeUpService;
-import spring.beautiq.domain.makeup.dto.web.MakeUpDetailResponseDto;
-import spring.beautiq.domain.makeup.dto.web.MakeUpListResponseDto;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.dto.UserRequest;
 import spring.beautiq.domain.user.dto.UserResponse;
@@ -37,13 +35,48 @@ public class UserController {
 
     private final UserService userService;
     private final S3Service s3Service;
-    private final MakeUpService makeUpService;
 
     @Value("${AWS_REGION}")
     private String region;
 
     @Value("${S3_BUCKET}")
     private String bucket;
+
+    @Operation(
+            summary = "OAuth2 로그인 (문서용)",
+            description = """
+                    ⚠️ 이 엔드포인트는 문서화 목적으로만 표시됩니다.
+                    
+                    실제 로그인 방법:
+                    1. Google 로그인: GET /oauth2/authorization/google
+                    2. Kakao 로그인: GET /oauth2/authorization/kakao
+                    
+                    로그인 흐름:
+                    1. 위 URL로 브라우저 리다이렉트
+                    2. OAuth2 공급자 인증 페이지로 이동
+                    3. 사용자 인증 완료 후 프론트엔드로 리다이렉트 (쿠키에 JWT 토큰 포함)
+                    4. 이후 모든 요청에 자동으로 JWT 쿠키 포함
+                    
+                    참고: 이 엔드포인트를 직접 호출하지 마세요.
+                    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "302",
+                            description = "OAuth2 인증 페이지로 리다이렉트"
+                    )
+            }
+    )
+    @GetMapping("/users/login")
+    public ResponseEntity<Map<String, String>> loginDocumentation(
+            @Parameter(description = "OAuth2 공급자 (google 또는 kakao)", example = "google")
+            @RequestParam(required = false) String ignoredProvider) {
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of(
+                        "error", "이 엔드포인트는 문서용입니다.",
+                        "googleLogin", "/oauth2/authorization/google",
+                        "kakaoLogin", "/oauth2/authorization/kakao"
+                ));
+    }
 
     @Operation(
             summary = "내 정보 조회",
@@ -275,51 +308,5 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "이미지 업로드에 실패했습니다."));
         }
-    }
-
-    /**
-     * 저장한 메이크업 목록 조회
-     */
-    @Operation(summary = "저장한 메이크업 목록 조회", description = "현재 사용자가 저장한 메이크업 목록을 페이징하여 조회합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = MakeUpListResponseDto.class)))
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
-    @GetMapping("/users/me/saved/makeups")
-    public MakeUpListResponseDto getSavedMakeups(
-            @CurrentUserId UUID userId,
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(value = "page", defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") int size
-    ) {
-        return makeUpService.getMakeUpList(userId, page, size);
-    }
-
-    /**
-     * 저장한 메이크업 상세 조회
-     */
-    @Operation(summary = "저장한 메이크업 상세 조회", description = "저장한 메이크업의 상세 정보를 조회합니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = MakeUpDetailResponseDto.class)))
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
-    @ApiResponse(responseCode = "404", description = "메이크업을 찾을 수 없음", content = @Content)
-    @GetMapping("/users/me/saved/makeups/{makeupId}")
-    public MakeUpDetailResponseDto getSavedMakeup(
-            @CurrentUserId UUID userId,
-            @Parameter(description = "메이크업 ID (UUID)") @PathVariable("makeupId") UUID makeupId
-    ) {
-        return makeUpService.getMakeUpById(userId, makeupId);
-    }
-
-    /**
-     * 저장한 메이크업 삭제
-     */
-    @Operation(summary = "저장한 메이크업 삭제", description = "저장한 메이크업을 삭제합니다. S3에서도 함께 삭제됩니다.")
-    @ApiResponse(responseCode = "204", description = "삭제 성공", content = @Content)
-    @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
-    @ApiResponse(responseCode = "404", description = "메이크업을 찾을 수 없음", content = @Content)
-    @DeleteMapping("/users/me/saved/makeups/{makeupId}")
-    public ResponseEntity<Void> deleteSavedMakeup(
-            @CurrentUserId UUID userId,
-            @Parameter(description = "메이크업 ID (UUID)") @PathVariable("makeupId") UUID makeupId
-    ) {
-        makeUpService.deleteMakeUpById(userId, makeupId);
-        return ResponseEntity.noContent().build();
     }
 }
