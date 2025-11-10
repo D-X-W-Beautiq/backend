@@ -80,7 +80,7 @@ public class S3Service {
                 : "";
 
         // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록
-        String imageName = fileName + extension;
+        String imageName = fileName + ".png";
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(image.getContentType());

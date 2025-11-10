@@ -252,21 +252,23 @@ public class MakeUpService {
      * @return 처리 상태와 결과 이미지(Base64)
      */
     public CustomizeResponseDto customize(
-            CustomizeRequestDto customizeRequestDto
-    ) {
+            String imageName,
+            CustomizeRequestDto customizeRequestDto,
+            UUID userId
+    ) throws IOException {
         // 입력 검증
-        if (customizeRequestDto == null || customizeRequestDto.getBaseImageBase64() == null || customizeRequestDto.getBaseImageBase64().isBlank()) {
-            return new CustomizeResponseDto("failed", null, "base_image_base64 is required");
+        if (customizeRequestDto == null || imageName == null || imageName.isBlank()) {
+            return new CustomizeResponseDto("failed", null, null, "imageName is required");
         }
         if (customizeRequestDto.getEdits() == null || customizeRequestDto.getEdits().isEmpty()) {
-            return new CustomizeResponseDto("failed", null, "edits is required and must contain at least one item");
+            return new CustomizeResponseDto("failed", null, null, "edits is required and must contain at least one item");
         }
 
-        String baseImage = extractBase64(customizeRequestDto.getBaseImageBase64());
+        String preImage = s3Service.imageNameToBase64(imageName);
 
         // 요청 DTO에 이미지, 편집 정보 담기
         CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
-        customizeAiRequestDto.setBaseImageBase64(baseImage); // 현재 이미지
+        customizeAiRequestDto.setBaseImageBase64(preImage); // 현재 이미지
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
             if(editForWeb.isEdited()) {
                 // intensity 범위는 DTO에서 검증되지만 방어적으로 보정
@@ -289,7 +291,7 @@ public class MakeUpService {
                 .block();
 
         if (customizeAiResponseDto == null) {
-            return new CustomizeResponseDto("failed", null, "AI service error: no response");
+            return new CustomizeResponseDto("failed", null, null, "AI service error: no response");
         }
 
         String status = customizeAiResponseDto.getStatus();
@@ -297,14 +299,17 @@ public class MakeUpService {
         String message = customizeAiResponseDto.getMessage();
 
         if (!"success".equalsIgnoreCase(status)) {
-            return new CustomizeResponseDto(status == null ? "failed" : status, null, message == null ? "AI processing failed" : message);
+            return new CustomizeResponseDto(status == null ? "failed" : status, null, null, message == null ? "AI processing failed" : message);
         }
 
         if (resultBase64 == null || resultBase64.isBlank()) {
-            return new CustomizeResponseDto("failed", null, "AI returned empty result image");
+            return new CustomizeResponseDto("failed", null, null, "AI returned empty result image");
         }
 
-        return new CustomizeResponseDto("success", resultBase64, null);
+        MultipartFile customizedImage = base64ToMultipart(resultBase64);
+        String customizedImageName = s3Service.uploadTempImage(customizedImage, userId);
+
+        return new CustomizeResponseDto("success", customizedImageName, s3Service.getPreSignedUrl(customizedImageName), null);
     }
 
 

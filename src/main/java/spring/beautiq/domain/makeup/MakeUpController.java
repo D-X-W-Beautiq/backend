@@ -82,7 +82,6 @@ public class MakeUpController {
                     4. 백엔드에서 Base64를 이미지로 변환 후 S3 임시 저장
                     5. 백엔드에서 추천 이미지 이름 및 S3 URL 반환
                     
-                    **S3 저장 없음** - 프론트 메모리에만 존재
                     """
     )
     @ApiResponses(value = {
@@ -136,9 +135,9 @@ public class MakeUpController {
                     시뮬레이션 결과 이미지(Base64)의 색상/강도를 조정한 결과를 Base64로 반환합니다.
                     
                     **흐름:**
-                    1. 프론트: 시뮬레이션 Base64 + 편집 조건
+                    1. 프론트: 시뮬레이션 이미지 이름 + 편집 조건
                     2. 백엔드: AI 서버에 커스터마이즈 요청
-                    3. 백엔드: 결과 Base64 반환
+                    3. 백엔드: 커스터마이징 된 이미지 이름, url 반환
                     4. (반복 가능)
                     
                     **편집 항목 설명:**
@@ -150,14 +149,18 @@ public class MakeUpController {
                       - "blush": 볼터치 intensity 조정
                     - intensity는 0~100 범위이며 기본값은 50입니다. 50보다 크면 메이크업이 더 진하게 적용되고, 50보다 작으면 더 연하게 적용됩니다.
                     
-                    **S3 저장 없음** - save API 호출 전까지 프론트 메모리에만 존재
                     """
     )
-    @PostMapping(value = "/customize", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/customize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CustomizeResponseDto customize(
-            @Valid @RequestBody CustomizeRequestDto customizeRequestDto
-    ) {
-        return makeUpService.customize(customizeRequestDto);
+            @CurrentUserId UUID userId,
+
+            @Schema(description = "시뮬레이션 된 이미지 이름", example = "temp/7f000001-9a6e-12b7-819a-6e42edf20000/fc32f75...", requiredMode = Schema.RequiredMode.REQUIRED)
+            @RequestPart("imageName") String imageName,
+
+            @RequestPart("data") CustomizeRequestDto customizeRequestDto
+    ) throws IOException {
+        return makeUpService.customize(imageName, customizeRequestDto, userId);
     }
 
 }
