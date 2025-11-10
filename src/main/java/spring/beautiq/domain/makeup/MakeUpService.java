@@ -147,6 +147,7 @@ public class MakeUpService {
      * @return Base64 이미지 3개 (S3에 저장하지 않음)
      */
     public RecommendResponseDto styleRecommend(
+            UUID userId,
             MultipartFile sourceImage,
             RecommendRequestDto recommendRequestDto
     ) throws IOException {
@@ -189,8 +190,9 @@ public class MakeUpService {
         // Base64 응답 그대로 반환 (S3 저장하지 않음)
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
         for (RecommendAiItem item : recommendAiResponseDto.getRecommendations()) {
-            // Base64 이미지를 그대로 반환
-            recommendResponseDto.addRecommendation(item.getStyleId(), item.getStyleImageBase64());
+            MultipartFile recommendImage = base64ToMultipart(item.getStyleImageBase64());// Base64 유효성 검증
+            String tempImageName = s3Service.uploadImage(recommendImage, userId);
+            recommendResponseDto.addRecommendation(tempImageName, s3Service.getPreSignedUrl(tempImageName));
         }
 
         return recommendResponseDto;

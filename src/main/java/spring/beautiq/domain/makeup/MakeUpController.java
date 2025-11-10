@@ -75,7 +75,8 @@ public class MakeUpController {
                     1. 프론트에서 파일 업로드
                     2. 백엔드에서 Base64 변환하여 AI 서버 요청
                     3. AI 서버에서 3개 스타일 Base64로 응답
-                    4. 프론트는 Base64를 저장 (추후 시뮬레이션에 사용)
+                    4. 백엔드에서 Base64를 이미지로 변환 후 S3 임시 저장
+                    5. 백엔드에서 추천 이미지 이름 및 S3 URL 반환
                     
                     **S3 저장 없음** - 프론트 메모리에만 존재
                     """
@@ -86,6 +87,7 @@ public class MakeUpController {
     })
     @PostMapping(value = "/recommendation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendResponseDto styleRecommend(
+            @CurrentUserId UUID userId,
             @RequestPart(name = "sourceImage")
             @Parameter(description = "사용자 얼굴 이미지 파일 (JPG/PNG)")
             MultipartFile sourceImage,
@@ -94,7 +96,7 @@ public class MakeUpController {
             @Parameter(description = "키워드 (선택, 최대 5개)")
             RecommendRequestDto recommendRequestDto
     ) throws IOException {
-        return makeUpService.styleRecommend(sourceImage, recommendRequestDto);
+        return makeUpService.styleRecommend(userId, sourceImage, recommendRequestDto);
     }
 
     /**
