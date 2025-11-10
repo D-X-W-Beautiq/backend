@@ -40,13 +40,13 @@ public class MakeUpController {
                     시뮬레이션 또는 커스터마이징 결과 이미지(Base64)를 S3에 영구 저장하고 DB에 기록합니다.
                     
                     **흐름:**
-                    1. 프론트에서 Base64 이미지 전송
-                    2. 백엔드가 S3 images 폴더에 저장
+                    1. 프론트에서 이미지 url 전송
+                    2. 백엔드가 S3에 영구 저장
                     3. DB에 메이크업 기록 저장
                     
                     **요청:**
                     - Content-Type: application/json
-                    - imageBase64: Base64 인코딩된 이미지 문자열
+                    - imageName: 저장할 이미지 이름
                     """
     )
     @ApiResponses(value = {
@@ -54,12 +54,16 @@ public class MakeUpController {
             @ApiResponse(responseCode = "400", description = "잘못된 입력"),
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    @PostMapping("/save")
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> saveMakeUp(
             @Parameter(hidden = true) @CurrentUserId UUID userId,
-            @Valid @RequestBody MakeUpSaveRequestDto makeUpSaveRequestDto
+            @RequestPart(name = "imageName") String imageName,
+
+            @Valid @RequestPart(name = "data")
+            @Parameter(description = "키워드 (선택, 최대 5개)")
+            RecommendRequestDto recommendRequestDto
     ) {
-        makeUpService.saveMakeUp(userId, makeUpSaveRequestDto);
+        makeUpService.saveMakeUp(userId, new MakeUpSaveRequestDto(imageName, recommendRequestDto.getKeywords()));
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -75,9 +79,9 @@ public class MakeUpController {
                     1. 프론트에서 파일 업로드
                     2. 백엔드에서 Base64 변환하여 AI 서버 요청
                     3. AI 서버에서 3개 스타일 Base64로 응답
-                    4. 프론트는 Base64를 저장 (추후 시뮬레이션에 사용)
+                    4. 백엔드에서 Base64를 이미지로 변환 후 S3 임시 저장
+                    5. 백엔드에서 추천 이미지 이름 및 S3 URL 반환
                     
-                    **S3 저장 없음** - 프론트 메모리에만 존재
                     """
     )
     @ApiResponses(value = {
@@ -86,6 +90,7 @@ public class MakeUpController {
     })
     @PostMapping(value = "/recommendation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public RecommendResponseDto styleRecommend(
+            @CurrentUserId UUID userId,
             @RequestPart(name = "sourceImage")
             @Parameter(description = "사용자 얼굴 이미지 파일 (JPG/PNG)")
             MultipartFile sourceImage,
@@ -94,7 +99,7 @@ public class MakeUpController {
             @Parameter(description = "키워드 (선택, 최대 5개)")
             RecommendRequestDto recommendRequestDto
     ) throws IOException {
-        return makeUpService.styleRecommend(sourceImage, recommendRequestDto);
+        return makeUpService.styleRecommend(userId, sourceImage, recommendRequestDto);
     }
 
     /**
@@ -103,23 +108,22 @@ public class MakeUpController {
     @Operation(
             summary = "메이크업 시뮬레이션",
             description = """
-                    원본 이미지(Base64)와 참조 스타일(파일 또는 Base64)을 받아 메이크업을 적용한 결과를 Base64로 반환합니다.
+                    원본 이미지와 참조 스타일(파일 또는 이미지 이름)을 받아 메이크업을 적용한 결과를 s3 url로 반환합니다.
 
                     **흐름:**
-                    1. 프론트: 원본 Base64 + (추천 이미지 Base64 선택 OR 새 파일 업로드)
+                    1. 프론트: 추천 이미지 이름 선택 OR 새 이미지 업로드
                     2. 백엔드: AI 서버에 시뮬레이션 요청
-                    3. 백엔드: 결과 Base64 반환
+                    3. 백엔드: 결과 이미지 s3 임시 저장
+                    4. 백엔드: 결과 이미지 이름 및 S3 URL 반환
 
-                    **S3 저장 없음** - 프론트 메모리에만 존재
                     """
     )
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImageItem simulateMakeUp(
             @CurrentUserId UUID userId,
-            @RequestPart("sourceImage") MultipartFile sourceImage,
-            @RequestPart("styleImage") MultipartFile styleImage
+            @RequestPart("styleImage") String recommendImageName
     ) throws IOException {
-        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage);
+        return makeUpService.simulateMakeUp(userId, recommendImageName);
     }
 
     /**
@@ -131,9 +135,9 @@ public class MakeUpController {
                     시뮬레이션 결과 이미지(Base64)의 색상/강도를 조정한 결과를 Base64로 반환합니다.
                     
                     **흐름:**
-                    1. 프론트: 시뮬레이션 Base64 + 편집 조건
+                    1. 프론트: 시뮬레이션 이미지 이름 + 편집 조건
                     2. 백엔드: AI 서버에 커스터마이즈 요청
-                    3. 백엔드: 결과 Base64 반환
+                    3. 백엔드: 커스터마이징 된 이미지 이름, url 반환
                     4. (반복 가능)
                     
                     **편집 항목 설명:**
@@ -145,14 +149,18 @@ public class MakeUpController {
                       - "blush": 볼터치 intensity 조정
                     - intensity는 0~100 범위이며 기본값은 50입니다. 50보다 크면 메이크업이 더 진하게 적용되고, 50보다 작으면 더 연하게 적용됩니다.
                     
-                    **S3 저장 없음** - save API 호출 전까지 프론트 메모리에만 존재
                     """
     )
-    @PostMapping(value = "/customize", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/customize", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CustomizeResponseDto customize(
-            @Valid @RequestBody CustomizeRequestDto customizeRequestDto
-    ) {
-        return makeUpService.customize(customizeRequestDto);
+            @CurrentUserId UUID userId,
+
+            @Schema(description = "시뮬레이션 된 이미지 이름", example = "temp/7f000001-9a6e-12b7-819a-6e42edf20000/fc32f75...", requiredMode = Schema.RequiredMode.REQUIRED)
+            @RequestPart("imageName") String imageName,
+
+            @RequestPart("data") CustomizeRequestDto customizeRequestDto
+    ) throws IOException {
+        return makeUpService.customize(imageName, customizeRequestDto, userId);
     }
 
 }
