@@ -54,12 +54,16 @@ public class MakeUpController {
             @ApiResponse(responseCode = "400", description = "잘못된 입력"),
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    @PostMapping("/save")
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> saveMakeUp(
             @Parameter(hidden = true) @CurrentUserId UUID userId,
-            @Valid @RequestBody MakeUpSaveRequestDto makeUpSaveRequestDto
+            @RequestPart(name = "imageName") String imageName,
+
+            @Valid @RequestPart(name = "data")
+            @Parameter(description = "키워드 (선택, 최대 5개)")
+            RecommendRequestDto recommendRequestDto
     ) {
-        makeUpService.saveMakeUp(userId, makeUpSaveRequestDto);
+        makeUpService.saveMakeUp(userId, new MakeUpSaveRequestDto(imageName, recommendRequestDto.getKeywords()));
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
