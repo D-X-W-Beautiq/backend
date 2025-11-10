@@ -185,7 +185,7 @@ public class S3Service {
             return imageNameToBase64(fileName);
         } catch (IOException e) {
             log.error("Failed to get source image from S3 for user {}: {}", userId, e.getMessage());
-            return null;
+            throw new IllegalStateException("Source image not found for user: " + userId, e);
         }
     }
 
