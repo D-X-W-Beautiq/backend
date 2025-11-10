@@ -51,11 +51,16 @@ public class MakeUpService {
             throw new IllegalArgumentException("Image Base64 is required");
         }
 
-        MakeUpEntity makeUp = MakeUpEntity.builder()
-                .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
-                .keywords(String.join(",", saveRequestDto.getKeywords()))
-                .imageName(newImageName)
-                .build();
+        try {
+            // Base64를 MultipartFile로 변환하여 S3에 저장
+            MultipartFile imageFile = base64ToMultipart(imageBase64);
+            String newImageName = s3Service.uploadImage(imageFile, userId);
+
+            MakeUpEntity makeUp = MakeUpEntity.builder()
+                    .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                    .keywords(String.join(",", saveRequestDto.getKeywords()))
+                    .imageName(newImageName)
+                    .build();
 
             makeUpRepository.save(makeUp);
         } catch (IOException e) {
@@ -201,28 +206,29 @@ public class MakeUpService {
             MultipartFile styleImage
             ) throws IOException {
 
-        // sourceImageBase64 필수 검증
-        if (requestDto.getSourceImageBase64() == null || requestDto.getSourceImageBase64().isBlank()) {
-            throw new IllegalArgumentException("Source image (Base64) is required");
+        // sourceImage 필수 검증
+        if (sourceImage == null || sourceImage.isEmpty()) {
+            throw new IllegalArgumentException("Source image is required");
         }
 
-        String sourceImageBase64 = extractBase64(requestDto.getSourceImageBase64());
+        String contentType = sourceImage.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid source image file");
+        }
+
+        String sourceImageBase64 = multipartToBase64(sourceImage);
         String styleImageBase64;
 
-        // styleImage: 파일 또는 Base64 중 하나는 필수
-        if (styleImage != null && !styleImage.isEmpty()) {
-            // 파일이 제공된 경우
-            String contentType = styleImage.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                throw new IllegalArgumentException("Invalid style image file");
-            }
-            styleImageBase64 = multipartToBase64(styleImage);
-        } else if (requestDto.getStyleImageBase64() != null && !requestDto.getStyleImageBase64().isBlank()) {
-            // Base64가 제공된 경우
-            styleImageBase64 = extractBase64(requestDto.getStyleImageBase64());
-        } else {
-            throw new IllegalArgumentException("Style image (file or Base64) is required");
+        // styleImage 필수 검증
+        if (styleImage == null || styleImage.isEmpty()) {
+            throw new IllegalArgumentException("Style image is required");
         }
+
+        String styleContentType = styleImage.getContentType();
+        if (styleContentType == null || !styleContentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Invalid style image file");
+        }
+        styleImageBase64 = multipartToBase64(styleImage);
 
         // 요청 DTO에 이미지 담기
         SimulationAiRequestDto simulationAiRequestDto = SimulationAiRequestDto.builder()
@@ -255,7 +261,8 @@ public class MakeUpService {
         }
 
         // Base64 응답 그대로 반환 (S3 저장하지 않음)
-        return new SimulationResponseDto(simulationAiResponseDto.getResultImageBase64());
+        // ImageItem은 (imageName, imageUrl) 두 파라미터가 필요하므로 적절히 생성
+        return new ImageItem("simulated_makeup", simulationAiResponseDto.getResultImageBase64());
     }
 
     /**
@@ -288,17 +295,16 @@ public class MakeUpService {
 
         // 요청 DTO에 이미지, 편집 정보 담기
         CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
-        customizeAiRequestDto.setBaseImageBase64(currentImageBase64); // 현재 이미지
+        customizeAiRequestDto.setBaseImageBase64(baseImage); // 현재 이미지
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
             if(editForWeb.isEdited()) {
+                // intensity 범위는 DTO에서 검증되지만 방어적으로 보정
+                int intensity = Math.max(0, Math.min(100, editForWeb.getIntensity()));
                 customizeAiRequestDto.addEdit(
                         editForWeb.getRegion(),
-                        editForWeb.getIntensity()
+                        intensity
                 );
             }
-            // intensity 범위는 DTO에서 검증되지만 방어적으로 보정
-            int intensity = Math.max(0, Math.min(100, edit.getIntensity()));
-            customizeAiRequestDto.addEdit(edit.getRegion(), intensity);
         }
 
         // AI 서버에 JSON 요청

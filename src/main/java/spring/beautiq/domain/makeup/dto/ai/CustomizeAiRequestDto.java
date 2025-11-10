@@ -34,8 +34,4 @@ public class CustomizeAiRequestDto {
         private int intensity; // 0~100
 
     }
-
-    public void addEdit(String region, int intensity) {
-        this.edits.add(new EditForAi(region, intensity));
-    }
 }
