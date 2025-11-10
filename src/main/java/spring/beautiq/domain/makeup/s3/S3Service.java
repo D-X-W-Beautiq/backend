@@ -79,7 +79,7 @@ public class S3Service {
                 ? originalImageName.substring(originalImageName.lastIndexOf("."))
                 : "";
 
-        // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록
+        // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록. png로 통일
         String imageName = fileName + ".png";
 
         ObjectMetadata metadata = new ObjectMetadata();

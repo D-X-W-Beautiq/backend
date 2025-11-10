@@ -48,9 +48,10 @@ public class MakeUpService {
 
         String newImageName = s3Service.saveImage(saveRequestDto.getImageName(), userId);
 
+        String[] keywords = saveRequestDto.getKeywords();
         MakeUpEntity makeUp = MakeUpEntity.builder()
                 .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
-                .keywords(String.join(",", saveRequestDto.getKeywords()))
+                .keywords(keywords == null ? null : String.join(",", keywords))
                 .imageName(newImageName)
                 .build();
 
