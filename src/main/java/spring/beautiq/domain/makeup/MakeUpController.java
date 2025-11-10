@@ -105,23 +105,22 @@ public class MakeUpController {
     @Operation(
             summary = "메이크업 시뮬레이션",
             description = """
-                    원본 이미지(Base64)와 참조 스타일(파일 또는 Base64)을 받아 메이크업을 적용한 결과를 Base64로 반환합니다.
+                    원본 이미지와 참조 스타일(파일 또는 이미지 이름)을 받아 메이크업을 적용한 결과를 s3 url로 반환합니다.
 
                     **흐름:**
-                    1. 프론트: 원본 Base64 + (추천 이미지 Base64 선택 OR 새 파일 업로드)
+                    1. 프론트: 추천 이미지 이름 선택 OR 새 이미지 업로드
                     2. 백엔드: AI 서버에 시뮬레이션 요청
-                    3. 백엔드: 결과 Base64 반환
+                    3. 백엔드: 결과 이미지 s3 임시 저장
+                    4. 백엔드: 결과 이미지 이름 및 S3 URL 반환
 
-                    **S3 저장 없음** - 프론트 메모리에만 존재
                     """
     )
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImageItem simulateMakeUp(
             @CurrentUserId UUID userId,
-            @RequestPart("sourceImage") MultipartFile sourceImage,
-            @RequestPart("styleImage") MultipartFile styleImage
+            @RequestPart("styleImage") String recommendImageName
     ) throws IOException {
-        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage);
+        return makeUpService.simulateMakeUp(userId, recommendImageName);
     }
 
     /**

@@ -41,10 +41,28 @@ public class S3Service {
         }
     }
 
+    public void uploadSourceImage(MultipartFile sourceImage, UUID userId) throws IOException {
+
+        String fileName = "sourceImg/" + userId;
+        uploadImage(sourceImage, userId, fileName);
+    }
+
+    public String uploadTempImage(MultipartFile recommendImage, UUID userId) throws IOException {
+
+        String fileName = "temp/" + userId + "/" + UUID.randomUUID();
+        return uploadImage(recommendImage, userId, fileName);
+
+    }
+
     /**
-     * S3에 이미지 임시 업로드 하기
+     * S3에 프로필 업로드 하기
      */
     public String uploadImage(MultipartFile image, UUID userId) throws IOException {
+        String fileName = "profile/" + userId;
+        return uploadImage(image, userId, fileName);
+    }
+
+    public String uploadImage(MultipartFile image, UUID userId, String fileName) throws IOException {
         ensureEnabled();
         // 이미지 입력 유효 검증
         if (image == null || image.isEmpty()) {
@@ -62,7 +80,7 @@ public class S3Service {
                 : "";
 
         // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록
-        String imageName = "temp/" + userId + "/" + UUID.randomUUID() + extension;
+        String imageName = fileName + extension;
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(image.getContentType());
@@ -160,4 +178,15 @@ public class S3Service {
         }
         amazonS3.deleteObject(bucket, imageName);
     }
+
+    public String getSourceImgBase64(UUID userId) {
+        String fileName = "sourceImg/" + userId + ".png";
+        try {
+            return imageNameToBase64(fileName);
+        } catch (IOException e) {
+            log.error("Failed to get source image from S3 for user {}: {}", userId, e.getMessage());
+            return null;
+        }
+    }
+
 }

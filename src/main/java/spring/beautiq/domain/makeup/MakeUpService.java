@@ -54,7 +54,7 @@ public class MakeUpService {
         try {
             // Base64를 MultipartFile로 변환하여 S3에 저장
             MultipartFile imageFile = base64ToMultipart(imageBase64);
-            String newImageName = s3Service.uploadImage(imageFile, userId);
+            String newImageName = s3Service.uploadImage(imageFile, userId, "");
 
             MakeUpEntity makeUp = MakeUpEntity.builder()
                     .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
@@ -187,11 +187,14 @@ public class MakeUpService {
             throw new IllegalStateException("AI service returned insufficient recommendations");
         }
 
+        // sourceImage 저장하기
+        s3Service.uploadSourceImage(sourceImage, userId);
+
         // Base64 응답 그대로 반환 (S3 저장하지 않음)
         RecommendResponseDto recommendResponseDto = new RecommendResponseDto();
         for (RecommendAiItem item : recommendAiResponseDto.getRecommendations()) {
             MultipartFile recommendImage = base64ToMultipart(item.getStyleImageBase64());// Base64 유효성 검증
-            String tempImageName = s3Service.uploadImage(recommendImage, userId);
+            String tempImageName = s3Service.uploadTempImage(recommendImage, userId);
             recommendResponseDto.addRecommendation(tempImageName, s3Service.getPreSignedUrl(tempImageName));
         }
 
@@ -204,38 +207,13 @@ public class MakeUpService {
      */
     public ImageItem simulateMakeUp(
             UUID userId,
-            MultipartFile sourceImage,
-            MultipartFile styleImage
+            String recommendImageName
             ) throws IOException {
-
-        // sourceImage 필수 검증
-        if (sourceImage == null || sourceImage.isEmpty()) {
-            throw new IllegalArgumentException("Source image is required");
-        }
-
-        String contentType = sourceImage.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Invalid source image file");
-        }
-
-        String sourceImageBase64 = multipartToBase64(sourceImage);
-        String styleImageBase64;
-
-        // styleImage 필수 검증
-        if (styleImage == null || styleImage.isEmpty()) {
-            throw new IllegalArgumentException("Style image is required");
-        }
-
-        String styleContentType = styleImage.getContentType();
-        if (styleContentType == null || !styleContentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Invalid style image file");
-        }
-        styleImageBase64 = multipartToBase64(styleImage);
 
         // 요청 DTO에 이미지 담기
         SimulationAiRequestDto simulationAiRequestDto = SimulationAiRequestDto.builder()
-                .sourceImageBase64(sourceImageBase64)
-                .styleImageBase64(styleImageBase64)
+                .sourceImageBase64(s3Service.getSourceImgBase64(userId)) // 저장된 source 이미지 사용
+                .styleImageBase64(s3Service.imageNameToBase64(recommendImageName))
                 .build();
 
         // AI 서버에 JSON 요청
@@ -262,9 +240,11 @@ public class MakeUpService {
             throw new RuntimeException("AI service error: No result image");
         }
 
-        // Base64 응답 그대로 반환 (S3 저장하지 않음)
-        // ImageItem은 (imageName, imageUrl) 두 파라미터가 필요하므로 적절히 생성
-        return new ImageItem("simulated_makeup", simulationAiResponseDto.getResultImageBase64());
+        String SimulatedImageName = s3Service.uploadTempImage(
+                base64ToMultipart(simulationAiResponseDto.getResultImageBase64()),
+                userId
+        );
+        return new ImageItem(SimulatedImageName, s3Service.getPreSignedUrl(SimulatedImageName));
     }
 
     /**
