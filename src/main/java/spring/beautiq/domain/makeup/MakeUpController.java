@@ -40,13 +40,13 @@ public class MakeUpController {
                     시뮬레이션 또는 커스터마이징 결과 이미지(Base64)를 S3에 영구 저장하고 DB에 기록합니다.
                     
                     **흐름:**
-                    1. 프론트에서 Base64 이미지 전송
-                    2. 백엔드가 S3 images 폴더에 저장
+                    1. 프론트에서 이미지 url 전송
+                    2. 백엔드가 S3에 영구 저장
                     3. DB에 메이크업 기록 저장
                     
                     **요청:**
                     - Content-Type: application/json
-                    - imageBase64: Base64 인코딩된 이미지 문자열
+                    - imageName: 저장할 이미지 이름
                     """
     )
     @ApiResponses(value = {

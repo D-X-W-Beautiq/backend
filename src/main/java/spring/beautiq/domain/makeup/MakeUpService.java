@@ -45,27 +45,16 @@ public class MakeUpService {
      */
     @Transactional
     public void saveMakeUp(UUID userId, MakeUpSaveRequestDto saveRequestDto) {
-        String imageBase64 = saveRequestDto.getImageBase64();
 
-        if (imageBase64 == null || imageBase64.isBlank()) {
-            throw new IllegalArgumentException("Image Base64 is required");
-        }
+        String newImageName = s3Service.saveImage(saveRequestDto.getImageName(), userId);
 
-        try {
-            // Base64를 MultipartFile로 변환하여 S3에 저장
-            MultipartFile imageFile = base64ToMultipart(imageBase64);
-            String newImageName = s3Service.uploadImage(imageFile, userId, "");
+        MakeUpEntity makeUp = MakeUpEntity.builder()
+                .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                .keywords(String.join(",", saveRequestDto.getKeywords()))
+                .imageName(newImageName)
+                .build();
 
-            MakeUpEntity makeUp = MakeUpEntity.builder()
-                    .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
-                    .keywords(String.join(",", saveRequestDto.getKeywords()))
-                    .imageName(newImageName)
-                    .build();
-
-            makeUpRepository.save(makeUp);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save image to S3", e);
-        }
+        makeUpRepository.save(makeUp);
     }
 
     /**

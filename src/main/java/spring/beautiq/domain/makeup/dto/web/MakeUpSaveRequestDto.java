@@ -7,9 +7,9 @@ import lombok.Data;
 @Data
 public class MakeUpSaveRequestDto {
 
-    @NotBlank(message = "Image Base64 is required")
-    @Schema(description = "Base64 인코딩된 이미지 문자열", required = true)
-    private String imageBase64;
+    @NotBlank(message = "Image Name cannot be blank")
+    @Schema(description = "저장할 시뮬레이션 이미지 이름", required = true)
+    private String imageName;
 
     @Schema(description = "키워드 배열")
     private String[] keywords;
