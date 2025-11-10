@@ -17,6 +17,7 @@ public enum ProductExceptions implements ErrorCode {
     RECOMMENDATION_REQUIRED("추천 제품 정보가 필요합니다.", HttpStatus.BAD_REQUEST),
     AI_SERVER_INVALID_RESPONSE("AI 서버 응답이 올바르지 않습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     PRODUCT_NOT_IN_FILTERED_LIST("AI 서버가 반환한 제품이 필터링된 목록에 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    NO_PRODUCTS_MATCH_FILTERS("필터 조건에 맞는 제품이 없습니다.", HttpStatus.NOT_FOUND),
     ;
 
     private final String message;

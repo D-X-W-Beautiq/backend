@@ -1,6 +1,7 @@
 package spring.beautiq.domain.skinanalysis.dto.ai.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -12,17 +13,13 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Schema(
         description = "AI 피부 분석 응답 (AI 서버 원본 스펙)",
         example = """
         {
           "status": "success",
           "predictions": {
-            "dryness": 70,
-            "pigmentation": 45,
-            "pore": 60,
-            "sagging": 35,
-            "wrinkle": 40,
             "pigmentation_reg": 48,
             "moisture_reg": 63,
             "elasticity_reg": 75,
@@ -67,71 +64,37 @@ public class SkinAnalysisAIResponse {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @Schema(description = "AI 예측 점수 집합 (0~100)")
     public static class Predictions {
 
         @NotNull
         @Min(0)
         @Max(100)
-        @Schema(description = "건조 점수", example = "70", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer dryness;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "색소침착 점수", example = "45", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer pigmentation;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "모공 점수", example = "60", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer pore;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "처짐 점수", example = "35", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer sagging;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "주름 점수", example = "40", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer wrinkle;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @JsonProperty("pigmentation_reg")
         @Schema(description = "색소침착 회귀 점수", example = "48", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer pigmentationReg;
 
         @NotNull
         @Min(0)
         @Max(100)
-        @JsonProperty("moisture_reg")
         @Schema(description = "수분 점수", example = "63", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer moistureReg;
 
         @NotNull
         @Min(0)
         @Max(100)
-        @JsonProperty("elasticity_reg")
         @Schema(description = "탄력 점수", example = "75", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer elasticityReg;
 
         @NotNull
         @Min(0)
         @Max(100)
-        @JsonProperty("wrinkle_reg")
         @Schema(description = "주름 회귀 점수", example = "42", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer wrinkleReg;
 
         @NotNull
         @Min(0)
         @Max(100)
-        @JsonProperty("pore_reg")
         @Schema(description = "모공 회귀 점수", example = "58", type = "integer", format = "int32", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer poreReg;
     }

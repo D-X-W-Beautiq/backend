@@ -59,8 +59,8 @@ public class ProductFilters {
 
         @DecimalMin("0.0")
         @DecimalMax("5.0")
-        @Schema(description = "최소 리뷰 평점 (0.0-5.0)", example = "4.0", type = "number", format = "float", minimum = "0.0", maximum = "5.0")
-        private Float min;
+        @Schema(description = "최소 리뷰 평점 (0.0-5.0)", example = "4.0", type = "number", format = "double", minimum = "0.0", maximum = "5.0")
+        private Double min;
     }
 
     /**

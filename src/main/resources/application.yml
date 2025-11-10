@@ -23,7 +23,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false  # SQL 로그 비활성화
     properties:
       hibernate:
@@ -72,16 +72,31 @@ app:
     description: Beautiq REST API
     version: ${spring.application.version:0.0.1-SNAPSHOT}
   oauth2:
-    redirect-success: ${OAUTH_REDIRECT_SUCCESS}
+    redirect: ${OAUTH_REDIRECT}
     cookie-domain: ${COOKIE_DOMAIN}
     use-cookie-secure: ${COOKIE_SECURE}
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
   ai-server:
     url: ${AI_SERVER_URL}
+    connect-timeout-ms: 10000
+    response-timeout-seconds: 180  # 3분
+    read-timeout-seconds: 180      # 3분
+    write-timeout-seconds: 60      # 1분
+    max-in-memory-mb: 50           # Base64 이미지 처리를 위한 메모리 제한
+  s3:
+    enabled: true
 
   product:
     init:
       enabled: true  # false로 설정하면 초기 로드 비활성화
       file: classpath:oliveyoung_data_set.xlsx
+
+# Swagger UI 설정
+springdoc:
+  swagger-ui:
+    with-credentials: true
+    csrf:
+      enabled: false
 
 # AWS SDK v1 deprecation 경고 비활성화
 aws:

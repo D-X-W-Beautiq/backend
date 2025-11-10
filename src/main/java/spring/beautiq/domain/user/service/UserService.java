@@ -1,8 +1,6 @@
 package spring.beautiq.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import spring.beautiq.domain.user.dto.UserRequest;
@@ -10,100 +8,92 @@ import spring.beautiq.domain.user.dto.UserResponse;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
 
-    @Transactional
-    public UserEntity createOneUser(String username, String email, String profileImage) {
-        return userRepository.findByUsername(username)
-                .map(user -> {
-                    user.setEmail(email);
-                    if (profileImage != null) {
-                        user.setProfileImage(profileImage);
-                    }
-                    return userRepository.save(user);
-                })
-                .orElseGet(() -> {
-                    UserEntity user = new UserEntity();
-                    user.setUsername(username);
-                    user.setEmail(email);
-                    user.setProfileImage(profileImage);
-                    return userRepository.save(user);
-                });
+    @Transactional(readOnly = true)
+    public UserResponse readOneUserById(UUID userId) {
+        UserEntity entity = findUserById(userId);
+        return mapToResponse(entity);
     }
 
+    @Transactional
+    public void updateOneUserById(UserRequest dto, UUID userId) {
+        validateRequest(dto);
 
-    @Transactional(readOnly = true)
-    public UserResponse readOneUser(String username) {
-        UserEntity entity = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."+ username));
+        UserEntity userEntity = findUserById(userId);
+
+        updateUsername(userEntity, dto.getUsername());
+        updateEmail(userEntity, dto.getEmail());
+
+        userRepository.save(userEntity);
+    }
+
+    @Transactional
+    public void updateProfileImageById(UUID userId, String imageUrl) {
+        UserEntity userEntity = findUserById(userId);
+        userEntity.setProfileImage(imageUrl);
+        userRepository.save(userEntity);
+    }
+
+    @Transactional
+    public void deleteUserById(UUID userId) {
+        UserEntity userEntity = findUserById(userId);
+        userRepository.delete(userEntity);
+    }
+
+    private UserEntity findUserById(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+    }
+
+    private UserResponse mapToResponse(UserEntity entity) {
         return UserResponse.builder()
                 .id(entity.getId())
                 .username(entity.getUsername())
                 .email(entity.getEmail())
                 .profileImage(entity.getProfileImage())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 
-
-    @Transactional
-    public void updateOneUser(UserRequest dto, String username) {
-
+    private void validateRequest(UserRequest dto) {
         if (dto == null) {
             throw new IllegalArgumentException("요청 본문이 비어있습니다.");
         }
+    }
 
-        UserEntity userEntity = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."+ username));
-
-        if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
-            String newUsername = dto.getUsername().trim();
-            if (!newUsername.equals(username) && userRepository.existsByUsername(newUsername)) {
-                throw new IllegalArgumentException("이미 사용중인 사용자명입니다: " + newUsername);
-            }
-            userEntity.setUsername(newUsername);
-
+    private void updateUsername(UserEntity userEntity, String newUsername) {
+        if (newUsername == null || newUsername.trim().isEmpty()) {
+            return;
         }
 
-        if(dto.getProfileImage() != null && !dto.getProfileImage().trim().isEmpty()) {
-            userEntity.setProfileImage(dto.getProfileImage());
+        String trimmedUsername = newUsername.trim();
+        if (trimmedUsername.equals(userEntity.getUsername())) {
+            return;
         }
 
-        userRepository.save(userEntity);
+        if (userRepository.existsByUsername(trimmedUsername)) {
+            throw new IllegalArgumentException("이미 사용중인 사용자명입니다: " + trimmedUsername);
         }
 
-    @Transactional
-    public void updateProfileImage(String username, String imageurl) {
-        UserEntity userEntity = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."+ username));
-        userEntity.setProfileImage(imageurl);
-        userRepository.save(userEntity);
+        userEntity.setUsername(trimmedUsername);
     }
 
-    @Transactional
-    public void deleteOneUser(String username) {
-        UserEntity entity = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다." + username));
-        userRepository.deleteByUsername(username);
-    }
+    private void updateEmail(UserEntity userEntity, String newEmail) {
+        if (newEmail == null || newEmail.trim().isEmpty()) {
+            return;
+        }
 
-    public boolean isAccess(String username) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated())
-            return false;
-        String current = auth.getName();
-        boolean isOwner = username != null && username.equals(current);
-        boolean isAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
-        return isOwner || isAdmin;
-    }
+        String trimmedEmail = newEmail.trim();
+        if (trimmedEmail.equals(userEntity.getEmail())) {
+            return;
+        }
 
-    @Transactional(readOnly = true)
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+        userEntity.setEmail(trimmedEmail);
     }
-
 }
-

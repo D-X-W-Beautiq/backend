@@ -17,7 +17,7 @@ import spring.beautiq.domain.product.dto.common.ProductSort;
         description = "개인화 제품 추천 요청",
         example = """
                 {
-                  "topN": 10,
+                  "topN": 2,
                   "filters": {
                     "price": {
                       "min": 10000,
@@ -43,11 +43,11 @@ public class ProductRequest {
     @Min(1)
     @Schema(
             description = "추천받을 카테고리별 제품의 최대 개수",
-            example = "10",
+            example = "2",
             type = "integer",
             format = "int32",
             minimum = "1",
-            maximum = "100",
+            maximum = "10",
             requiredMode = Schema.RequiredMode.REQUIRED
     )
     private Integer topN;

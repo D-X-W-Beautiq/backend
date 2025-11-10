@@ -21,31 +21,6 @@ public class SkinAnalysisEntity extends BaseEntity {
     @NotNull
     UserEntity user;
 
-    @Column(name = "dryness", nullable = false)
-    @NotNull
-    @Min(0) @Max(100)
-    Integer dryness;
-
-    @Column(name = "pigmentation", nullable = false)
-    @NotNull
-    @Min(0) @Max(100)
-    Integer pigmentation;
-
-    @Column(name = "pore", nullable = false)
-    @NotNull
-    @Min(0) @Max(100)
-    Integer pore;
-
-    @Column(name = "sagging", nullable = false)
-    @NotNull
-    @Min(0) @Max(100)
-    Integer sagging;
-
-    @Column(name = "wrinkle", nullable = false)
-    @NotNull
-    @Min(0) @Max(100)
-    Integer wrinkle;
-
     @Column(name = "pigmentation_reg", nullable = false)
     @NotNull
     @Min(0) @Max(100)
