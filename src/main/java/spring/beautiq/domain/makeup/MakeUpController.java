@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.anhttps://github.com/D-X-W-Beautiq/backend/pull/21/conflict?name=src%252Fmain%252Fjava%252Fspring%252Fbeautiq%252Fdomain%252Fmakeup%252FMakeUpGetController.java&base_oid=7cbb49ba037b1d5cdd92f4ed30a61a7f32f2cd20&head_oid=34915e55abaa7cb30a810abbbb00bea2bdce8108notations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -113,16 +113,12 @@ public class MakeUpController {
                     """
     )
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public SimulationResponseDto simulateMakeUp(
-            @Valid @RequestPart(name = "data")
-            @Parameter(description = "시뮬레이션 요청 데이터 (원본 Base64 + 선택적 styleImageBase64)")
-            SimulationRequestDto requestDto,
-
-            @RequestPart(name = "styleImage", required = false)
-            @Parameter(description = "참조 스타일 이미지 파일 (선택, 업로드 시 styleImageBase64는 무시됨)")
-            MultipartFile styleImage
+    public ImageItem simulateMakeUp(
+            @CurrentUserId UUID userId,
+            @RequestPart("sourceImage") MultipartFile sourceImage,
+            @RequestPart("styleImage") MultipartFile styleImage
     ) throws IOException {
-        return makeUpService.simulateMakeUp(requestDto, styleImage);
+        return makeUpService.simulateMakeUp(userId, sourceImage, styleImage);
     }
 
     /**

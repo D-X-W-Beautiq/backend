@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import spring.beautiq.domain.makeup.dto.ai.*;
+import spring.beautiq.domain.makeup.dto.common.ImageItem;
 import spring.beautiq.domain.makeup.dto.web.*;
 import spring.beautiq.domain.makeup.entity.MakeUpEntity;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
@@ -50,24 +51,11 @@ public class MakeUpService {
             throw new IllegalArgumentException("Image Base64 is required");
         }
 
-        try {
-            // Base64 data URI prefix 제거
-            String pureBase64 = extractBase64(imageBase64);
-
-            // Base64 -> MultipartFile 변환
-            MultipartFile imageFile = base64ToMultipart(pureBase64);
-
-            // S3 temp 폴더에 먼저 업로드
-            String tempImageName = s3Service.uploadImage(imageFile, userId);
-
-            // temp -> images 폴더로 영구 이동
-            String imageName = s3Service.saveImage(tempImageName, userId);
-
-            // DB에 저장
-            MakeUpEntity makeUp = MakeUpEntity.builder()
-                    .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
-                    .imageName(imageName)
-                    .build();
+        MakeUpEntity makeUp = MakeUpEntity.builder()
+                .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                .keywords(String.join(",", saveRequestDto.getKeywords()))
+                .imageName(newImageName)
+                .build();
 
             makeUpRepository.save(makeUp);
         } catch (IOException e) {
@@ -120,15 +108,12 @@ public class MakeUpService {
     /**
      * 메이크업 상세 조회 (ID 기반)
      */
-    public MakeUpDetailResponseDto getMakeUpById(UUID userId, UUID makeupId) {
-        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeupId)
-                .orElseThrow(() -> new RuntimeException("MakeUp not found"));
+    public MakeUpDetailResponseDto getMakeUp(UUID userId, UUID makeUpId) {
+        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
 
-        // 본인 소유 확인
-        if (!makeUpEntity.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Access denied: not your makeup");
+        if(!makeUpEntity.getUser().getId().equals(userId)) { // 조회 시 사용자 권한 검증
+            throw new RuntimeException("Unauthorized");
         }
-
 
         return MakeUptoMakeUpDetailResponseDto(makeUpEntity);
     }
@@ -137,15 +122,11 @@ public class MakeUpService {
      * 메이크업 삭제 (ID 기반)
      */
     @Transactional
-    public void deleteMakeUpById(UUID userId, UUID makeupId) {
-        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeupId)
-                .orElseThrow(() -> new RuntimeException("MakeUp not found"));
-
-        // 본인 소유 확인
-        if (!makeUpEntity.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Access denied: not your makeup");
+    public void deleteMakeUp(UUID userId, UUID makeUpId) {
+        MakeUpEntity makeUpEntity = makeUpRepository.findById(makeUpId).orElseThrow(() -> new RuntimeException("MakeUp not found"));
+        if(!makeUpEntity.getUser().getId().equals(userId)) { // 삭제 시 사용자 권한 검증
+            throw new RuntimeException("Unauthorized");
         }
-
         // s3에서 이미지 삭제
         try {
             s3Service.deleteImage(makeUpEntity.getImageName());
@@ -214,10 +195,11 @@ public class MakeUpService {
      * 메이크업 시뮬레이션
      * @return Base64 이미지 (S3에 저장하지 않음)
      */
-    public SimulationResponseDto simulateMakeUp(
-            SimulationRequestDto requestDto,
+    public ImageItem simulateMakeUp(
+            UUID userId,
+            MultipartFile sourceImage,
             MultipartFile styleImage
-    ) throws IOException {
+            ) throws IOException {
 
         // sourceImageBase64 필수 검증
         if (requestDto.getSourceImageBase64() == null || requestDto.getSourceImageBase64().isBlank()) {
@@ -306,10 +288,13 @@ public class MakeUpService {
 
         // 요청 DTO에 이미지, 편집 정보 담기
         CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
-        customizeAiRequestDto.setBaseImageBase64(baseImage);
-        for (CustomizeRequestDto.EditForWeb edit : customizeRequestDto.getEdits()) {
-            if (edit == null || edit.getRegion() == null || edit.getRegion().isBlank() || edit.getIntensity() == null) {
-                return new CustomizeResponseDto("failed", null, "Each edit must contain region and intensity");
+        customizeAiRequestDto.setBaseImageBase64(currentImageBase64); // 현재 이미지
+        for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
+            if(editForWeb.isEdited()) {
+                customizeAiRequestDto.addEdit(
+                        editForWeb.getRegion(),
+                        editForWeb.getIntensity()
+                );
             }
             // intensity 범위는 DTO에서 검증되지만 방어적으로 보정
             int intensity = Math.max(0, Math.min(100, edit.getIntensity()));

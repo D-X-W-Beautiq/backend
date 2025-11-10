@@ -43,14 +43,8 @@ public class CustomizeRequestDto {
     @AllArgsConstructor
     @Schema(description = "편집 항목")
     public static class EditForWeb {
-        @NotBlank
-        @Schema(description = "편집 영역 (필수): skin | lip | eyelid | blush", example = "lip", requiredMode = Schema.RequiredMode.REQUIRED)
-        private String region;
-
-        @NotNull
-        @Min(0)
-        @Max(100)
-        @Schema(description = "편집 강도 (0~100). 기본값은 50입니다 — 50보다 크면 메이크업이 더 진하게 적용되고, 50보다 작으면 더 연하게 적용됩니다.", example = "50", requiredMode = Schema.RequiredMode.REQUIRED)
-        private Integer intensity;
+        private boolean isEdited;
+        private String region; // "skin" | "eye" | "lip" | "blush"
+        private int intensity; // 0~100
     }
 }

@@ -31,6 +31,11 @@ public class CustomizeAiRequestDto {
 
         @Min(value = 0, message = "intensity는 0 이상이어야 합니다")
         @Max(value = 100, message = "intensity는 100 이하여야 합니다")
-        private int intensity; // 0~100 (기본 50)
+        private int intensity; // 0~100
+
+    }
+
+    public void addEdit(String region, int intensity) {
+        this.edits.add(new EditForAi(region, intensity));
     }
 }
