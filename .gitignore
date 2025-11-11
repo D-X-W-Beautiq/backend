@@ -36,6 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
+
+.github
 .env
 .DS_Store
 **/.DS_Store
