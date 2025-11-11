@@ -19,7 +19,7 @@ app:
     redirect: ${OAUTH_REDIRECT:http://localhost:5173/oauth/callback}
     cookie-domain: ${COOKIE_DOMAIN:}
     use-cookie-secure: ${COOKIE_SECURE:false}
-    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   auth:
     dev-login-page-enabled: ${DEV_LOGIN_PAGE_ENABLED:true}
   ai-server:
