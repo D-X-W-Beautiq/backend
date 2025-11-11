@@ -8,9 +8,9 @@ spring:
       client:
         registration:
           google:
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: ${BASE_URL}/login/oauth2/code/{registrationId}
           kakao:
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: ${BASE_URL}/login/oauth2/code/{registrationId}
 
 app:
   openapi:
