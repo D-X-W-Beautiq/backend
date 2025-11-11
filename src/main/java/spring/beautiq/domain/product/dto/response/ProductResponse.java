@@ -46,7 +46,8 @@ import java.util.List;
                         "imageUrl": "https://example.com/image.jpg",
                         "productUrl": "https://example.com/product/1"
                       },
-                      "reason": "귀하의 민감성 피부 타입에 적합한 진정 성분이 포함되어 있습니다."
+                      "reason": "귀하의 민감성 피부 타입에 적합한 진정 성분이 포함되어 있습니다.",
+                      "isWish": false
                     }
                   ]
                 }
@@ -88,10 +89,15 @@ public class ProductResponse {
         @Schema(description = "LLM이 생성한 개인화 추천 이유", example = "귀하의 민감성 피부 타입에 적합한 진정 성분이 포함되어 있습니다.", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
         private String reason;
 
-        public static ProductRecommendation of(ProductEntity entity, String reason) {
+        @NotNull
+        @Schema(description = "위시리스트 포함 여부", example = "false", type = "boolean", requiredMode = Schema.RequiredMode.REQUIRED)
+        private Boolean isWish;
+
+        public static ProductRecommendation of(ProductEntity entity, String reason, boolean isWish) {
             return ProductRecommendation.builder()
                     .product(Product.from(entity))
                     .reason(reason)
+                    .isWish(isWish)
                     .build();
         }
     }

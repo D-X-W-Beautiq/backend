@@ -138,37 +138,29 @@ public class ProductService {
             throw ProductExceptions.AI_SERVER_INVALID_RESPONSE.toException();
         }
 
-        // 추천 결과 매핑
+        // 사용자의 위시리스트에 있는 제품 ID 목록 조회
+        List<UUID> wishlistProductIds = wishlistProductRepository.findAllByUser_Id(userId)
+                .stream()
+                .map(wish -> wish.getProduct().getId())
+                .toList();
+
+        // 추천 결과 매핑 (isWish 포함)
         List<ProductResponse.ProductRecommendation> recommendations = aiResponse.getRecommendations().stream()
                 .map(aiRec -> {
                     ProductEntity product = allProducts.stream()
                             .filter(p -> p.getId().toString().equals(aiRec.getProductId()))
                             .findFirst()
                             .orElseThrow(ProductExceptions.PRODUCT_NOT_IN_FILTERED_LIST::toException);
-                    return ProductResponse.ProductRecommendation.of(product, aiRec.getReason());
+
+                    boolean isWish = wishlistProductIds.contains(product.getId());
+
+                    return ProductResponse.ProductRecommendation.of(product, aiRec.getReason(), isWish);
                 })
                 .collect(Collectors.toList());
 
         return ProductResponse.from(recommendations);
     }
 
-    @Transactional
-    public WishProductResponse addWishlist(UUID userId, UUID productId) {
-        if (wishlistProductRepository.existsByUser_IdAndProduct_Id(userId, productId)) {
-            throw ProductExceptions.WISHLIST_ALREADY_EXISTS.toException();
-        }
-
-        WishlistProductEntity saved = wishlistProductRepository.save(
-                WishlistProductEntity.builder()
-                        .user(userRepository.findById(userId)
-                                .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException))
-                        .product(productRepository.findById(productId)
-                                .orElseThrow(ProductExceptions.PRODUCT_NOT_FOUND::toException))
-                        .build()
-        );
-
-        return WishProductResponse.from(saved);
-    }
 
     @Transactional(readOnly = true)
     public Page<WishProductResponse> getAllWishProduct(UUID userId, WishlistOrderOption order, int page, int size) {
@@ -189,12 +181,42 @@ public class ProductService {
                 .orElseThrow(ProductExceptions.WISHLIST_NOT_FOUND::toException);
     }
 
+
+    /**
+     * 위시리스트 토글 (추가/삭제를 하나의 API로)
+     * - 위시리스트에 있으면 삭제
+     * - 위시리스트에 없으면 추가
+     *
+     * @param userId 사용자 ID
+     * @param productId 제품 ID
+     * @return 토글 후 상태 (isWish: true=추가됨, false=삭제됨)
+     */
     @Transactional
-    public void deleteWishlist(UUID userId, UUID productId) {
-        if (!wishlistProductRepository.existsByUser_IdAndProduct_Id(userId, productId)) {
-            throw ProductExceptions.WISHLIST_NOT_FOUND.toException();
+    public boolean toggleWishlist(UUID userId, UUID productId) {
+        // 제품 존재 여부 확인
+        if (!productRepository.existsById(productId)) {
+            throw ProductExceptions.PRODUCT_NOT_FOUND.toException();
         }
-        wishlistProductRepository.deleteByUser_IdAndProduct_Id(userId, productId);
+
+        // 위시리스트에 있는지 확인
+        boolean exists = wishlistProductRepository.existsByUser_IdAndProduct_Id(userId, productId);
+
+        if (exists) {
+            // 있으면 삭제
+            wishlistProductRepository.deleteByUser_IdAndProduct_Id(userId, productId);
+            return false; // 삭제됨
+        } else {
+            // 없으면 추가
+            wishlistProductRepository.save(
+                    WishlistProductEntity.builder()
+                            .user(userRepository.findById(userId)
+                                    .orElseThrow(GlobalErrorCode.SECURITY_USER_NOT_FOUND::toException))
+                            .product(productRepository.findById(productId)
+                                    .orElseThrow(ProductExceptions.PRODUCT_NOT_FOUND::toException))
+                            .build()
+            );
+            return true; // 추가됨
+        }
     }
 
     // Specification 헬퍼 메서드들
