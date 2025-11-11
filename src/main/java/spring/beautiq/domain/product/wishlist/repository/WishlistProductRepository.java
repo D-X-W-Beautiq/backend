@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import spring.beautiq.domain.product.wishlist.entity.WishlistProductEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,6 +14,8 @@ import java.util.UUID;
  */
 public interface WishlistProductRepository extends JpaRepository<WishlistProductEntity, UUID> {
     Page<WishlistProductEntity> findAllByUser_Id(UUID userId, Pageable pageable);
+
+    List<WishlistProductEntity> findAllByUser_Id(UUID userId);
 
     Optional<WishlistProductEntity> findByUser_IdAndProduct_Id(UUID userId, UUID productId);
     boolean existsByUser_IdAndProduct_Id(UUID userId, UUID productId);

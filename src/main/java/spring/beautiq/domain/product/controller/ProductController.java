@@ -18,6 +18,7 @@ import spring.beautiq.domain.product.dto.response.ProductResponse;
 import spring.beautiq.domain.product.service.ProductService;
 import spring.beautiq.domain.product.wishlist.dto.common.WishlistOrderOption;
 import spring.beautiq.domain.product.wishlist.dto.response.WishProductResponse;
+import spring.beautiq.domain.product.wishlist.dto.response.WishlistToggleResponse;
 import spring.beautiq.global.security.annotation.CurrentUserId;
 import spring.beautiq.global.security.guard.MemberGuard;
 
@@ -65,15 +66,27 @@ public class ProductController {
                                             {
                                               "products": [
                                                 {
-                                                  "productId": "550e8400-e29b-41d4-a716-446655440000",
-                                                  "name": "토너 패드",
-                                                  "brand": "메디힐",
-                                                  "category": "스킨케어",
-                                                  "price": 15000,
-                                                  "rating": 4.5,
-                                                  "reviewCount": 1234,
-                                                  "imageUrl": "https://...",
-                                                  "description": "수분 공급에 효과적인 토너 패드"
+                                                  "product": {
+                                                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                                                    "category": "스킨케어",
+                                                    "overallRank": 1,
+                                                    "pageNumber": 1,
+                                                    "pageRank": 1,
+                                                    "brand": "라운드랩",
+                                                    "productName": "1025 독도 토너",
+                                                    "listPrice": 20000,
+                                                    "salePrice": 15000,
+                                                    "reviewScore": 4.8,
+                                                    "reviewCount": 1234,
+                                                    "ingredients": "정제수, 글리세린, 부틸렌글라이콜, 판테놀, 해조추출물",
+                                                    "description": "민감한 피부를 진정시키는 토너",
+                                                    "tags": "민감성피부, 진정, 보습",
+                                                    "bestOrNew": "BEST",
+                                                    "imageUrl": "https://example.com/image.jpg",
+                                                    "productUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000183210"
+                                                  },
+                                                  "reason": "귀하의 민감성 피부 타입에 적합한 진정 성분이 포함되어 있습니다.",
+                                                  "isWish": false
                                                 }
                                               ]
                                             }
@@ -81,9 +94,96 @@ public class ProductController {
                             )
                     )
             ),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 - 분석 ID 누락 또는 카테고리 오류"),
-            @ApiResponse(responseCode = "404", description = "피부 분석 결과를 찾을 수 없음"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 - 필터 조건 오류 또는 필수 필드 누락",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "필수 필드 누락",
+                                    value = """
+                                            {
+                                              "code": "BAD_REQUEST",
+                                              "message": "topN 필드는 필수입니다.",
+                                              "status": 400,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패 - JWT 토큰이 없거나 유효하지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "인증 실패",
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한 없음 - 다른 사용자의 분석 결과에 접근",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "권한 없음",
+                                    value = """
+                                            {
+                                              "code": "SKIN_ANALYSIS_FORBIDDEN",
+                                              "message": "해당 피부 분석 결과에 접근할 권한이 없습니다.",
+                                              "status": 403,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "피부 분석 결과를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "분석 결과 없음",
+                                    value = """
+                                            {
+                                              "code": "SKIN_ANALYSIS_NOT_FOUND",
+                                              "message": "피부 분석 결과를 찾을 수 없습니다.",
+                                              "status": 404,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 - AI 서버 통신 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "AI 서버 오류",
+                                    value = """
+                                            {
+                                              "code": "AI_SERVER_INVALID_RESPONSE",
+                                              "message": "AI 서버 응답이 올바르지 않습니다.",
+                                              "status": 500,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @PostMapping("/skin-analyses/{analysisId}/recommend-products")
     public ResponseEntity<ProductResponse> getRecommendProducts(
@@ -115,31 +215,89 @@ public class ProductController {
     }
 
     @Operation(
-            summary = "위시리스트에 제품 추가",
+            summary = "위시리스트 토글 (추가/삭제 통합)",
             description = """
-                    특정 제품을 사용자의 위시리스트에 추가합니다.
+                    제품의 위시리스트 상태를 토글합니다. (프론트엔드 편의 기능)
                     
-                    **기능:**
-                    - 중복 추가 방지
-                    - 추가된 제품 정보 반환
+                    **동작 방식:**
+                    - 위시리스트에 **없으면 → 추가**
+                    - 위시리스트에 **있으면 → 삭제**
                     """
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "추가 성공",
-                    content = @Content(schema = @Schema(implementation = WishProductResponse.class))
+                    description = "토글 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WishlistToggleResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "추가된 경우",
+                                            value = """
+                                                    {
+                                                      "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                                                      "isWish": true,
+                                                      "message": "위시리스트에 추가되었습니다."
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "삭제된 경우",
+                                            value = """
+                                                    {
+                                                      "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                                                      "isWish": false,
+                                                      "message": "위시리스트에서 제거되었습니다."
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
             ),
-            @ApiResponse(responseCode = "404", description = "제품을 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 위시리스트에 존재함")
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "제품을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "PRODUCT_NOT_FOUND",
+                                              "message": "제품을 찾을 수 없습니다.",
+                                              "status": 404,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
-    @PostMapping("/products/{productId}/wishlists")
-    public ResponseEntity<WishProductResponse> addWishlist(
+    @PatchMapping("/products/{productId}/wishlists")
+    public ResponseEntity<WishlistToggleResponse> toggleWishlist(
             @Parameter(hidden = true) @CurrentUserId UUID userId,
             @Parameter(description = "제품 ID", example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable("productId") UUID productId
     ) {
-        return ResponseEntity.ok(productService.addWishlist(userId, productId));
+        boolean isWish = productService.toggleWishlist(userId, productId);
+        return ResponseEntity.ok(WishlistToggleResponse.of(productId, isWish));
     }
 
     @Operation(
@@ -148,11 +306,9 @@ public class ProductController {
                     사용자의 위시리스트에 담긴 모든 제품을 조회합니다.
                     
                     **정렬 옵션:**
+                    - rate: 평점 높은 순
+                    - popular: 인기순 (리뷰 많은 순)
                     - newest: 최신 추가순 (기본)
-                    - oldest: 오래된 순
-                    - price_high: 가격 높은 순
-                    - price_low: 가격 낮은 순
-                    - rating: 평점 높은 순
                     
                     **페이징:**
                     - page: 페이지 번호 (1부터 시작, 기본: 1)
@@ -165,19 +321,76 @@ public class ProductController {
                     description = "조회 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class)
+                            schema = @Schema(implementation = Page.class),
+                            examples = @ExampleObject(
+                                    name = "위시리스트 목록",
+                                    value = """
+                                            {
+                                              "content": [
+                                                {
+                                                  "id": "660e8400-e29b-41d4-a716-446655440001",
+                                                  "userId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+                                                  "wishProduct": {
+                                                    "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                                                    "category": "스킨케어",
+                                                    "overallRank": 1,
+                                                    "pageNumber": 1,
+                                                    "pageRank": 1,
+                                                    "brand": "라운드랩",
+                                                    "productName": "[라운드랩] 1025 독도 토너 200ml",
+                                                    "listPrice": 30000,
+                                                    "salePrice": 25000,
+                                                    "reviewScore": 4.5,
+                                                    "reviewCount": 1234,
+                                                    "ingredients": "정제수, 글리세린, 부틸렌글라이콜",
+                                                    "description": "독도 해양심층수로 피부를 진정시키는 토너",
+                                                    "tags": "민감성피부, 진정, 보습",
+                                                    "bestOrNew": "BEST",
+                                                    "imageUrl": "https://example.com/image.jpg",
+                                                    "productUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000183210"
+                                                  }
+                                                }
+                                              ],
+                                              "pageable": {
+                                                "pageNumber": 0,
+                                                "pageSize": 10
+                                              },
+                                              "totalElements": 15,
+                                              "totalPages": 2,
+                                              "last": false
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "인증 실패",
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
                     )
             )
     })
-    @GetMapping("/users/me/wishlist/products")
+    @GetMapping("/users/me/wishlists/products")
     public ResponseEntity<Page<WishProductResponse>> getAllWishProduct(
             @Parameter(hidden = true) @CurrentUserId UUID userId,
             @Parameter(
                     description = "정렬 옵션",
-                    schema = @Schema(allowableValues = {"newest", "oldest", "price_high", "price_low", "rating"}),
-                    example = "newest"
+                    schema = @Schema(allowableValues = {"rate", "popular", "newest"}),
+                    example = "rate"
             )
-            @RequestParam(name = "order", defaultValue = "newest") String order,
+            @RequestParam(name = "order", defaultValue = "rate") String order,
             @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
             @RequestParam(name = "page", defaultValue = "1") Integer page
     ) {
@@ -191,33 +404,83 @@ public class ProductController {
             description = "위시리스트에 담긴 특정 제품의 상세 정보를 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "위시리스트에 해당 제품이 없음")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WishProductResponse.class),
+                            examples = @ExampleObject(
+                                    name = "위시리스트 제품 상세",
+                                    value = """
+                                            {
+                                              "id": "660e8400-e29b-41d4-a716-446655440001",
+                                              "userId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+                                              "wishProduct": {
+                                                "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                                                "category": "스킨케어",
+                                                "overallRank": 1,
+                                                "pageNumber": 1,
+                                                "pageRank": 1,
+                                                "brand": "라운드랩",
+                                                "productName": "[라운드랩] 1025 독도 토너 200ml",
+                                                "listPrice": 30000,
+                                                "salePrice": 25000,
+                                                "reviewScore": 4.5,
+                                                "reviewCount": 1234,
+                                                "ingredients": "정제수, 글리세린, 부틸렌글라이콜",
+                                                "description": "독도 해양심층수로 피부를 진정시키는 토너",
+                                                "tags": "민감성피부, 진정, 보습",
+                                                "bestOrNew": "BEST",
+                                                "imageUrl": "https://example.com/image.jpg",
+                                                "productUrl": "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000183210"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "위시리스트에 해당 제품이 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "WISHLIST_NOT_FOUND",
+                                              "message": "위시리스트를 찾을 수 없습니다.",
+                                              "status": 404,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
-    @GetMapping("/users/me/wishlist/products/{productId}")
+    @GetMapping("/users/me/wishlists/products/{productId}")
     public ResponseEntity<WishProductResponse> getWishProduct(
             @Parameter(hidden = true) @CurrentUserId UUID userId,
             @Parameter(description = "제품 ID")
             @PathVariable("productId") UUID productId
     ) {
         return ResponseEntity.ok(productService.getWishProduct(userId, productId));
-    }
-
-    @Operation(
-            summary = "위시리스트에서 제품 삭제",
-            description = "위시리스트에서 특정 제품을 제거합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "위시리스트에 해당 제품이 없음")
-    })
-    @DeleteMapping("/users/me/wishlist/products/{productId}")
-    public ResponseEntity<Void> deleteWishlist(
-            @Parameter(hidden = true) @CurrentUserId UUID userId,
-            @Parameter(description = "제품 ID")
-            @PathVariable("productId") UUID productId
-    ) {
-        productService.deleteWishlist(userId, productId);
-        return ResponseEntity.noContent().build();
     }
 }

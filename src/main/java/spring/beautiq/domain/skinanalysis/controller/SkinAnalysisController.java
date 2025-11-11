@@ -59,25 +59,74 @@ public class SkinAnalysisController {
                                     name = "분석 결과",
                                     value = """
                                             {
-                                              "analysisId": "550e8400-e29b-41d4-a716-446655440000",
-                                              "skinType": "OILY",
-                                              "moistureReg": 65,
-                                              "oilinessReg": 80,
-                                              "pigmentationReg": 45,
-                                              "wrinkleReg": 30,
-                                              "poreReg": 70,
-                                              "troubleReg": 55,
-                                              "feedback": "피부 유분기가 많아 수분 밸런스 관리가 필요합니다.",
-                                              "imageUrl": "https://bucket.s3.../image.png",
-                                              "createdAt": "2025-01-15T10:30:00"
+                                              "id": "550e8400-e29b-41d4-a716-446655440000",
+                                              "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                                              "skinAnalysis": {
+                                                "pigmentationReg": 45,
+                                                "moistureReg": 65,
+                                                "elasticityReg": 78,
+                                                "wrinkleReg": 30,
+                                                "poreReg": 55
+                                              },
+                                              "feedback": "전반적으로 건조한 피부 타입으로 보습 관리가 필요합니다.",
+                                              "averageScore": 54.6,
+                                              "createdAt": "2025-01-10T10:30:00Z"
                                             }
                                             """
                             )
                     )
             ),
-            @ApiResponse(responseCode = "400", description = "잘못된 입력 - 이미지 파일 누락 또는 형식 오류"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "500", description = "AI 서버 오류")
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 입력 - 이미지 파일 누락 또는 형식 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "IMAGE_INVALID_TYPE",
+                                              "message": "이미지 파일이 필요합니다. JPG 또는 PNG 형식만 지원됩니다.",
+                                              "status": 400,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "AI 서버 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "AI_SERVER_RESPONSE_EMPTY",
+                                              "message": "AI 분석 서버와 통신 중 오류가 발생했습니다.",
+                                              "status": 500,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SkinAnalysisResponse> createAnalysis(
@@ -94,9 +143,65 @@ public class SkinAnalysisController {
             description = "특정 분석 ID의 상세 결과를 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "분석 결과를 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "다른 사용자의 분석 결과 접근 불가")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = SkinAnalysisResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "다른 사용자의 분석 결과 접근 불가",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "SKIN_ANALYSIS_FORBIDDEN",
+                                              "message": "해당 피부 분석 결과에 접근할 권한이 없습니다.",
+                                              "status": 403,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "분석 결과를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "SKIN_ANALYSIS_NOT_FOUND",
+                                              "message": "피부 분석 결과를 찾을 수 없습니다.",
+                                              "status": 404,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @GetMapping("/{analysisId}")
     public ResponseEntity<SkinAnalysisResponse> getAnalysis(
@@ -112,9 +217,61 @@ public class SkinAnalysisController {
             description = "특정 분석 결과를 삭제합니다. S3 이미지도 함께 삭제됩니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "분석 결과를 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "다른 사용자의 분석 결과 삭제 불가")
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "삭제 성공 - 응답 본문 없음"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "UNAUTHORIZED",
+                                              "message": "인증이 필요합니다.",
+                                              "status": 401,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "다른 사용자의 분석 결과 삭제 불가",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "SKIN_ANALYSIS_FORBIDDEN",
+                                              "message": "해당 피부 분석 결과를 삭제할 권한이 없습니다.",
+                                              "status": 403,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "분석 결과를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "code": "SKIN_ANALYSIS_NOT_FOUND",
+                                              "message": "피부 분석 결과를 찾을 수 없습니다.",
+                                              "status": 404,
+                                              "timestamp": "2025-01-10T10:30:00.123Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @DeleteMapping("/{analysisId}")
     public ResponseEntity<Void> deleteAnalysis(
