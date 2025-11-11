@@ -75,7 +75,7 @@ app:
     redirect: ${OAUTH_REDIRECT}
     cookie-domain: ${COOKIE_DOMAIN}
     use-cookie-secure: ${COOKIE_SECURE}
-    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   ai-server:
     url: ${AI_SERVER_URL}
     connect-timeout-ms: 10000

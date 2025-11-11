@@ -16,7 +16,7 @@ app:
   openapi:
     enabled: ${SWAGGER_ENABLED:true}
   oauth2:
-    redirect: ${OAUTH_REDIRECT:http://localhost:3000/oauth/callback}
+    redirect: ${OAUTH_REDIRECT:http://localhost:5173/oauth/callback}
     cookie-domain: ${COOKIE_DOMAIN:}
     use-cookie-secure: ${COOKIE_SECURE:false}
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
