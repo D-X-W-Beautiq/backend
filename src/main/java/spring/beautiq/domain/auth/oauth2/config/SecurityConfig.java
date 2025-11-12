@@ -19,7 +19,9 @@ import spring.beautiq.domain.auth.oauth2.successhandler.CustomSuccessHandler;
 import spring.beautiq.global.jwt.JwtFilter;
 import spring.beautiq.global.jwt.JwtUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -100,7 +102,16 @@ public class SecurityConfig {
                     CorsConfiguration config = new CorsConfiguration();
 
                     // 환경 변수에서 프론트엔드 주소 가져오기
-                    config.setAllowedOrigins(Collections.singletonList(allowedOrigin));
+                    List<String> allowedOrigins = new ArrayList<>();
+                    if (allowedOrigin != null && !allowedOrigin.isBlank()) {
+                        allowedOrigins.add(allowedOrigin);
+                    }
+                    // localhost 및 127.0.0.1 허용 (모든 포트)
+                    allowedOrigins.add("http://localhost:*");
+                    allowedOrigins.add("http://127.0.0.1:*");
+
+                    // 포트 와일드카드 등 패턴을 허용하려면 setAllowedOriginPatterns 사용
+                    config.setAllowedOriginPatterns(allowedOrigins);
                     config.setAllowedMethods(Collections.singletonList("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(Collections.singletonList("*"));
