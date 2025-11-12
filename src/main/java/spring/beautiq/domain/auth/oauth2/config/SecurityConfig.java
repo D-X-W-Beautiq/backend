@@ -102,6 +102,7 @@ public class SecurityConfig {
                     CorsConfiguration config = new CorsConfiguration();
 
                     config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+                    config.setAllowedOrigins(Collections.singletonList(allowedOrigin));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
                     config.setMaxAge(3600L);
