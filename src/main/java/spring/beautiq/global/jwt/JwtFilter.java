@@ -48,9 +48,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
 
-
-
-        if (authorization != null) {
+        if (authorization == null) {
             Cookie[] cookies = request.getCookies();
 
             if (cookies != null) {
