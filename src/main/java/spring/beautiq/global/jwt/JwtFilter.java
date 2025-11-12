@@ -32,19 +32,33 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        //cookie들을 불러온 뒤 Authorization key에 담긴 쿠키 찾기
+        log.info("=== JWT Filter Debug ===");
+        log.info("Request URI: {}", request.getRequestURI());
+        log.info("Request Method: {}", request.getMethod());
+
 
         String authorization = null;
-        Cookie[] cookies = request.getCookies();
 
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                log.debug("Found cookie: {}", cookie.getName());
+        String authHeader = request.getHeader("Authorization");
+        log.info("Authorization header: {}", authHeader);
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            authorization = authHeader.substring(7);
+            log.info("Token from Authorization header: {}", authorization);;
+        }
 
 
-                if ("Authorization".equals(cookie.getName())) {
-                    authorization = cookie.getValue();
-                    break;
+        if (authorization == null) {
+            Cookie[] cookies = request.getCookies();
+
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    log.debug("Found cookie: {}", cookie.getName());
+
+                    if ("Authorization".equals(cookie.getName())) {
+                        authorization = cookie.getValue();
+                        break;
+                    }
                 }
             }
         }
@@ -52,11 +66,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         //Authorization 헤더 검증
         if (authorization == null) {
-
-            System.out.println("token null");
+            log.warn("No token found in Authorization header or Cookie");
             filterChain.doFilter(request, response);
-
-            //조건이 해당되면 메소드 종료
             return;
         }
 
@@ -65,40 +76,45 @@ public class JwtFilter extends OncePerRequestFilter {
         //토큰 소멸 시간 검증
         try {
             if (jwtUtil.isExpired(token)) {
+                log.warn("Token expired");
                filterChain.doFilter(request, response);
                return;
             }
-        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
-            // 잘못,변조된 토큰 -> 인증 미적용 후 다음 필터로 진행
+
+            String userId = jwtUtil.getUserId(token);
+            String username = jwtUtil.getUsername(token);
+            String role = jwtUtil.getRole(token);
+
+            log.info("Token validated - UserId: {}, Username: {}, Role: {}", userId, username, role);
+
+            OAuth2UserDTO userDTO = new OAuth2UserDTO();
+            userDTO.setUserId(userId);
+            userDTO.setUsername(username);
+            userDTO.setRole(role);
+
+            CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
+
+            Authentication authToken = new OAuth2AuthenticationToken(
+                    customOAuth2User,
+                    Collections.singletonList(new SimpleGrantedAuthority(role)),
+                    "jwt"
+        );
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+            log.info("Authentication set in SecurityContext");
+    } catch (io.jsonwebtoken.JwtException e) {
+            log.error("JWT validation failed: {}", e.getMessage());
+            filterChain.doFilter(request, response);
+            return;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid token argument: {}", e.getMessage());
+            filterChain.doFilter(request, response);
+            return;
+        } catch (Exception e) {
+            log.error("Unexpected error in JWT filter: {}", e.getMessage(), e);
             filterChain.doFilter(request, response);
             return;
         }
-
-
-        //토큰에서 userId, username, role 획득
-        String userId = jwtUtil.getUserId(token);
-        String username = jwtUtil.getUsername(token);
-        String role = jwtUtil.getRole(token);
-
-
-        //userDto를 생성하여 값 set
-        OAuth2UserDTO userDTO = new OAuth2UserDTO();
-        userDTO.setUserId(userId);
-        userDTO.setUsername(username);
-        userDTO.setRole(role);
-
-
-        //UserDetails에 회원 정보 객체 담기
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
-
-        //스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new OAuth2AuthenticationToken(
-                customOAuth2User,
-                Collections.singletonList(new SimpleGrantedAuthority(role)),
-                "jwt"
-        );
-        //세션에 사용자 등록
-        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }
