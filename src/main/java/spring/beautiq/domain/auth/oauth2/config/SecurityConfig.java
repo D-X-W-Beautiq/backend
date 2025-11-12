@@ -114,7 +114,9 @@ public class SecurityConfig {
                     allowedOrigins.add("https://localhost:*");
                     allowedOrigins.add("https://127.0.0.1:*");
                     allowedOrigins.add("https://www.beautiq.my");
+                    allowedOrigins.add("https://api.beautiq.my");
                     allowedOrigins.add("https://beautiq.my"); // www 없는 버전도 추가
+
 
 
                     // 포트 와일드카드 등 패턴을 허용하려면 setAllowedOriginPatterns 사용
@@ -125,6 +127,7 @@ public class SecurityConfig {
                             "https://localhost:*",
                             "https://127.0.0.1:*",
                             "https://www.beautiq.my",
+                            "https://api.beautiq.my",
                             "https://beautiq.my"
 
                     ));
