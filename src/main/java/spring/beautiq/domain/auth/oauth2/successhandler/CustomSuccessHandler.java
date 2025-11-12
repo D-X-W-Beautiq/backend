@@ -2,7 +2,6 @@ package spring.beautiq.domain.auth.oauth2.successhandler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -15,7 +14,9 @@ import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.jwt.JwtUtil;
+
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -119,7 +120,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String token = jwtUtil.createJwt(userId, username, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
 
         ResponseCookie jwtcookie = createCookie(token);
-        response.addHeader("Set-Cookie", jwtcookie.getValue());
+        response.addHeader("Set-Cookie", jwtcookie.toString());
 
         response.sendRedirect(successRedirect);
     }
