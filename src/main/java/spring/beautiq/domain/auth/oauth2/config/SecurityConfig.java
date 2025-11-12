@@ -108,8 +108,8 @@ public class SecurityConfig {
                         allowedOrigins.add(allowedOrigin);
                     }
                     // localhost 및 127.0.0.1 허용 (모든 포트)
-                    allowedOrigins.add("http://localhost:*");
-                    allowedOrigins.add("http://127.0.0.1:*");
+                    allowedOrigins.add("https://localhost:*");
+                    allowedOrigins.add("https://127.0.0.1:*");
 
                     // 포트 와일드카드 등 패턴을 허용하려면 setAllowedOriginPatterns 사용
                     config.setAllowedOriginPatterns(allowedOrigins);
