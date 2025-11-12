@@ -1,5 +1,6 @@
 package spring.beautiq.global.config;
 
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -21,11 +22,15 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        String[] allowedMethods = {"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"};
+
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000")  // 프론트 도메인
-                .allowedMethods("*")
+                .allowedOrigins("http://localhost:5173", "https://beautiq.my", "https://www.beautiq.my", "https://api.beautiq.my")  // 프론트 도메인
+                .allowedMethods(allowedMethods)
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .exposedHeaders("Authorization", "Content-Type")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 
     @Override

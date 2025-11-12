@@ -1,6 +1,8 @@
 package spring.beautiq.domain.auth.oauth2.config;
 
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -99,14 +101,11 @@ public class SecurityConfig {
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
 
-                    // 환경 변수에서 프론트엔드 주소 가져오기
-                    config.setAllowedOrigins(Collections.singletonList(allowedOrigin));
-                    config.setAllowedMethods(Collections.singletonList("*"));
+                    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));;
                     config.setAllowCredentials(true);
-                    config.setAllowedHeaders(Collections.singletonList("*"));
+                    config.setAllowedHeaders(List.of("*"));
                     config.setMaxAge(3600L);
-
-                    config.setExposedHeaders(java.util.Arrays.asList("Set-Cookie", "Authorization"));
+                    config.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
                     return config;
 
                 }));
