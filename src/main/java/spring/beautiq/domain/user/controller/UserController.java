@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import spring.beautiq.domain.makeup.MakeUpService;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.dto.UserRequest;
 import spring.beautiq.domain.user.dto.UserResponse;
@@ -116,6 +115,11 @@ public class UserController {
     public ResponseEntity<UserResponse> getMe(@CurrentUserId UUID userId) {
         UserResponse dto = userService.readOneUserById(userId);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/oauth/callback")
+    public void oauthCallback(HttpServletResponse response) throws IOException {
+        response.sendRedirect("https://beautiq.my");
     }
 
     @Operation(

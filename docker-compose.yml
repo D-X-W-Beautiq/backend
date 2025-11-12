@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  beautiq:
+    build: .
+    container_name: beautiq-app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - OAUTH_REDIRECT=${OAUTH_REDIRECT}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+      - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
+      - COOKIE_SECURE=${COOKIE_SECURE}
+      - APP_OAUTH2_ALLOWED_ORIGIN=${APP_OAUTH2_ALLOWED_ORIGIN}
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - beautiq-network
+
+networks:
+  beautiq-network:
+    driver: bridge
