@@ -66,7 +66,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/swagger-ui.html",
-                                "/users/login"
+                                "/users/login",
+                                "/oauth/**", "/oauth2/callback/**" // OAuth2 로그인 관련 엔드포인트
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
