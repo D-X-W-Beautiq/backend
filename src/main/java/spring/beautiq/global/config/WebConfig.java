@@ -26,7 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns(allowedOrigin, "http://localhost:*", "http://127.0.0.1:*", "https://www.beautiq.my:*")  // 프론트 도메인 + localhost + 버셀 도메인 허용
+                .allowedOriginPatterns(allowedOrigin, "http://localhost:*", "http://127.0.0.1:*", "https://www.beautiq.my")  // 프론트 도메인 + localhost + 버셀 도메인 허용
                 .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(true);
