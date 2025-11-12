@@ -7,13 +7,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import java.util.Collections;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.filter.OncePerRequestFilter;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
 import spring.beautiq.domain.user.dto.OAuth2UserDTO;
 
+
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -33,7 +39,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                System.out.println(cookie.getName());
+                log.debug("Found cookie: {}", cookie.getName());
+
+
                 if ("Authorization".equals(cookie.getName())) {
                     authorization = cookie.getValue();
                     break;
@@ -84,10 +92,11 @@ public class JwtFilter extends OncePerRequestFilter {
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
 
         //스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User,
-                null,
-                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(role)));
-
+        Authentication authToken = new OAuth2AuthenticationToken(
+                customOAuth2User,
+                Collections.singletonList(new SimpleGrantedAuthority(role)),
+                "jwt"
+        );
         //세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
