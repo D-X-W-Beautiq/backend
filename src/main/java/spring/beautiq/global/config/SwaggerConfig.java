@@ -7,9 +7,12 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
@@ -17,11 +20,22 @@ public class SwaggerConfig {
     @Value("${spring.application.name:Beautiq}")
     private String applicationName;
 
+    @Value("${swagger.server.url:https://localhost:8080}")
+    private String serverUrl;
+
+    @Value("${swagger.server.description:Production Server}")
+    private String serverDescription;
+
     @Bean
     public OpenAPI openAPI() {
         final String schemeName = "BearerAuth";
         return new OpenAPI()
                 .info(apiInfo())
+                .servers(List.of(
+                        new Server()
+                                .url(serverUrl)
+                                .description(serverDescription)
+                ))
                 .components(new Components().addSecuritySchemes(
                         schemeName,
                         new SecurityScheme()

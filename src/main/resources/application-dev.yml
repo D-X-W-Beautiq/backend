@@ -32,3 +32,8 @@ app:
   product:
     init:
       enabled: ${PRODUCT_INIT_ENABLED:false}
+
+swagger:
+  server:
+    url: ${SWAGGER_SERVER_URL:https://localhost:8080}
+    description: Development Server

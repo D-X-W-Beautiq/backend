@@ -197,14 +197,27 @@ public class MakeUpService {
      */
     public ImageItem simulateMakeUp(
             UUID userId,
-            String recommendImageName
+            String styleImageName,
+            MultipartFile styleImage
             ) throws IOException {
 
-        // 요청 DTO에 이미지 담기
+        // styleImageName과 styleImage 중 하나는 필수
+        if ((styleImageName == null || styleImageName.isBlank()) && (styleImage == null || styleImage.isEmpty())) {
+            throw new IllegalArgumentException("Either styleImageName or styleImage must be provided");
+        }
+
+        // 요청 DTO에 원본 이미지 담기
         SimulationAiRequestDto simulationAiRequestDto = SimulationAiRequestDto.builder()
                 .sourceImageBase64(s3Service.getSourceImgBase64(userId)) // 저장된 source 이미지 사용
-                .styleImageBase64(s3Service.imageNameToBase64(recommendImageName))
                 .build();
+
+        if(styleImage == null || styleImage.isEmpty()) {
+            // styleImageName으로 이미지 불러오기
+            simulationAiRequestDto.setStyleImageBase64(s3Service.imageNameToBase64(styleImageName));
+        } else {
+            // 업로드된 styleImage 사용
+            simulationAiRequestDto.setStyleImageBase64(multipartToBase64(styleImage));
+        }
 
         // AI 서버에 JSON 요청
         SimulationAiResponseDto simulationAiResponseDto = webClientBuilder.build().post()
