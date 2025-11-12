@@ -1,8 +1,6 @@
 package spring.beautiq.domain.auth.oauth2.config;
 
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +19,9 @@ import spring.beautiq.domain.auth.oauth2.successhandler.CustomSuccessHandler;
 import spring.beautiq.global.jwt.JwtFilter;
 import spring.beautiq.global.jwt.JwtUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -101,12 +101,23 @@ public class SecurityConfig {
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
 
-                    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-                    config.setAllowedOrigins(Collections.singletonList(allowedOrigin));
+                    // 환경 변수에서 프론트엔드 주소 가져오기
+                    List<String> allowedOrigins = new ArrayList<>();
+                    if (allowedOrigin != null && !allowedOrigin.isBlank()) {
+                        allowedOrigins.add(allowedOrigin);
+                    }
+                    // localhost 및 127.0.0.1 허용 (모든 포트)
+                    allowedOrigins.add("http://localhost:*");
+                    allowedOrigins.add("http://127.0.0.1:*");
+
+                    // 포트 와일드카드 등 패턴을 허용하려면 setAllowedOriginPatterns 사용
+                    config.setAllowedOriginPatterns(allowedOrigins);
+                    config.setAllowedMethods(Collections.singletonList("*"));
                     config.setAllowCredentials(true);
-                    config.setAllowedHeaders(List.of("*"));
+                    config.setAllowedHeaders(Collections.singletonList("*"));
                     config.setMaxAge(3600L);
-                    config.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
+
+                    config.setExposedHeaders(java.util.Arrays.asList("Set-Cookie", "Authorization"));
                     return config;
 
                 }));

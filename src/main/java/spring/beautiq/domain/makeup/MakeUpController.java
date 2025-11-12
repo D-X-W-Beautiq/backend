@@ -116,14 +116,23 @@ public class MakeUpController {
                     3. 백엔드: 결과 이미지 s3 임시 저장
                     4. 백엔드: 결과 이미지 이름 및 S3 URL 반환
 
+                    **참고:**
+                    - styleImageName 또는 styleImage 중 하나는 필수입니다.
+                    - styleImageName: 추천 받은 이미지 이름
+                    - styleImage: 직접 업로드한 스타일 이미지 파일
                     """
     )
     @PostMapping(value = "/simulation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImageItem simulateMakeUp(
             @CurrentUserId UUID userId,
-            @RequestPart("styleImage") String recommendImageName
+            @RequestPart(value = "styleImageName", required = false)
+            @Parameter(description = "추천 받은 스타일 이미지 이름 (styleImage와 둘 중 하나 필수)")
+            String recommendImageName,
+            @RequestPart(value = "styleImage", required = false)
+            @Parameter(description = "직접 업로드한 스타일 이미지 파일 (styleImageName과 둘 중 하나 필수)")
+            MultipartFile styleImage
     ) throws IOException {
-        return makeUpService.simulateMakeUp(userId, recommendImageName);
+        return makeUpService.simulateMakeUp(userId, recommendImageName, styleImage);
     }
 
     /**
