@@ -1,6 +1,7 @@
 package spring.beautiq.domain.auth.oauth2.config;
 
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -111,11 +112,20 @@ public class SecurityConfig {
                     allowedOrigins.add("https://localhost:*");
                     allowedOrigins.add("https://127.0.0.1:*");
                     allowedOrigins.add("https://www.beautiq.my");
-//                    allowedOrigins.add("https://beautiq.my"); // www 없는 버전도 추가
+                    allowedOrigins.add("https://beautiq.my"); // www 없는 버전도 추가
 
 
                     // 포트 와일드카드 등 패턴을 허용하려면 setAllowedOriginPatterns 사용
-                    config.setAllowedOriginPatterns(allowedOrigins);
+                    config.setAllowedOriginPatterns(Arrays.asList(
+                            allowedOrigin,
+                            "http://localhost:*",
+                            "http://127.0.0.1:*",
+                            "https://localhost:*",
+                            "https://127.0.0.1:*",
+                            "https://www.beautiq.my",
+                            "https://beautiq.my"
+
+                    ));
                     config.setAllowedMethods(Collections.singletonList("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(Collections.singletonList("*"));

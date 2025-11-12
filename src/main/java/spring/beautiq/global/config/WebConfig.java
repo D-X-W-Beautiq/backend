@@ -20,17 +20,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final CurrentUserIdArgumentResolver currentUserIdArgumentResolver;
 
-    @Value("${app.oauth2.allowed-origin}")
-    private String allowedOrigin;
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns(allowedOrigin, "https://localhost:*", "https://127.0.0.1:*", "https://www.beautiq.my")  // 프론트 도메인 + localhost + 버셀 도메인 허용
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
+//    @Value("${app.oauth2.allowed-origin}")
+//    private String allowedOrigin;
+//
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//        registry.addMapping("/**")
+//                .allowedOriginPatterns(allowedOrigin, "https://localhost:*", "https://127.0.0.1:*", "https://www.beautiq.my")  // 프론트 도메인 + localhost + 버셀 도메인 허용
+//                .allowedMethods("*")
+//                .allowedHeaders("*")
+//                .allowCredentials(true);
+//    }
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
