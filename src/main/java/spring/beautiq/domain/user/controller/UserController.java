@@ -41,6 +41,9 @@ public class UserController {
     @Value("${S3_BUCKET}")
     private String bucket;
 
+    @Value("${app.oauth2.redirect:http://localhost:5173/oauth/callback}")
+    private String oauthRedirect;
+
     @Operation(
             summary = "OAuth2 로그인 (문서용)",
             description = """
@@ -117,9 +120,25 @@ public class UserController {
         return ResponseEntity.ok(dto);
     }
 
+    @Operation(
+            summary = "OAuth 콜백 리다이렉트 (내부용)",
+            description = """
+                    OAuth2 인증 후 프론트엔드로 리다이렉트하는 중간 엔드포인트입니다.
+                    환경 변수 app.oauth2.redirect에 설정된 URL로 자동 리다이렉트됩니다.
+                    
+                    - 로컬: http://localhost:5173/oauth/callback (기본값)
+                    - 프로덕션: 환경 변수에 설정된 값 사용
+                    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "302",
+                            description = "프론트엔드 콜백 페이지로 리다이렉트"
+                    )
+            }
+    )
     @GetMapping("/oauth/callback")
     public void oauthCallback(HttpServletResponse response) throws IOException {
-        response.sendRedirect("https://beautiq.my");
+        response.sendRedirect(oauthRedirect);
     }
 
     @Operation(

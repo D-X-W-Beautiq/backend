@@ -35,5 +35,5 @@ app:
 
 swagger:
   server:
-    url: ${SWAGGER_SERVER_URL:https://localhost:8080}
+    url: ${SWAGGER_SERVER_URL:http://localhost:8080}
     description: Development Server

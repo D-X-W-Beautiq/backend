@@ -5,11 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
-import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +13,9 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.web.filter.OncePerRequestFilter;
 import spring.beautiq.domain.auth.oauth2.dto.CustomOAuth2User;
 import spring.beautiq.domain.user.dto.OAuth2UserDTO;
+
+import java.io.IOException;
+import java.util.Collections;
 
 
 @Slf4j
@@ -36,20 +35,21 @@ public class JwtFilter extends OncePerRequestFilter {
         log.info("Request URI: {}", request.getRequestURI());
         log.info("Request Method: {}", request.getMethod());
 
-
         String authorization = null;
 
+        // 1. 먼저 Authorization 헤더에서 토큰 확인 (Swagger용)
         String authHeader = request.getHeader("Authorization");
         log.info("Authorization header: {}", authHeader);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             authorization = authHeader.substring(7);
-            log.info("Token from Authorization header: {}", authorization);;
+            log.info("Token from Authorization header: {}", authorization);
         }
 
-
+        // 2. 헤더에 없으면 쿠키에서 토큰 확인 (일반 브라우저 요청용)
         if (authorization == null) {
             Cookie[] cookies = request.getCookies();
+            log.info("Checking cookies...");
 
             if (cookies != null) {
                 for (Cookie cookie : cookies) {
@@ -57,14 +57,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
                     if ("Authorization".equals(cookie.getName())) {
                         authorization = cookie.getValue();
+                        log.info("Token from Cookie: {}", authorization);
                         break;
                     }
                 }
             }
         }
 
-
-        //Authorization 헤더 검증
+        // 3. 토큰이 없으면 인증 없이 진행
         if (authorization == null) {
             log.warn("No token found in Authorization header or Cookie");
             filterChain.doFilter(request, response);
