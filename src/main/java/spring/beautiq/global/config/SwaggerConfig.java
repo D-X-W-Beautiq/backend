@@ -20,7 +20,7 @@ public class SwaggerConfig {
     @Value("${spring.application.name:Beautiq}")
     private String applicationName;
 
-    @Value("${swagger.server.url:https://localhost:8080}")
+    @Value("${swagger.server.url:http://localhost:8080}")
     private String serverUrl;
 
     @Value("${swagger.server.description:Production Server}")

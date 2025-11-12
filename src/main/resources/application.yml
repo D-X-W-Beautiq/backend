@@ -97,6 +97,13 @@ springdoc:
     with-credentials: true
     csrf:
       enabled: false
+    # 쿠키가 제대로 전달되도록 설정
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    enabled: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 # AWS SDK v1 deprecation 경고 비활성화
 aws:
@@ -104,24 +111,7 @@ aws:
     v1:
       disableDeprecationAnnouncement: true
 
-
-openapi: 3.0.3
-info:
-  title: Demo API
-  version: 1.0.0
-
-servers:
-  - url: https://localhost:8080
-
-paths:
-  /users/me:
-    get:
-      summary: 내 정보 보기
-      security:
-        - BearerAuth: []   # <- 여기에 인증 적용
-      responses:
-        "200":
-          description: 성공
+# Swagger 서버 URL은 각 환경 설정(dev/prod)에서 관리
 components:
   securitySchemes:
     BearerAuth:

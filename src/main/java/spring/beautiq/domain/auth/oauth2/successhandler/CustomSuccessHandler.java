@@ -24,7 +24,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    @Value("${app.oauth2.redirect:http://localhost:3000/oauth/callback}")
+    @Value("${app.oauth2.redirect:http://localhost:5173/oauth/callback}")
     private String successRedirect;
     @Value("${app.oauth2.use-cookie-secure:false}")
     private boolean useCookieSecure;

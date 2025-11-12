@@ -1,13 +1,11 @@
 package spring.beautiq.global.config;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import spring.beautiq.global.security.resolver.CurrentUserIdArgumentResolver;
 
@@ -20,17 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final CurrentUserIdArgumentResolver currentUserIdArgumentResolver;
 
-    @Value("${app.oauth2.allowed-origin}")
-    private String allowedOrigin;
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns(allowedOrigin, "https://localhost:*", "https://127.0.0.1:*", "https://www.beautiq.my")  // 프론트 도메인 + localhost + 버셀 도메인 허용
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
+    // CORS 설정은 SecurityConfig에서 관리 (Spring Security의 CORS가 우선순위가 높음)
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {

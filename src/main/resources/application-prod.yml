@@ -32,3 +32,9 @@ app:
   product:
     init:
       enabled: ${PRODUCT_INIT_ENABLED:true}
+
+swagger:
+  server:
+    url: ${SWAGGER_SERVER_URL}
+    description: Production Server
+

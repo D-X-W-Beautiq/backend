@@ -14,7 +14,7 @@ import java.io.IOException;
 @Component
 public class CustomFailureHandler implements AuthenticationFailureHandler {
 
-    @Value("${app.oauth2.redirect:http://localhost:3000/oauth/callback}")
+    @Value("${app.oauth2.redirect:http://localhost:5173/oauth/callback}")
     private String baseRedirect;
 
     @Override
