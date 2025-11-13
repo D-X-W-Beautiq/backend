@@ -58,6 +58,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 // 이메일로 찾았지만 providerId가 없는 경우 업데이트
                                 existing.setProviderId(providerId);
                                 existing.setProfileImage(profileImage); // 프로필 이미지 업데이트
+                                // username이 없으면 설정
+                                if (existing.getUsername() == null || existing.getUsername().isEmpty()) {
+                                    existing.setUsername(name != null && !name.isEmpty()
+                                            ? name
+                                            : generateDefaultUsername(email));
+                                }
                                 return userRepository.save(existing);
                             })
                             .orElseGet(() -> {
@@ -65,6 +71,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 UserEntity newUser = new UserEntity();
                                 newUser.setProviderId(providerId);
                                 newUser.setEmail(email);
+                                newUser.setUsername(name != null && !name.isEmpty()
+                                        ? name
+                                        : generateDefaultUsername(email));
                                 newUser.setRole("ROLE_USER");
                                 newUser.setProfileImage(profileImage); // 프로필 이미지 저장
                                 return userRepository.save(newUser);
