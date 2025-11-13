@@ -47,6 +47,7 @@ public class UserService {
         response.put("message", "정보가 성공적으로 수정되었습니다");
         response.put("username", user.getUsername());
         response.put("email", user.getEmail());
+        response.put("provider", extractProvider(user.getProviderId()));  // ✅ 추가
 
         return response;
     }
@@ -77,6 +78,7 @@ public class UserService {
                 .username(entity.getUsername())
                 .email(entity.getEmail())
                 .profileImage(entity.getProfileImage())
+                .provider(extractProvider(entity.getProviderId()))  // ✅ 추가
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
@@ -120,5 +122,17 @@ public class UserService {
         }
 
         userEntity.setEmail(trimmedEmail);
+    }
+
+    /**
+     * providerId에서 provider 추출
+     * @param providerId "kakao_123456" 또는 "google_789012" 형식
+     * @return "kakao" 또는 "google", providerId가 null이면 null
+     */
+    private String extractProvider(String providerId) {
+        if (providerId != null && providerId.contains("_")) {
+            return providerId.split("_")[0];
+        }
+        return null;
     }
 }
