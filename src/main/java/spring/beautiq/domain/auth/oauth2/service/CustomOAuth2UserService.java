@@ -40,6 +40,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String providerId = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
         String email = oAuth2Response.getEmail();
         String profileImage = oAuth2Response.getProfileImage(); // 프로필 이미지 가져오기
+        String name = oAuth2Response.getName();
+
+        log.info("=== OAuth2 정보 ===");
+        log.info("Provider: {}", oAuth2Response.getProvider());
+        log.info("Email: {}", email);
+        log.info("Name: {}", name);
+        log.info("ProfileImage: {}", profileImage);
+
 
         // providerId로 먼저 조회 (이메일 변경 케이스 대응)
         UserEntity userEntity = userRepository.findByProviderId(providerId)
@@ -57,7 +65,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 UserEntity newUser = new UserEntity();
                                 newUser.setProviderId(providerId);
                                 newUser.setEmail(email);
-                                newUser.setUsername(generateDefaultUsername(email));
                                 newUser.setRole("ROLE_USER");
                                 newUser.setProfileImage(profileImage); // 프로필 이미지 저장
                                 return userRepository.save(newUser);

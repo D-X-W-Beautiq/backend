@@ -1,6 +1,7 @@
 package spring.beautiq.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import spring.beautiq.domain.user.dto.UserRequest;
@@ -10,6 +11,8 @@ import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.util.UUID;
 
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -27,10 +30,17 @@ public class UserService {
 
         UserEntity userEntity = findUserById(userId);
 
+        log.info("=== UPDATE DEBUG ===");
+        log.info("현재 username: {}", userEntity.getUsername());
+        log.info("새로운 username: {}", dto.getUsername());
+        log.info("현재 email: {}", userEntity.getEmail());
+        log.info("새로운 email: {}", dto.getEmail());
+
         updateUsername(userEntity, dto.getUsername());
         updateEmail(userEntity, dto.getEmail());
 
         userRepository.save(userEntity);
+        log.info("=== SAVE CALLED ===");
     }
 
     @Transactional
