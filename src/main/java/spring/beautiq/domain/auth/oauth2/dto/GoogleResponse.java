@@ -31,4 +31,11 @@ public class GoogleResponse implements OAuth2Response {
     public String getName() {
         return (String) attribute.get("name");
     }
+
+    @Override
+    public String getProfileImage() {
+        Object picture = attribute.get("picture");
+        return picture != null ? picture.toString() : null;
+
+    }
 }
