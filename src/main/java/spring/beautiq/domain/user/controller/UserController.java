@@ -211,7 +211,7 @@ public class UserController {
                     )
             )
             @RequestBody UserRequest userRequest) {
-        userService.updateOneUserById(userRequest, userId);
+        userService.updateMyUser(userId, userRequest);
         return ResponseEntity.ok(Map.of("message", "회원 정보가 수정되었습니다."));
     }
 

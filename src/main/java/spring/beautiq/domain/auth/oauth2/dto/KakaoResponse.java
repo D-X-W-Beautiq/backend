@@ -25,9 +25,16 @@ public class KakaoResponse implements OAuth2Response {
     @Override
     public String getEmail() {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attribute.get("kakao_account");
+
+        System.out.println("=== 카카오 전체 데이터 ===");
+        System.out.println(attribute);
+        System.out.println("=== kakao_account ===");
+        System.out.println(kakaoAccount);
+
         if (kakaoAccount != null && kakaoAccount.containsKey("email")) {
             return (String) kakaoAccount.get("email");
         }
+        System.out.println("❌ 이메일 없음! 기본값 사용");
         return "kakao_" + attribute.get("id") + "@kakao.local";
     }
 
@@ -36,10 +43,19 @@ public class KakaoResponse implements OAuth2Response {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attribute.get("kakao_account");
         if (kakaoAccount != null) {
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+
+
+            System.out.println("=== profile ===");
+            System.out.println(profile);
+
             if (profile != null) {
+                String nickname = (String) profile.get("nickname");
+                System.out.println("✅ 닉네임 받음: " + nickname);
                 return (String) profile.get("nickname");
             }
         }
+
+        System.out.println("❌ 닉네임 없음!");
         return null;
     }
 

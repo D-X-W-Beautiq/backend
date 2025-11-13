@@ -1,5 +1,7 @@
 package spring.beautiq.domain.user.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -10,7 +12,6 @@ import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 
 import java.util.UUID;
-
 
 @Slf4j
 @Service
@@ -25,22 +26,29 @@ public class UserService {
     }
 
     @Transactional
-    public void updateOneUserById(UserRequest dto, UUID userId) {
-        validateRequest(dto);
+    public Map<String, String> updateMyUser(UUID userId, UserRequest request) {
+        validateRequest(request);
 
-        UserEntity userEntity = findUserById(userId);
+        UserEntity user = findUserById(userId);
 
-        log.info("=== UPDATE DEBUG ===");
-        log.info("현재 username: {}", userEntity.getUsername());
-        log.info("새로운 username: {}", dto.getUsername());
-        log.info("현재 email: {}", userEntity.getEmail());
-        log.info("새로운 email: {}", dto.getEmail());
+        log.info("=== 사용자 정보 수정 시작 ===");
+        log.info("현재 username: {}", user.getUsername());
+        log.info("새로운 username: {}", request.getUsername());
+        log.info("현재 email: {}", user.getEmail());
+        log.info("새로운 email: {}", request.getEmail());
 
-        updateUsername(userEntity, dto.getUsername());
-        updateEmail(userEntity, dto.getEmail());
+        updateUsername(user, request.getUsername());
+        updateEmail(user, request.getEmail());
 
-        userRepository.save(userEntity);
-        log.info("=== SAVE CALLED ===");
+        userRepository.save(user);
+        log.info("=== 사용자 정보 수정 완료 ===");
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "정보가 성공적으로 수정되었습니다");
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
+
+        return response;
     }
 
     @Transactional
@@ -55,6 +63,8 @@ public class UserService {
         UserEntity userEntity = findUserById(userId);
         userRepository.delete(userEntity);
     }
+
+    // === Private Helper Methods ===
 
     private UserEntity findUserById(UUID userId) {
         return userRepository.findById(userId)
@@ -102,6 +112,11 @@ public class UserService {
         String trimmedEmail = newEmail.trim();
         if (trimmedEmail.equals(userEntity.getEmail())) {
             return;
+        }
+
+        // 이메일 중복 체크
+        if (userRepository.findByEmail(trimmedEmail).isPresent()) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + trimmedEmail);
         }
 
         userEntity.setEmail(trimmedEmail);
