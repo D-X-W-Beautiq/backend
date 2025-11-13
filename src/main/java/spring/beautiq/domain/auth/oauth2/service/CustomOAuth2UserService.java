@@ -39,7 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         String providerId = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
         String email = oAuth2Response.getEmail();
-        String profileImage = oAuth2Response.getProfileImage(); // 프로필 이미지 가져오기
+        String profileImage = oAuth2Response.getProfileImage();
         String name = oAuth2Response.getName();
 
         log.info("=== OAuth2 정보 ===");
@@ -48,37 +48,70 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("Name: {}", name);
         log.info("ProfileImage: {}", profileImage);
 
+        log.info("=== 사용자 조회 시작 ===");
+        log.info("ProviderId: {}", providerId);
 
         // providerId로 먼저 조회 (이메일 변경 케이스 대응)
         UserEntity userEntity = userRepository.findByProviderId(providerId)
                 .orElseGet(() -> {
+                    log.info("providerId로 사용자 없음, 이메일로 조회: {}", email);
+
                     // providerId 없으면 이메일로 조회
                     return userRepository.findByEmail(email)
                             .map(existing -> {
+                                log.info("이메일로 기존 사용자 발견, 업데이트");
                                 // 이메일로 찾았지만 providerId가 없는 경우 업데이트
                                 existing.setProviderId(providerId);
-                                existing.setProfileImage(profileImage); // 프로필 이미지 업데이트
+                                existing.setProfileImage(profileImage);
                                 // username이 없으면 설정
                                 if (existing.getUsername() == null || existing.getUsername().isEmpty()) {
-                                    existing.setUsername(name != null && !name.isEmpty()
-                                            ? name
-                                            : generateDefaultUsername(email));
+                                    existing.setUsername(generateUniqueUsername(name, email));
                                 }
-                                return userRepository.save(existing);
+                                UserEntity saved = userRepository.save(existing);
+                                log.info("기존 사용자 업데이트 완료 - ID: {}", saved.getId());
+                                return saved;
                             })
                             .orElseGet(() -> {
-                                // 완전 신규 사용자
-                                UserEntity newUser = new UserEntity();
-                                newUser.setProviderId(providerId);
-                                newUser.setEmail(email);
-                                newUser.setUsername(name != null && !name.isEmpty()
-                                        ? name
-                                        : generateDefaultUsername(email));
-                                newUser.setRole("ROLE_USER");
-                                newUser.setProfileImage(profileImage); // 프로필 이미지 저장
-                                return userRepository.save(newUser);
+                                log.info("=== 완전 신규 사용자 생성 시작 ===");
+                                try {
+                                    // 완전 신규 사용자
+                                    UserEntity newUser = new UserEntity();
+                                    log.info("1. UserEntity 객체 생성 완료");
+
+                                    newUser.setProviderId(providerId);
+                                    log.info("2. ProviderId 설정 완료: {}", providerId);
+
+                                    newUser.setEmail(email);
+                                    log.info("3. Email 설정 완료: {}", email);
+
+                                    String username = generateUniqueUsername(name, email);
+                                    log.info("4. Username 생성 완료: {}", username);
+
+                                    newUser.setUsername(username);
+                                    log.info("5. Username 설정 완료");
+
+                                    newUser.setRole("ROLE_USER");
+                                    log.info("6. Role 설정 완료");
+
+                                    newUser.setProfileImage(profileImage);
+                                    log.info("7. ProfileImage 설정 완료");
+
+                                    log.info("8. DB 저장 시작...");
+                                    UserEntity saved = userRepository.save(newUser);
+                                    log.info("9. ✅ DB 저장 완료 - ID: {}", saved.getId());
+
+                                    return saved;
+                                } catch (Exception e) {
+                                    log.error("❌ 신규 사용자 생성 실패!", e);
+                                    throw e;
+                                }
                             });
                 });
+
+        log.info("=== 최종 사용자 정보 ===");
+        log.info("User ID: {}", userEntity.getId());
+        log.info("Username: {}", userEntity.getUsername());
+        log.info("Email: {}", userEntity.getEmail());
 
         // providerId에서 provider 추출 (kakao_123456 -> kakao)
         String provider = null;
@@ -90,29 +123,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .userId(userEntity.getId().toString())
                 .username(userEntity.getUsername())
                 .role(userEntity.getRole())
-                .email(userEntity.getEmail())              // 추가
-                .profileImage(userEntity.getProfileImage()) // 추가
-                .provider(provider)                         // 추가
+                .email(userEntity.getEmail())
+                .profileImage(userEntity.getProfileImage())
+                .provider(provider)
                 .build();
 
         return new CustomOAuth2User(userDTO);
     }
 
-    private String generateDefaultUsername(String email) {
-        // 이메일 @ 앞부분을 기본 닉네임으로 사용
-        String baseUsername = email.split("@")[0];
+    private String generateUniqueUsername(String name, String email) {
+        String baseUsername = (name != null && !name.isEmpty()) ? name : email.split("@")[0];
+        log.debug("baseUsername 생성 시도");
 
-        // 중복 체크 후 숫자 suffix 추가
-        String username = baseUsername;
-        int suffix = 1;
-        while (userRepository.existsByUsername(username)) {
-            username = baseUsername + suffix;
-            suffix++;
-        }
-        return username;
+        return baseUsername + "_" + System.currentTimeMillis();
     }
-
-
 
     private OAuth2Response createOAuth2Response(String registrationId, OAuth2User oAuth2User) {
         if (registrationId.equals("google")) {
