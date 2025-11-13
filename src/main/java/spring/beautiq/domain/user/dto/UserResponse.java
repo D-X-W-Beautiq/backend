@@ -49,4 +49,9 @@ public class UserResponse {
     )
     @NotNull
     private LocalDateTime createdAt;
+
+    @Schema(description = "OAuth 제공자", example = "kakao", allowableValues = {"kakao", "google" })
+    private String provider;
+
+
 }
