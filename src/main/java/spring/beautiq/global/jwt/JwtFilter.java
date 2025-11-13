@@ -84,6 +84,9 @@ public class JwtFilter extends OncePerRequestFilter {
             String userId = jwtUtil.getUserId(token);
             String username = jwtUtil.getUsername(token);
             String role = jwtUtil.getRole(token);
+            String email = jwtUtil.getEmail(token);
+            String profileImage = jwtUtil.getProfileImage(token);
+            String provider = jwtUtil.getProvider(token);
 
             log.info("Token validated - UserId: {}, Username: {}, Role: {}", userId, username, role);
 
@@ -91,6 +94,9 @@ public class JwtFilter extends OncePerRequestFilter {
             userDTO.setUserId(userId);
             userDTO.setUsername(username);
             userDTO.setRole(role);
+            userDTO.setEmail(email);
+            userDTO.setProfileImage(profileImage);
+            userDTO.setProvider(provider);
 
             CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
 

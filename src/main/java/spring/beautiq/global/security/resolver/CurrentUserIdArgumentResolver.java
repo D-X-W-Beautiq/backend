@@ -62,9 +62,8 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
             try {
                 return UUID.fromString(String.valueOf(userIdAttr));
             } catch (IllegalArgumentException e) {
-                if (required) {
-                    throw GlobalErrorCode.INVALID_ACCESS_TOKEN.toException();
-                }
+                // 로깅 추가: 형식이 UUID가 아님
+                // 계속 진행하여 다른 필드로 찾기 시도
             }
         }
 
@@ -75,11 +74,34 @@ public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResol
             if (!username.isBlank() && !"null".equals(username)) {
                 return userRepository.findByUsername(username)
                         .map(BaseEntity::getId)
-                        .orElseGet(() -> handleMissingUser(required));
+                        .orElseGet(() -> null);
             }
         }
 
-        return handleMissingUser(required);
+        // 3차: email로 DB 조회 (JWT에 email이 포함될 수 있음)
+        Object emailAttr = oAuth2User.getAttribute("email");
+        if (emailAttr != null) {
+            String email = String.valueOf(emailAttr);
+            if (!email.isBlank() && !"null".equals(email)) {
+                return userRepository.findByEmail(email)
+                        .map(BaseEntity::getId)
+                        .orElseGet(() -> null);
+            }
+        }
+
+        // 4차: authentication.getName() 사용(Principal.getName()이 username인 경우가 있음)
+        String principalName = oAuth2User.getName();
+        if (principalName != null && !principalName.isBlank() && !"null".equals(principalName)) {
+            return userRepository.findByUsername(principalName)
+                    .map(BaseEntity::getId)
+                    .orElseGet(() -> null);
+        }
+
+        // 모두 실패하면 에러 처리
+        if (required) {
+            throw GlobalErrorCode.SECURITY_USER_NOT_FOUND.toException();
+        }
+        return null;
     }
 
     private UUID handleMissingAuthentication(boolean required) {
