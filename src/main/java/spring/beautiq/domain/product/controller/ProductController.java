@@ -324,8 +324,8 @@ public class ProductController {
                                                 {
                                                   "id": "660e8400-e29b-41d4-a716-446655440001",
                                                   "userId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-                                                  "wishProduct": {
-                                                    "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                                                  "product": {
+                                                    "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                                                     "category": "스킨케어",
                                                     "overallRank": 1,
                                                     "pageNumber": 1,
@@ -410,8 +410,8 @@ public class ProductController {
                                             {
                                               "id": "660e8400-e29b-41d4-a716-446655440001",
                                               "userId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-                                              "wishProduct": {
-                                                "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                                              "product": {
+                                                "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                                                 "category": "스킨케어",
                                                 "overallRank": 1,
                                                 "pageNumber": 1,
