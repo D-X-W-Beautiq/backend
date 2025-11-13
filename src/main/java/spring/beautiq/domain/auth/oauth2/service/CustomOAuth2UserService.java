@@ -132,25 +132,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private String generateUniqueUsername(String name, String email) {
-        // 1. name이 있으면 name 사용, 없으면 email 앞부분 사용
-        String baseUsername = (name != null && !name.isEmpty())
-                ? name
-                : email.split("@")[0];
+        String baseUsername = (name != null && !name.isEmpty()) ? name : email.split("@")[0];
+        log.debug("baseUsername 생성 시도");
 
-        log.info("baseUsername: {}", baseUsername);
-
-        // 2. 중복 체크
-        String username = baseUsername;
-        int suffix = 1;
-
-        while (userRepository.existsByUsername(username)) {
-            username = baseUsername + suffix;
-            suffix++;
-            log.info("중복 발견, 새로운 username 시도: {}", username);
-        }
-
-        log.info("최종 username: {}", username);
-        return username;
+        return baseUsername + "_" + System.currentTimeMillis();
     }
 
     private OAuth2Response createOAuth2Response(String registrationId, OAuth2User oAuth2User) {
