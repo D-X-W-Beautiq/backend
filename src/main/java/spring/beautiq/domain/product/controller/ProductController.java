@@ -199,13 +199,7 @@ public class ProductController {
                             schema = @Schema(implementation = ProductRequest.class),
                             examples = @ExampleObject(
                                     name = "추천 요청 예시",
-                                    value = """
-                                            {
-                                              "category": "skincare",
-                                              "skinConcern": "hydration",
-                                              "limit": 10
-                                            }
-                                            """
+                                    value = "{\n  \"topN\": 2,\n  \"filters\": {\n    \"price\": {\"min\": 10000, \"max\": 50000},\n    \"reviewScore\": {\"min\": 4.0},\n    \"reviewCount\": {\"min\": 50}\n  },\n  \"sort\": {\n    \"by\": \"reviewScore\",\n    \"order\": \"desc\"\n  }\n}"
                             )
                     )
             )
