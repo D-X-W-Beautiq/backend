@@ -25,11 +25,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    @Value("${app.oauth2.redirect:http://localhost:3000/oauth/callback}")
+    @Value("${app.oauth2.redirect:https://localhost:5173/oauth/callback}")
     private String successRedirect;
-    @Value("${app.oauth2.use-cookie-secure:false}")
+    @Value("${app.oauth2.cookie.secure:false}")
     private boolean useCookieSecure;
-    @Value("${app.oauth2.cookie-domain:}")
+    @Value("${app.oauth2.cookie.domain:}")
     private String cookieDomain;
 
     public CustomSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository) {

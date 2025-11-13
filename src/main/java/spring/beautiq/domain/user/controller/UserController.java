@@ -41,7 +41,7 @@ public class UserController {
     @Value("${S3_BUCKET}")
     private String bucket;
 
-    @Value("${app.oauth2.redirect:http://localhost:5173/oauth/callback}")
+    @Value("${app.oauth2.redirect:https://localhost:5173/oauth/callback}")
     private String oauthRedirect;
 
     @Operation(
@@ -126,7 +126,7 @@ public class UserController {
                     OAuth2 인증 후 프론트엔드로 리다이렉트하는 중간 엔드포인트입니다.
                     환경 변수 app.oauth2.redirect에 설정된 URL로 자동 리다이렉트됩니다.
                     
-                    - 로컬: http://localhost:5173/oauth/callback (기본값)
+                    - 로컬: https://localhost:5173/oauth/callback (기본값)
                     - 프로덕션: 환경 변수에 설정된 값 사용
                     """,
             responses = {
