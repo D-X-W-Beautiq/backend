@@ -5,7 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import spring.beautiq.domain.product.entity.ProductEntity;
-import spring.beautiq.domain.product.wishlist.dto.common.WishProduct;
+import spring.beautiq.domain.product.dto.common.Product;
 import spring.beautiq.domain.product.wishlist.entity.WishlistProductEntity;
 
 @Getter
@@ -19,8 +19,8 @@ import spring.beautiq.domain.product.wishlist.entity.WishlistProductEntity;
                 {
                   "id": "550e8400-e29b-41d4-a716-446655440000",
                   "userId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-                  "wishProduct": {
-                    "productId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                  "product": {
+                    "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                     "category": "스킨케어",
                     "overallRank": 1,
                     "pageNumber": 1,
@@ -53,34 +53,16 @@ public class WishProductResponse {
 
     @NotNull
     @Valid
-    @Schema(description = "위시리스트 제품 정보", requiredMode = Schema.RequiredMode.REQUIRED)
-    private WishProduct wishProduct;
+    @Schema(description = "제품 정보", implementation = Product.class, requiredMode = Schema.RequiredMode.REQUIRED)
+    private Product product;
 
     public static WishProductResponse from(WishlistProductEntity entity) {
         ProductEntity productEntity = entity.getProduct();
-        WishProduct wishProduct = WishProduct.builder()
-                .productId(productEntity.getId().toString())
-                .category(productEntity.getCategory())
-                .overallRank(productEntity.getOverallRank())
-                .pageNumber(productEntity.getPageNumber())
-                .pageRank(productEntity.getPageRank())
-                .brand(productEntity.getBrand())
-                .productName(productEntity.getProductName())
-                .listPrice(productEntity.getListPrice())
-                .salePrice(productEntity.getSalePrice())
-                .reviewScore(productEntity.getReviewScore() != null ? productEntity.getReviewScore().floatValue() : 0.0f)
-                .reviewCount(productEntity.getReviewCount())
-                .ingredients(productEntity.getIngredients())
-                .description(productEntity.getDescription())
-                .tags(productEntity.getTags())
-                .bestOrNew(productEntity.getBestOrNew())
-                .imageUrl(productEntity.getImageUrl())
-                .productUrl(productEntity.getProductUrl())
-                .build();
+        Product product = Product.from(productEntity);
         return WishProductResponse.builder()
                 .id(entity.getId().toString())
                 .userId(entity.getUser().getId().toString())
-                .wishProduct(wishProduct)
+                .product(product)
                 .build();
     }
 }
