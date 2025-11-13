@@ -12,5 +12,8 @@ public interface OAuth2Response {
 
     String getName();
 
+    String getProfileImage(); // 이거 추가
+
+
 
 }

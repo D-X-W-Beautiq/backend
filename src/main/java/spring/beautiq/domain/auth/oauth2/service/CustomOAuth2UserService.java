@@ -39,6 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         String providerId = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
         String email = oAuth2Response.getEmail();
+        String profileImage = oAuth2Response.getProfileImage(); // 프로필 이미지 가져오기
 
         // providerId로 먼저 조회 (이메일 변경 케이스 대응)
         UserEntity userEntity = userRepository.findByProviderId(providerId)
@@ -48,6 +49,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             .map(existing -> {
                                 // 이메일로 찾았지만 providerId가 없는 경우 업데이트
                                 existing.setProviderId(providerId);
+                                existing.setProfileImage(profileImage); // 프로필 이미지 업데이트
                                 return userRepository.save(existing);
                             })
                             .orElseGet(() -> {
@@ -57,14 +59,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 newUser.setEmail(email);
                                 newUser.setUsername(generateDefaultUsername(email));
                                 newUser.setRole("ROLE_USER");
+                                newUser.setProfileImage(profileImage); // 프로필 이미지 저장
                                 return userRepository.save(newUser);
                             });
                 });
+
+        // providerId에서 provider 추출 (kakao_123456 -> kakao)
+        String provider = null;
+        if (providerId != null && providerId.contains("_")) {
+            provider = providerId.split("_")[0];
+        }
 
         OAuth2UserDTO userDTO = OAuth2UserDTO.builder()
                 .userId(userEntity.getId().toString())
                 .username(userEntity.getUsername())
                 .role(userEntity.getRole())
+                .email(userEntity.getEmail())              // 추가
+                .profileImage(userEntity.getProfileImage()) // 추가
+                .provider(provider)                         // 추가
                 .build();
 
         return new CustomOAuth2User(userDTO);

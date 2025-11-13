@@ -42,4 +42,9 @@ public class KakaoResponse implements OAuth2Response {
         }
         return null;
     }
+
+    @Override
+    public String getProfileImage() {
+        return "";
+    }
 }

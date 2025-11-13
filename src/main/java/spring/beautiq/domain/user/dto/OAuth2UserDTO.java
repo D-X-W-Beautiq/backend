@@ -22,4 +22,14 @@ public class OAuth2UserDTO {
 
     @Schema(description = "사용자 역할", example = "ROLE_USER")
     private String role;
+
+    @Schema(description = "이메일", example = "minwoo@example.com")
+    private String email;
+
+    @Schema(description = "프로필 이미지 URL")
+    private String profileImage;
+
+    @Schema(description = "OAuth 제공자", example = "kakao")
+    private String provider;
+
 }

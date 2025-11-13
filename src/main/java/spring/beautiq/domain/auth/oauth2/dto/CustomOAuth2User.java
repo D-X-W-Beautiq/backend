@@ -34,6 +34,17 @@ public class CustomOAuth2User implements OAuth2User {
             attributes.put("role", userDTO.getRole());
         }
 
+        // ===== 아래 3개 추가 =====
+        if (userDTO.getEmail() != null) {
+            attributes.put("email", userDTO.getEmail());
+        }
+        if (userDTO.getProfileImage() != null) {
+            attributes.put("profileImage", userDTO.getProfileImage());
+        }
+        if (userDTO.getProvider() != null) {
+            attributes.put("provider", userDTO.getProvider());
+        }
+
         return attributes.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(attributes);
     }
 
@@ -57,6 +68,20 @@ public class CustomOAuth2User implements OAuth2User {
 
     public String getUsername() {
         return userDTO.getUsername();
+    }
+
+
+
+    public String getEmail() {
+        return userDTO.getEmail();
+    }
+
+    public String getProfileImage() {
+        return userDTO.getProfileImage();
+    }
+
+    public String getProvider() {
+        return userDTO.getProvider();
     }
 
 }

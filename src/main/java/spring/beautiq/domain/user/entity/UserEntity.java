@@ -20,9 +20,10 @@ public class UserEntity extends BaseEntity {
     private String username;
 
     @Column(unique = true)
-    private String providerId; // google_123456, kakao_789012 등 OAuth provider의 고유 ID
+    private String providerId; // google_123456, kakao_789012
 
     private String role;
+
     @Column(length = 2048)
     private String profileImage;
 
