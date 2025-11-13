@@ -95,7 +95,7 @@ app:
 
   # OAuth2
   oauth2:
-    redirect: ${OAUTH2_REDIRECT_URL:http://localhost:5173/oauth2/callback}
+    redirect: ${OAUTH2_REDIRECT_URL:http://localhost:5173/oauth/callback}
     cookie:
       domain: ${COOKIE_DOMAIN:}  # 빈 값이면 현재 도메인만, .beautiq.my면 서브도메인 공유
       secure: ${COOKIE_SECURE:false}  # HTTPS 환경에서는 true
