@@ -319,8 +319,8 @@ public class UserController {
         }
         try {
             UUID fileId = UUID.randomUUID();
-            s3Service.uploadImage(file, fileId);
-            String imageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, fileId);
+            String profileImageUrl = s3Service.uploadImage(file, fileId);
+            String imageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, profileImageUrl);
             userService.updateProfileImageById(userId, imageUrl);
             return ResponseEntity.ok(Map.of(
                     "success", true,
