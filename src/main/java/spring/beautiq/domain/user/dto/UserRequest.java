@@ -20,7 +20,8 @@ public class UserRequest {
             description = "변경할 닉네임 (2-20자, 영문/한글/숫자 가능)",
             example = "홍길동123"
     )
-    @NotBlank(message = "사용자명은 필수입니다.")
+
+
     @Size(min = 2, max = 20, message = "사용자명은 2자 이상 20자 이하여야 합니다.")
     private String username;
 
@@ -28,7 +29,6 @@ public class UserRequest {
             description = "변경할 이메일 주소",
             example = "newemail@example.com"
     )
-    @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @Email
     private String email;
 }
