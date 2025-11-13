@@ -185,7 +185,7 @@ public class ProductController {
                     )
             )
     })
-    @PostMapping("/skin-analyses/{analysisId}/recommend-products")
+    @PostMapping("/skin-analysis/{analysisId}/recommend-products")
     public ResponseEntity<ProductResponse> getRecommendProducts(
             @Parameter(description = "피부 분석 ID", example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable("analysisId") UUID analysisId,

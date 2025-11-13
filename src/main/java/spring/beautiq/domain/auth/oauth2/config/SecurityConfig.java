@@ -35,8 +35,8 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final CustomFailureHandler customFailureHandler;
 
-    @Value("${app.oauth2.allowed-origin}")
-    private String allowedOrigin;
+    @Value("${app.frontend.origin}")
+    private String frontendOrigin;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService, CustomSuccessHandler customSuccessHandler,
                           JwtUtil jwtUtil, CustomFailureHandler customFailureHandler) {
@@ -105,38 +105,36 @@ public class SecurityConfig {
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
 
-                    // 환경 변수에서 프론트엔드 주소 가져오기
-                    List<String> allowedOrigins = new ArrayList<>();
-                    if (allowedOrigin != null && !allowedOrigin.isBlank()) {
-                        allowedOrigins.add(allowedOrigin);
+                    // 허용할 Origin 패턴
+                    List<String> allowedPatterns = new ArrayList<>();
+
+                    // 프론트엔드 Origin (환경변수, .env에서 설정)
+                    if (frontendOrigin != null && !frontendOrigin.isBlank()) {
+                        allowedPatterns.add(frontendOrigin);
                     }
-                    // localhost 및 127.0.0.1 허용 (모든 포트)
-                    allowedOrigins.add("https://localhost:*");
-                    allowedOrigins.add("https://127.0.0.1:*");
-                    allowedOrigins.add("https://www.beautiq.my");
-                    allowedOrigins.add("https://api.beautiq.my");
-                    allowedOrigins.add("https://beautiq.my"); // www 없는 버전도 추가
 
-
-
-                    // 포트 와일드카드 등 패턴을 허용하려면 setAllowedOriginPatterns 사용
-                    config.setAllowedOriginPatterns(Arrays.asList(
-                            allowedOrigin,
+                    // 로컬 개발 환경 (항상 허용)
+                    allowedPatterns.addAll(Arrays.asList(
                             "http://localhost:*",
                             "http://127.0.0.1:*",
                             "https://localhost:*",
-                            "https://127.0.0.1:*",
+                            "https://127.0.0.1:*"
+                    ));
+
+                    // 프로덕션 도메인
+                    allowedPatterns.addAll(Arrays.asList(
                             "https://www.beautiq.my",
                             "https://api.beautiq.my",
                             "https://beautiq.my"
-
                     ));
+
+                    config.setAllowedOriginPatterns(allowedPatterns);
                     config.setAllowedMethods(Collections.singletonList("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(Collections.singletonList("*"));
                     config.setMaxAge(3600L);
+                    config.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
 
-                    config.setExposedHeaders(java.util.Arrays.asList("Set-Cookie", "Authorization"));
                     return config;
 
                 }));

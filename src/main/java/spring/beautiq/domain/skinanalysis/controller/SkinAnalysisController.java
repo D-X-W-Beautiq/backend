@@ -25,7 +25,7 @@ import java.util.UUID;
 @MemberGuard
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/skin-analyses")
+@RequestMapping("/skin-analysis")
 @Tag(name = "Skin Analysis", description = "피부 분석 API - 이미지 업로드 및 분석 결과 조회")
 public class SkinAnalysisController {
 

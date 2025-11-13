@@ -9,23 +9,35 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * Swagger/OpenAPI 설정
+ * - app.swagger.enabled=false 설정 시 비활성화됨
+ * - 프로덕션 환경에서는 HTTPS URL로 자동 설정됨
+ */
 @Configuration
+@ConditionalOnProperty(name = "app.swagger.enabled", havingValue = "true", matchIfMissing = true)
 public class SwaggerConfig {
 
     @Value("${spring.application.name:Beautiq}")
     private String applicationName;
 
-    @Value("${swagger.server.url:http://localhost:8080}")
+    @Value("${app.swagger.server.url:http://localhost:8080}")
     private String serverUrl;
 
-    @Value("${swagger.server.description:Development Server}")
+    @Value("${app.swagger.server.description:Development Server}")
     private String serverDescription;
 
+    /**
+     * OpenAPI 설정 Bean
+     * - servers 설정으로 Swagger UI가 올바른 프로토콜(https/http)로 요청을 보냄
+     * - ForwardedHeaderFilter와 함께 작동하여 프록시 환경에서도 정상 동작
+     */
     @Bean
     public OpenAPI openAPI() {
         final String schemeName = "BearerAuth";
@@ -41,7 +53,8 @@ public class SwaggerConfig {
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
-                                .bearerFormat("JWT")))
+                                .bearerFormat("JWT")
+                                .description("JWT 토큰을 입력하세요 (Bearer 접두사 불필요)")))
                 .addSecurityItem(new SecurityRequirement().addList(schemeName));
     }
 
@@ -60,6 +73,10 @@ public class SwaggerConfig {
                         **인증 방식:**
                         - JWT Bearer Token (쿠키 기반)
                         - OAuth2 (Google, Kakao)
+                        
+                        **HTTPS 환경:**
+                        - 프로덕션 환경에서는 자동으로 HTTPS로 요청됩니다
+                        - ForwardedHeaderFilter가 X-Forwarded-Proto 헤더를 처리합니다
                         """)
                 .version("1.0.0")
                 .contact(new Contact()

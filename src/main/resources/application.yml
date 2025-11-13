@@ -1,35 +1,53 @@
+# ======================================
+# Beautiq Backend Application Config
+# ======================================
+# 모든 환경(개발/프로덕션)을 .env 파일로 관리
+# application-dev.yml, application-prod.yml 불필요
+# ======================================
+
 spring:
-#  profiles:
-#    active: mock-ai  # AI Mock 클라이언트 사용 (개발/테스트용)
+  application:
+    name: Beautiq
+
+  # .env 파일 자동 로드
   config:
     import: optional:file:.env[.properties]
 
-  cloud:
-    aws:
-      credentials:
-        access-key: ${AWS_ACCESS_KEY_ID}
-        secret-key: ${AWS_SECRET_ACCESS_KEY}
-      region:
-        static: ${AWS_REGION}
-      s3:
-        bucket: ${S3_BUCKET}
+  # 리버스 프록시 헤더 처리 (HTTPS 환경에서 필수)
+  # Nginx, ALB 등이 전달하는 X-Forwarded-Proto, X-Forwarded-Host 등을 인식
+  mvc:
+    forward-headers-strategy: framework
 
+  # ===== Database =====
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # ===== JPA/Hibernate =====
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: false  # SQL 로그 비활성화
+      ddl-auto: ${JPA_DDL_AUTO:update}  # dev: update, prod: validate
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: false  # SQL 포맷팅도 비활성화
+        format_sql: ${JPA_FORMAT_SQL:false}
         dialect: org.hibernate.dialect.MySQL8Dialect
 
+  # ===== AWS =====
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+      region:
+        static: ${AWS_REGION:ap-northeast-2}
+      s3:
+        bucket: ${S3_BUCKET}
+
+  # ===== OAuth2 =====
   security:
     oauth2:
       client:
@@ -58,75 +76,81 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+
+  # ===== Multipart =====
   servlet:
     multipart:
       max-file-size: 50MB
       max-request-size: 100MB
 
+# ===== JWT =====
 jwt:
   secret: ${JWT_SECRET}
 
+# ===== Application Custom Config =====
 app:
-  openapi:
-    title: Beautiq Swagger
-    description: Beautiq REST API
-    version: ${spring.application.version:0.0.1-SNAPSHOT}
-  oauth2:
-    redirect: ${OAUTH_REDIRECT}
-    cookie-domain: ${COOKIE_DOMAIN}
-    use-cookie-secure: ${COOKIE_SECURE}
-    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
-  ai-server:
-    url: ${AI_SERVER_URL}
-    connect-timeout-ms: 10000
-    response-timeout-seconds: 180  # 3분
-    read-timeout-seconds: 180      # 3분
-    write-timeout-seconds: 60      # 1분
-    max-in-memory-mb: 50           # Base64 이미지 처리를 위한 메모리 제한
-  s3:
-    enabled: true
+  # 프론트엔드
+  frontend:
+    origin: ${FRONTEND_ORIGIN:http://localhost:5173}
 
+  # OAuth2
+  oauth2:
+    redirect: ${OAUTH2_REDIRECT_URL:http://localhost:5173/oauth2/callback}
+    cookie:
+      domain: ${COOKIE_DOMAIN:}  # 빈 값이면 현재 도메인만, .beautiq.my면 서브도메인 공유
+      secure: ${COOKIE_SECURE:false}  # HTTPS 환경에서는 true
+
+  # AI 서버
+  ai-server:
+    url: ${AI_SERVER_URL:http://localhost:5000}
+    connect-timeout-ms: ${AI_CONNECT_TIMEOUT_MS:10000}
+    response-timeout-seconds: ${AI_RESPONSE_TIMEOUT_SECONDS:180}
+    read-timeout-seconds: ${AI_READ_TIMEOUT_SECONDS:180}
+    write-timeout-seconds: ${AI_WRITE_TIMEOUT_SECONDS:60}
+    max-in-memory-mb: ${AI_MAX_IN_MEMORY_MB:50}
+
+  # S3
+  s3:
+    enabled: ${S3_ENABLED:true}
+
+  # 제품 초기화
   product:
     init:
-      enabled: true  # false로 설정하면 초기 로드 비활성화
-      file: classpath:oliveyoung_data_set.xlsx
+      enabled: ${PRODUCT_INIT_ENABLED:true}
+      file: ${PRODUCT_INIT_FILE:classpath:oliveyoung_data_set.xlsx}
 
-# Swagger UI 설정
+  # 개발 로그인 페이지
+  auth:
+    dev-login-page-enabled: ${DEV_LOGIN_PAGE_ENABLED:true}
+
+  # Swagger/OpenAPI
+  swagger:
+    enabled: ${SWAGGER_ENABLED:true}
+    server:
+      url: ${SWAGGER_SERVER_URL:http://localhost:8080}
+      description: ${SWAGGER_SERVER_DESC:Development Server}
+
+# ===== Swagger UI =====
 springdoc:
   swagger-ui:
     with-credentials: true
     csrf:
       enabled: false
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
 
-# AWS SDK v1 deprecation 경고 비활성화
+# ===== AWS SDK =====
 aws:
   java:
     v1:
       disableDeprecationAnnouncement: true
 
+# ===== Logging =====
+# AWS SDK 로그 레벨 조정, 임시 조치이므로 25년도 내로 v2로 마이그레이션 필수
+logging:
+  level:
+    com.amazonaws: ERROR
+    software.amazon.awssdk: ERROR
+    com.amazonaws.util: ERROR
 
-openapi: 3.0.3
-info:
-  title: Demo API
-  version: 1.0.0
-
-servers:
-  - url: https://localhost:8080
-
-paths:
-  /users/me:
-    get:
-      summary: 내 정보 보기
-      security:
-        - BearerAuth: []   # <- 여기에 인증 적용
-      responses:
-        "200":
-          description: 성공
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-security:
-  - BearerAuth: []   # <- 전역 설정 (원하면 생략 가능)
