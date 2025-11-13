@@ -147,16 +147,17 @@ public class S3Service {
      * Pre-signed URL 생성 (GET)
      */
     public String getPreSignedUrl(String fileName) {
-        ensureEnabled();
-        Date expiration = new Date();
-        expiration.setTime(expiration.getTime() + 1000L * 60 * 5); // 5분
-
-        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, fileName)
-                .withMethod(HttpMethod.GET)
-                .withExpiration(expiration);
-
-        URL url = amazonS3.generatePresignedUrl(request);
-        return url.toString();
+        return getPublicUrl(fileName);
+//        ensureEnabled();
+//        Date expiration = new Date();
+//        expiration.setTime(expiration.getTime() + 1000L * 60 * 5); // 5분
+//
+//        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, fileName)
+//                .withMethod(HttpMethod.GET)
+//                .withExpiration(expiration);
+//
+//        URL url = amazonS3.generatePresignedUrl(request);
+//        return url.toString();
     }
 
     /**
