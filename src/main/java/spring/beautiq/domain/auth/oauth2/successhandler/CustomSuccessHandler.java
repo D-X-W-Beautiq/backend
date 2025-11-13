@@ -117,8 +117,27 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority authority = iterator.next();
         String role = authority.getAuthority();
 
-        String token = jwtUtil.createJwt(userId, username, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60));
+        // 이메일/프로필/프로바이더 정보 획득 (가능한 경우)
+        String email = null;
+        String profileImage = null;
+        String provider = null;
 
+        if (principal instanceof CustomOAuth2User cu) {
+            email = cu.getEmail();
+            profileImage = cu.getProfileImage();
+            provider = cu.getProvider();
+        } else if (principal instanceof DefaultOAuth2User d) {
+            Object e = d.getAttributes().get("email");
+            if (e != null) email = String.valueOf(e);
+            Object pi = d.getAttributes().get("profileImage");
+            if (pi == null) pi = d.getAttributes().get("picture");
+            if (pi != null) profileImage = String.valueOf(pi);
+            // provider는 성공 핸들러에서는 알기 어려워 생략 가능
+        }
+
+        String token = jwtUtil.createJwt(userId, username, role, java.util.concurrent.TimeUnit.HOURS.toMillis(60), email, profileImage, provider);
+
+        // JWT를 쿠키로 설정하여 프론트엔드로 전달
         ResponseCookie jwtcookie = createCookie(token);
         response.addHeader("Set-Cookie", jwtcookie.toString());
 
@@ -138,7 +157,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private ResponseCookie createCookie(String value) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("Authorization", value)
-                .maxAge(Duration.ofHours(6))
+                .maxAge(java.time.Duration.ofHours(6))
                 .path("/")
                 .httpOnly(true);
 

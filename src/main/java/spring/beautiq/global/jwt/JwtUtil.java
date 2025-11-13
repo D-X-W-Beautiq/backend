@@ -44,18 +44,35 @@ public class JwtUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("role", String.class);
     }
 
+    public String getEmail(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("email", String.class);
+    }
+
+    public String getProfileImage(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("profileImage", String.class);
+    }
+
+    public String getProvider(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("provider", String.class);
+    }
+
+
     public Boolean isExpired(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration().before(new Date());
     }
 
 
-    public String createJwt(String userId, String username, String role, Long expiredMs) {
+    public String createJwt(String userId, String username, String role, Long expiredMs, String email, String profileImage, String provider) {
 
         Claims claims = Jwts.claims();
 
         claims.put("userId", userId);
         claims.put("username", username);
         claims.put("role", role);
+
+        if (email != null) claims.put("email", email);
+        if (profileImage != null) claims.put("profileImage", profileImage);
+        if (provider != null) claims.put("provider", provider);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -64,6 +81,11 @@ public class JwtUtil {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
+    }
+
+    // 기존 호출 호환성 유지용 오버로드: email/profileImage/provider 없이 간단히 토큰 생성
+    public String createJwt(String userId, String username, String role, Long expiredMs) {
+        return createJwt(userId, username, role, expiredMs, null, null, null);
     }
 
 }
