@@ -40,8 +40,12 @@ public class CustomizeRequestDto {
     @AllArgsConstructor
     @Schema(description = "편집 항목")
     public static class EditForWeb {
-        private boolean isEdited;
+        // 클라이언트가 is_edited(혹은 edited) 값을 보내지 않으면 null -> 서버에서 기본 true로 처리
+        private Boolean edited; // optional; null=implicit true
         private String region; // "skin" | "eye" | "lip" | "blush"
         private int intensity; // 0~100
+
+        public Boolean getEdited() { return edited; }
+//        public void setEdited(Boolean edited) { this.edited = edited; }
     }
 }

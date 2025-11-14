@@ -156,6 +156,9 @@ aws:
 # AWS SDK 로그 레벨 조정, 임시 조치이므로 25년도 내로 v2로 마이그레이션 필수
 logging:
   level:
+    root: INFO
     com.amazonaws: ERROR
     software.amazon.awssdk: ERROR
     com.amazonaws.util: ERROR
+    spring.beautiq: DEBUG
+    spring.beautiq.domain.makeup: DEBUG
