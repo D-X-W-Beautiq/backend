@@ -62,8 +62,9 @@ public class SkinAnalysisService {
 
         try {
             // 2. 이미지 Base64 인코딩 및 요청 DTO 구성
-            // 이미지 정규화: 정사각형으로 리사이징하여 메타데이터/회전 문제를 예방
-            byte[] normalized = ImageUtil.normalizeFile(image);
+            // EXIF가 있으면 회전 후 정규화하여 AI로 전송
+            byte[] rotated = ImageUtil.rotateFileIfExifPresent(image);
+            byte[] normalized = ImageUtil.normalizeToSquare(rotated);
             String base64 = Base64.getEncoder().encodeToString(normalized);
             SkinAnalysisAIRequest aiRequest = new SkinAnalysisAIRequest();
             aiRequest.setImageBase64(base64);

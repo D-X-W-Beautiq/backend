@@ -84,9 +84,10 @@ public class S3Service {
         // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록. png로 통일
         String imageName = fileName + ".png";
 
-        // 정규화: 정사각형으로 리사이징하여 메타데이터/회전 문제를 예방
+        // EXIF이 있으면 회전하고 정규화하여 업로드
         byte[] originalBytes = image.getBytes();
-        byte[] normalizedBytes = ImageUtil.normalizeToSquare(originalBytes);
+        byte[] rotated = ImageUtil.rotateIfExifPresent(originalBytes);
+        byte[] normalizedBytes = ImageUtil.normalizeToSquare(rotated);
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType("image/png");

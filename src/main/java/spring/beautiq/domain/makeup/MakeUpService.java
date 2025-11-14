@@ -20,6 +20,7 @@ import spring.beautiq.domain.makeup.entity.MakeUpEntity;
 import spring.beautiq.domain.makeup.repository.MakeUpRepository;
 import spring.beautiq.domain.makeup.s3.S3Service;
 import spring.beautiq.domain.user.repository.UserRepository;
+import spring.beautiq.global.util.ImageUtil;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -372,8 +373,10 @@ resultImageBase64:
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is null or empty");
         }
-        // 정규화: 정사각형으로 리사이징하여 메타데이터/회전 문제를 예방
-        byte[] normalized = spring.beautiq.global.util.ImageUtil.normalizeFile(file);
+        // 1) EXIF가 있으면 회전
+        byte[] rotated = ImageUtil.rotateFileIfExifPresent(file);
+        // 2) 정규화: 정사각형으로 리사이징
+        byte[] normalized = ImageUtil.normalizeToSquare(rotated);
         return Base64.getEncoder().encodeToString(normalized);
     }
 
