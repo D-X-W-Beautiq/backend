@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import spring.beautiq.global.util.ImageUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -82,15 +84,19 @@ public class S3Service {
         // temp/{userId}/ 폴더에 저장. 이미지 소유권 기록. png로 통일
         String imageName = fileName + ".png";
 
+        // 정규화: EXIF 제거하여 자동 회전 문제 예방
+        byte[] originalBytes = image.getBytes();
+        byte[] normalizedBytes = ImageUtil.stripExif(originalBytes);
+
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(image.getContentType());
-        metadata.setContentLength(image.getSize());
+        metadata.setContentType("image/png");
+        metadata.setContentLength(normalizedBytes.length);
 
-        // S3에 이미지 업로드 요청 생성
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, imageName, image.getInputStream(), metadata);
-
-        // S3에 이미지 업로드
-        amazonS3.putObject(putObjectRequest);
+        // S3에 이미지 업로드 요청 생성 (정규화된 바이트 사용)
+        try (InputStream is = new ByteArrayInputStream(normalizedBytes)) {
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, imageName, is, metadata);
+            amazonS3.putObject(putObjectRequest);
+        }
 
         return imageName; // 업로드된 이미지 이름 반환
     }

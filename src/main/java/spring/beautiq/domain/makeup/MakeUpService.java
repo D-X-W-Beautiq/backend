@@ -369,7 +369,12 @@ resultImageBase64:
 
 
     static String multipartToBase64(MultipartFile file) throws IOException {
-        return Base64.getEncoder().encodeToString(file.getBytes());
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is null or empty");
+        }
+        // EXIF/메타데이터를 제거하여 이미지가 자동으로 회전되는 문제를 예방합니다.
+        byte[] normalized = spring.beautiq.global.util.ImageUtil.stripExif(file.getBytes());
+        return Base64.getEncoder().encodeToString(normalized);
     }
 
     static MultipartFile base64ToMultipart(String base64) {

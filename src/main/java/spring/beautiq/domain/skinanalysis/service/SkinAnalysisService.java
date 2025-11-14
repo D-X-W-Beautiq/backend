@@ -19,6 +19,7 @@ import spring.beautiq.domain.skinanalysis.util.SkinAnalysisCalculator;
 import spring.beautiq.domain.user.entity.UserEntity;
 import spring.beautiq.domain.user.repository.UserRepository;
 import spring.beautiq.global.exception.GlobalErrorCode;
+import spring.beautiq.global.util.ImageUtil;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,7 +62,9 @@ public class SkinAnalysisService {
 
         try {
             // 2. 이미지 Base64 인코딩 및 요청 DTO 구성
-            String base64 = Base64.getEncoder().encodeToString(image.getBytes());
+            // 이미지 정규화: EXIF/메타데이터 제거하여 자동 회전 문제 방지
+            byte[] normalized = ImageUtil.stripExif(image.getBytes());
+            String base64 = Base64.getEncoder().encodeToString(normalized);
             SkinAnalysisAIRequest aiRequest = new SkinAnalysisAIRequest();
             aiRequest.setImageBase64(base64);
 
