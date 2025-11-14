@@ -1,7 +1,6 @@
 package spring.beautiq.domain.makeup;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -287,7 +286,7 @@ public class MakeUpService {
         CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
         customizeAiRequestDto.setBaseImageBase64(preImage);
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
-            Boolean editedFlag = editForWeb.getEdited();
+            Boolean editedFlag = editForWeb.getIsEdited();
             boolean apply = (editedFlag == null) || Boolean.TRUE.equals(editedFlag); // null 또는 true면 적용
             if(apply) {
                 int intensity = Math.max(0, Math.min(100, editForWeb.getIntensity()));
