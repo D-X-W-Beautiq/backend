@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,8 +39,12 @@ public class CustomizeRequestDto {
     @AllArgsConstructor
     @Schema(description = "편집 항목")
     public static class EditForWeb {
-        private boolean isEdited;
+        // 클라이언트가 is_edited(혹은 edited) 값을 보내지 않으면 null -> 서버에서 기본 true로 처리
+        private Boolean isEdited; // optional; null=implicit true
         private String region; // "skin" | "eye" | "lip" | "blush"
         private int intensity; // 0~100
+
+        public Boolean getIsEdited() { return isEdited; }
+//        public void setEdited(Boolean edited) { this.edited = edited; }
     }
 }

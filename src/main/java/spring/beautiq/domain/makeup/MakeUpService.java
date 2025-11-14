@@ -1,5 +1,6 @@
 package spring.beautiq.domain.makeup;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,16 @@ public class MakeUpService {
     private final WebClient.Builder webClientBuilder;
 
     private final S3Service s3Service;
+    private final ObjectMapper objectMapper; // JSON 직렬화용
+
+    // JSON 직렬화 헬퍼 (메서드명 변경: safeJson)
+    private String safeJson(Object obj) {
+        try {
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+        } catch (Exception e) {
+            return "{\"error\":\"serialize failed: " + e.getMessage() + "\"}";
+        }
+    }
 
     /**
      * 메이크업 저장 - Base64 이미지를 S3에 저장하고 DB에 기록
@@ -250,16 +261,6 @@ public class MakeUpService {
         return new ImageItem(SimulatedImageName, s3Service.getPreSignedUrl(SimulatedImageName));
     }
 
-    /**
-     * Base64 data URI에서 순수 Base64 추출
-     */
-    private String extractBase64(String base64Data) {
-        if (base64Data.startsWith("data:image")) {
-            String[] parts = base64Data.split(",");
-            return parts.length > 1 ? parts[1] : parts[0];
-        }
-        return base64Data;
-    }
 
     /**
      * 메이크업 커스터마이즈
@@ -270,6 +271,7 @@ public class MakeUpService {
             CustomizeRequestDto customizeRequestDto,
             UUID userId
     ) throws IOException {
+        log.info("[CUSTOMIZE] start imageName={} editsCount={} userId={}", imageName, customizeRequestDto == null ? -1 : (customizeRequestDto.getEdits() == null ? -1 : customizeRequestDto.getEdits().size()), userId);
         // 입력 검증
         if (customizeRequestDto == null || imageName == null || imageName.isBlank()) {
             return new CustomizeResponseDto("failed", null, null, "imageName is required");
@@ -282,16 +284,33 @@ public class MakeUpService {
 
         // 요청 DTO에 이미지, 편집 정보 담기
         CustomizeAiRequestDto customizeAiRequestDto = new CustomizeAiRequestDto();
-        customizeAiRequestDto.setBaseImageBase64(preImage); // 현재 이미지
+        customizeAiRequestDto.setBaseImageBase64(preImage);
         for(CustomizeRequestDto.EditForWeb editForWeb : customizeRequestDto.getEdits()) {
-            if(editForWeb.isEdited()) {
-                // intensity 범위는 DTO에서 검증되지만 방어적으로 보정
+            Boolean editedFlag = editForWeb.getIsEdited();
+            boolean apply = (editedFlag == null) || Boolean.TRUE.equals(editedFlag); // null 또는 true면 적용
+            if(apply) {
                 int intensity = Math.max(0, Math.min(100, editForWeb.getIntensity()));
-                customizeAiRequestDto.addEdit(
-                        editForWeb.getRegion(),
-                        intensity
-                );
+                String region = editForWeb.getRegion();
+                if("eye".equalsIgnoreCase(region)) { // AI 패턴에 맞게 매핑
+                    region = "eyelid";
+                }
+                customizeAiRequestDto.addEdit(region, intensity);
             }
+        }
+        if (log.isDebugEnabled()) {
+            String editsJson = safeJson(customizeAiRequestDto.getEdits());
+            log.debug("""
+================ [AI CUSTOMIZE REQUEST] ================
+imageName: {}
+baseImageBase64:
+  length: {}
+  head(120): {}
+edits ({} items) JSON:
+{}
+=======================================================
+""", imageName, customizeAiRequestDto.getBaseImageBase64().length(), head(customizeAiRequestDto.getBaseImageBase64(), 120), customizeAiRequestDto.getEdits().size(), editsJson);
+        } else {
+            log.info("[CUSTOMIZE] baseImage len={} editsApplied={}", preImage.length(), customizeAiRequestDto.getEdits().size());
         }
 
         // AI 서버에 JSON 요청
@@ -305,7 +324,24 @@ public class MakeUpService {
                 .block();
 
         if (customizeAiResponseDto == null) {
+            log.warn("[CUSTOMIZE] AI response null imageName={}", imageName);
             return new CustomizeResponseDto("failed", null, null, "AI service error: no response");
+        }
+
+        if (log.isDebugEnabled()) { // 이전에 null 반환했으므로 추가 null 체크 불필요
+            String result = customizeAiResponseDto.getResultImageBase64();
+            int len = result == null ? 0 : result.length();
+            log.debug("""
+================ [AI CUSTOMIZE RESPONSE] ================
+status: {}
+message: {}
+resultImageBase64:
+  length: {}
+  head(120): {}
+========================================================
+""", customizeAiResponseDto.getStatus(), customizeAiResponseDto.getMessage(), len, result == null ? "null" : head(result, 120));
+        } else {
+            log.info("[CUSTOMIZE] result status={} resultBase64Len={}", customizeAiResponseDto.getStatus(), customizeAiResponseDto.getResultImageBase64() == null ? 0 : customizeAiResponseDto.getResultImageBase64().length());
         }
 
         String status = customizeAiResponseDto.getStatus();
@@ -324,6 +360,11 @@ public class MakeUpService {
         String customizedImageName = s3Service.uploadTempImage(customizedImage, userId);
 
         return new CustomizeResponseDto("success", customizedImageName, s3Service.getPreSignedUrl(customizedImageName), null);
+    }
+
+    private String head(String base64, int limit) {
+        if (base64 == null) return "null";
+        return base64.length() <= limit ? base64 : base64.substring(0, limit) + "...";
     }
 
 
