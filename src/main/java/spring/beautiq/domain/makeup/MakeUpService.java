@@ -372,8 +372,8 @@ resultImageBase64:
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is null or empty");
         }
-        // EXIF/메타데이터를 제거하여 이미지가 자동으로 회전되는 문제를 예방합니다.
-        byte[] normalized = spring.beautiq.global.util.ImageUtil.stripExif(file.getBytes());
+        // 정규화: 정사각형으로 리사이징하여 메타데이터/회전 문제를 예방
+        byte[] normalized = spring.beautiq.global.util.ImageUtil.normalizeFile(file);
         return Base64.getEncoder().encodeToString(normalized);
     }
 

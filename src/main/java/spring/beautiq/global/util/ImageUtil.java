@@ -5,8 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 public final class ImageUtil {
     private static final Logger log = LoggerFactory.getLogger(ImageUtil.class);
@@ -14,79 +17,55 @@ public final class ImageUtil {
     private ImageUtil() {}
 
     /**
-     * 이미지에서 EXIF 메타데이터(특히 Orientation)를 제거하고
-     * 순수 픽셀 기반 이미지(JPEG/PNG)로 재인코딩합니다.
-     *
-     * 주의:
-     * - 회전은 절대 하지 않습니다.
-     * - JPEG로 재인코딩할 경우 품질 손실이 있을 수 있습니다.
-     *   필요 시 PNG로 강제 변환하도록 변경할 수 있습니다.
+     * 바이트 배열을 읽어 비율을 유지한 채 정사각형 캔버스로 패딩하고 PNG로 재인코딩하여 반환합니다.
+     * 회전(orientation) 처리는 하지 않습니다.
      */
-    public static byte[] stripExif(byte[] imageBytes) {
-        if (imageBytes == null || imageBytes.length == 0) return imageBytes;
-
-        try (InputStream is = new ByteArrayInputStream(imageBytes)) {
-
-            // 이미지 읽기 (이 단계에서 Orientation 적용 없음)
-            BufferedImage img = ImageIO.read(is);
-            if (img == null) {
-                log.warn("ImageIO failed to read image; returning original bytes");
-                return imageBytes;
+    public static byte[] normalizeToSquare(byte[] originalBytes) {
+        if (originalBytes == null || originalBytes.length == 0) {
+            return originalBytes;
+        }
+        try {
+            BufferedImage original = ImageIO.read(new ByteArrayInputStream(originalBytes));
+            if (original == null) {
+                log.warn("ImageIO.read returned null for given bytes");
+                return originalBytes;
             }
 
-            // 재인코딩 (EXIF 제거)
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            int width = original.getWidth();
+            int height = original.getHeight();
+            int maxSide = Math.max(width, height);
 
-            // JPG로 강제 저장 (PNG로 바꾸고 싶으면 "png"로 변경)
-            ImageIO.write(img, "jpg", os);
+            // 캔버스는 ARGB로 생성(투명 배경)
+            BufferedImage square = new BufferedImage(maxSide, maxSide, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = square.createGraphics();
+            try {
+                g.setComposite(AlphaComposite.Src);
+                g.setColor(new Color(255, 255, 255, 0));
+                g.fillRect(0, 0, maxSide, maxSide);
 
-            return os.toByteArray();
+                int offsetX = (maxSide - width) / 2;
+                int offsetY = (maxSide - height) / 2;
+                g.drawImage(original, offsetX, offsetY, null);
+            } finally {
+                g.dispose();
+            }
 
-        } catch (Exception e) {
-            log.warn("Failed to strip EXIF metadata", e);
-            return imageBytes;
-        }
-    }
-
-    /**
-     * MultipartFile 버전 - EXIF 제거 후 byte[] 반환
-     */
-    public static byte[] stripExif(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            return new byte[0];
-        }
-        try {
-            return stripExif(file.getBytes());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(square, "png", baos);
+            return baos.toByteArray();
         } catch (IOException e) {
-            log.warn("Failed to strip EXIF from MultipartFile", e);
-            return new byte[0];
+            log.warn("Failed to normalize image to square", e);
+            return originalBytes;
         }
     }
 
     /**
-     * 이미지 픽셀 기준 세로/가로 판별(height > width).
-     * EXIF Orientation은 고려하지 않습니다(이미 제거되었기 때문).
+     * MultipartFile을 정규화하여 바이트 배열로 반환합니다.
      */
-    public static boolean isPortrait(byte[] bytes) {
-        try (InputStream is = new ByteArrayInputStream(bytes)) {
-            BufferedImage img = ImageIO.read(is);
-            if (img == null) return false;
-            return img.getHeight() > img.getWidth();
-        } catch (Exception e) {
-            log.warn("Failed to check portrait orientation", e);
-            return false;
+    public static byte[] normalizeFile(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("file is null or empty");
         }
-    }
-
-    /**
-     * MultipartFile 버전 세로 판별
-     */
-    public static boolean isPortrait(MultipartFile file) {
-        try {
-            return isPortrait(file.getBytes());
-        } catch (Exception e) {
-            log.warn("Failed to check portrait for MultipartFile", e);
-            return false;
-        }
+        return normalizeToSquare(file.getBytes());
     }
 }
