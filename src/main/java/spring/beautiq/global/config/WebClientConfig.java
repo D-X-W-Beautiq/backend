@@ -51,6 +51,7 @@ public class WebClientConfig {
                 .baseUrl(aiServerUrl)
                 .exchangeStrategies(strategies)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .defaultHeader("ngrok-skip-browser-warning", "true") // ngrok 경고 페이지 우회
                 .filter(errorMappingFilter);
     }
 
